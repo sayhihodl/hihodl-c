@@ -1,0 +1,82 @@
+// app/onboarding/choose-principal-account.tsx
+import React, { useState, useCallback } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+
+// === Tipos opcionales (útiles si usas TS) ===
+type Preset = "Daily" | "Savings" | "Social" | "Other";
+type WalletType = "daily" | "savings" | "social";
+type Wallet = { label: string; type: WalletType };
+
+// Storage key
+const STORE_KEY = "hihodl::wallets_v1";
+
+// 👉 Estados mínimos que usa el flujo (ajusta si ya los tienes en otro sitio)
+export default function ChoosePrincipalAccountScreen() {
+  const [selected, setSelected] = useState<Preset | null>(null); // opción elegida en UI
+  const [customName, setCustomName] = useState<string>("");      // nombre si "Other"
+  const [sheetOpen, setSheetOpen] = useState<boolean>(false);    // controla tu bottom sheet
+  const [submitting, setSubmitting] = useState<boolean>(false);  // evita doble tap
+
+  // Handler principal
+  const continueFlow = useCallback(async () => {
+    if (submitting) return;               // evita doble tap
+    setSubmitting(true);
+    console.log("[principalaccount] CTA tapped", { selected, customName });
+
+    try {
+      // 1) Selección efectiva (por defecto “Daily”)
+      let effective: Preset = (selected ?? "Daily") as Preset;
+      if (!selected) setSelected("Daily");
+
+      // 2) Si “Other” pero sin nombre → abre el sheet y frena
+      const hasCustom = customName.trim().length >= 2;
+      if (effective === "Other" && !hasCustom) {
+        console.log("[principalaccount] Other w/o name → open sheet");
+        setSheetOpen(true);
+        return; // finally apagará submitting
+      }
+
+      // 3) Construir wallets en el orden correcto
+      const wallets: Wallet[] = [
+        { label: "Daily",   type: "daily"   },
+        { label: "Savings", type: "savings" },
+        { label: "Social",  type: "social"  },
+      ];
+
+      if (effective === "Other" && hasCustom) {
+        const name = customName.trim();
+        // Sustituye “Daily” por el custom como principal
+        wallets[0].label = name;
+        console.log("[principalaccount] custom as principal ->", name);
+      } else if (effective !== "Daily") {
+        // Mueve la elegida al principio
+        const idx = wallets.findIndex((w) => w.label === effective);
+        if (idx > -1) {
+          const [chosen] = wallets.splice(idx, 1);
+          wallets.unshift(chosen);
+        }
+        console.log("[principalaccount] principal ->", wallets[0].label);
+      }
+
+      // 4) Persistir (best-effort)
+      const stateToSave = JSON.stringify({ principal: wallets[0], wallets });
+      await AsyncStorage.setItem(STORE_KEY, stateToSave);
+      console.log("[principalaccount] saved ->", stateToSave);
+
+      // 5) Navegar
+      console.log("[principalaccount] navigate → /onboarding/success");
+      router.replace("/onboarding/success");
+    } catch (e) {
+      console.error("[principalaccount] save/navigate error", e);
+      // aun así intenta navegar para no bloquear el onboarding
+      router.replace("/onboarding/success");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [submitting, selected, customName]);
+
+  // 🔻 …tu JSX aquí. Expón `continueFlow`, setters y estados a tus componentes/CTAs.
+  // Ejemplo mínimo:
+  return null;
+}

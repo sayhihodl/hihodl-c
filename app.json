@@ -2,38 +2,32 @@
   "expo": {
     "name": "hihodl-yes",
     "slug": "hihodl-yes",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true
-    },
+    "scheme": "hihodl",
+    "icon": "./assets/icon.png",
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
       }
     },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+    "ios": {
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Usamos Face ID/Touch ID para proteger tu cuenta."
+      }
     },
     "plugins": [
+      "expo-font",
+      "expo-secure-store",
+      "expo-local-authentication",
       "expo-router"
     ],
-    "experiments": {
-      "typedRoutes": true
+    "extra": {
+      "EXPO_PUBLIC_FIREBASE_API_KEY": "...",
+      "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "hihodlapp.web.app",
+      "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "hihodlapp",
+      "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "928131091332",
+      "EXPO_PUBLIC_FIREBASE_APP_ID": "1:928131091332:web:b2b41bde81247e25892bd1",
+      "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "xxxxxxxxxx-aaaaaaaaaaaaaaaaaaaaaaaaaaaa.apps.googleusercontent.com"
     }
   }
 }

@@ -1,0 +1,37 @@
+[
+  {
+    "mint": "So11111111111111111111111111111111111111112",
+    "symbol": "SOL",
+    "name": "Solana",
+    "decimals": 9,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png"
+  },
+  {
+    "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "symbol": "USDC",
+    "name": "USD Coin",
+    "decimals": 6,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png"
+  },
+  {
+    "mint": "Es9vMFrzaCERm9mX4DyZ8v8QxVJQ3QnRbYx6B7xN6fQ3",
+    "symbol": "USDT",
+    "name": "Tether USD",
+    "decimals": 6,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/Es9vMFrzaCERm9mX4DyZ8v8QxVJQ3QnRbYx6B7xN6fQ3/logo.png"
+  },
+  {
+    "mint": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6x7UH2G5D5gG2JkE",
+    "symbol": "BONK",
+    "name": "Bonk",
+    "decimals": 5,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/DezXAZ8z7PnrnRJjz3wXBoRgixCa6x7UH2G5D5gG2JkE/logo.png"
+  },
+  {
+    "mint": "ETAtLmCmsoiEEKfNrHKJ2k1Yy3Z4q2L9i5w6dYjLx6t",
+    "symbol": "WIF",
+    "name": "dogwifhat",
+    "decimals": 6,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/ETAtLmCmsoiEEKfNrHKJ2k1Yy3Z4q2L9i5w6dYjLx6t/logo.png"
+  }
+]

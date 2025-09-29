@@ -1,0 +1,44 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .fill { fill: currentColor; }
+    </style>
+  </defs>
+  <!-- circular badge -->
+  <circle cx="256" cy="256" r="232" class="fill"/>
+  <!-- inner knock-out to keep it "iconic" (circle minus inner hole) -->
+  <circle cx="256" cy="256" r="188" fill="none"/>
+  <!-- flames (three tongues) carved as negative shapes via white to punch out -->
+  <g transform="translate(0,0)">
+    <!-- main flame -->
+    <path d="M256 124
+             C 292 168, 308 204, 300 234
+             C 292 264, 264 280, 238 288
+             C 220 264, 220 236, 228 214
+             C 236 192, 246 168, 256 124 Z" fill="#000000"/>
+    <!-- side flame left -->
+    <path d="M208 180
+             C 226 202, 230 222, 224 236
+             C 216 254, 198 260, 186 260
+             C 182 244, 188 226, 196 212
+             C 202 202, 206 192, 208 180 Z" fill="#000000"/>
+    <!-- side flame right -->
+    <path d="M304 184
+             C 322 204, 328 224, 324 238
+             C 318 256, 302 262, 290 262
+             C 288 246, 294 228, 302 214
+             C 306 206, 308 196, 304 184 Z" fill="#000000"/>
+  </g>
+  <!-- Use mask to subtract flames from circle -->
+  <mask id="cut">
+    <rect width="100%" height="100%" fill="white"/>
+    <!-- punch out with black shapes -->
+    <circle cx="256" cy="256" r="188" fill="black"/>
+    <path d="M256 124 C 292 168, 308 204, 300 234 C 292 264, 264 280, 238 288 C 220 264, 220 236, 228 214 C 236 192, 246 168, 256 124 Z" fill="black"/>
+    <path d="M208 180 C 226 202, 230 222, 224 236 C 216 254, 198 260, 186 260 C 182 244, 188 226, 196 212 C 202 202, 206 192, 208 180 Z" fill="black"/>
+    <path d="M304 184 C 322 204, 328 224, 324 238 C 318 256, 302 262, 290 262 C 288 246, 294 228, 302 214 C 306 206, 308 196, 304 184 Z" fill="black"/>
+  </mask>
+  <g mask="url(#cut)">
+    <circle cx="256" cy="256" r="232" class="fill"/>
+  </g>
+</svg>

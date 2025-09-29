@@ -1,0 +1,37 @@
+// src/ui/icons/token-icon.tsx
+import React, { memo } from "react";
+import { Image, StyleSheet, type StyleProp, type ImageStyle } from "react-native";
+import { TOKEN_ICONS, DEFAULT_TOKEN_ICON, type IconDef } from "../../config/iconRegistry";
+
+type Props = {
+  currencyId: string;
+  size?: number;
+  rounded?: number;                 // por defecto círculo
+  style?: StyleProp<ImageStyle>;    // <- evita el error de tipos
+};
+
+export const TokenIcon = memo(function TokenIcon({
+  currencyId,
+  size = 36,
+  rounded,
+  style,
+}: Props) {
+  const def: IconDef = TOKEN_ICONS[currencyId] ?? DEFAULT_TOKEN_ICON;
+
+  if (def.kind === "svg") {
+    const SvgComp = def.Comp;
+    return <SvgComp width={size} height={size} />;
+  }
+
+  return (
+    <Image
+      source={def.src}
+      style={[styles.img, { width: size, height: size, borderRadius: rounded ?? size / 2 }, style]}
+      resizeMode="contain"
+    />
+  );
+});
+
+const styles = StyleSheet.create({
+  img: { overflow: "hidden" },
+});
