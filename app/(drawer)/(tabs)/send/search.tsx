@@ -16,6 +16,10 @@ import { legacy } from "@/theme/colors";
 type Account = "Daily" | "Savings" | "Social";
 const { BG, TEXT, SUB } = legacy;
 
+/* ---------- UI base (default shared) ---------- */
+const GLASS_BG = "rgba(3, 12, 16, 0.35)";
+const GLASS_BORDER = "rgba(255,255,255,0.08)";
+
 type Contact = {
   id: string; name?: string; alias?: string; phone?: string; email?: string;
   avatar?: any; onHH?: boolean; hhAlias?: string;
@@ -36,18 +40,19 @@ const TOKEN_LABEL: Record<string, string> = {
 
 export default function SendSearch() {
   const insets = useSafeAreaInsets();
-  const { tokenId, amount, to, account } = useLocalSearchParams<{
-    tokenId?: string; amount?: string; to?: string; account?: Account;
+  const { tokenId, amount, to, account, from } = useLocalSearchParams<{
+    tokenId?: string; amount?: string; to?: string; account?: Account; from?: string;
   }>();
 
   const token = tokenId ?? "USDC.circle";
   const acc: Account = (account as Account) ?? "Daily";
+  const fromTokenDetails = from === "tokenDetails";
 
-  // ===== Header layout dials =====
+  // ===== Header layout dials (mismos que Receive) =====
   const TITLE_H = 44;
-  const ROW_SEARCH_GAP = 12;
-  const SEARCH_H = 44;            // ↓ más bajito
-  const AFTER_SEARCH_GAP = 20;    // ↑ más espacio debajo del buscador
+  const ROW_SEARCH_GAP = 14;   // igual que Receive
+  const SEARCH_H = 50;         // igual que Receive (alto por defecto)
+  const AFTER_SEARCH_GAP = 10; // igual que Receive
   const HEADER_INNER_TOP = 6;
 
   const HEADER_CONTENT_H = TITLE_H + ROW_SEARCH_GAP + SEARCH_H + AFTER_SEARCH_GAP;
@@ -78,12 +83,14 @@ export default function SendSearch() {
     });
   }, [token, amount, acc]);
 
-  const closeBack = useCallback(() => {
-    router.replace({
-      pathname: "/(drawer)/(tabs)/send/amount",
-      params: { tokenId: token, amount: amount ?? "", to: q ?? "", account: acc } as any,
-    });
-  }, [token, amount, q, acc]);
+  // Back: si viene de token details -> dashboard; si no -> token picker (selector de token en send)
+  const onLeftPress = useCallback(() => {
+    if (fromTokenDetails) {
+      router.replace({ pathname: "/(drawer)/(tabs)/(home)", params: { account: String(acc).toLowerCase() } as any });
+    } else {
+      router.replace({ pathname: "/(drawer)/(tabs)/send", params: { account: acc } as any });
+    }
+  }, [fromTokenDetails, acc]);
 
   const invite = useCallback(async () => {
     const msg = `Hey! Te envío cripto fácil con HiHODL 👽
@@ -95,8 +102,8 @@ Descárgala aquí y te mando ${TOKEN_LABEL[token] ?? "tokens"}: https://hihodl.a
     const clip = (await Clipboard.getStringAsync())?.trim();
     if (!clip) return;
     setQ(clip);
-    goAmount(clip);
-  }, [goAmount]);
+    // goAmount(clip); // <- si quieres salto directo tras pegar
+  }, []);
 
   // Header blur
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -110,30 +117,45 @@ Descárgala aquí y te mando ${TOKEN_LABEL[token] ?? "tokens"}: https://hihodl.a
         height={HEADER_CONTENT_H}
         innerTopPad={HEADER_INNER_TOP}
         solidColor="transparent"
-        // fila superior (left/center/right) + buscador debajo (usamos column)
         contentStyle={{ flexDirection: "column", paddingHorizontal: 20 }}
-        // LEFT: LightKicks (tap = cerrar)
         leftSlot={null}
+        rightSlot={null}
         centerSlot={
           <>
+            {/* ===== Top row: igual que Receive ===== */}
             <View style={styles.topRow}>
-              <Pressable onPress={closeBack} hitSlop={10} style={styles.brandBtn}>
-                <Text style={styles.brand}>LightKicks</Text>
+              {/* Left: back o X (bare) */}
+              <Pressable
+                onPress={onLeftPress}
+                hitSlop={10}
+                style={styles.headerIconBtnBare}
+                accessibilityLabel="Back"
+              >
+                <Ionicons
+                  name={fromTokenDetails ? "close" : "chevron-back"}
+                  size={22}
+                  color={TEXT}
+                />
               </Pressable>
 
-              <Text style={styles.title} numberOfLines={1}>Choose a friend</Text>
+              <Text style={styles.title} numberOfLines={1}>
+                Choose a friend
+              </Text>
 
+              {/* Right: scanner en burbuja */}
               <View style={styles.rightBtns}>
-                <Pressable onPress={() => { /* abrir escáner QR */ }} hitSlop={10} style={styles.roundBtn}>
-                  <Ionicons name="scan-outline" size={18} color="#fff" />
-                </Pressable>
-                <Pressable onPress={pasteFromClipboard} hitSlop={10} style={styles.roundBtn}>
-                  <Ionicons name="clipboard-outline" size={18} color="#fff" />
+                <Pressable
+                  onPress={() => router.push("/(drawer)/(tabs)/send/scanner")}
+                  hitSlop={10}
+                  style={styles.headerIconBtn}
+                  accessibilityLabel="Open scanner"
+                >
+                  <Ionicons name="qr-code-outline" size={22} color={TEXT} />
                 </Pressable>
               </View>
             </View>
 
-            {/* Search dentro del header (sin autoFocus) */}
+            {/* ===== Search unificado (glass + border) ===== */}
             <View
               style={[
                 styles.searchInHeader,
@@ -146,23 +168,31 @@ Descárgala aquí y te mando ${TOKEN_LABEL[token] ?? "tokens"}: https://hihodl.a
                 onChangeText={setQ}
                 placeholder="Search your contacts"
                 placeholderTextColor={SUB}
-                style={styles.input as any}
-                autoFocus={false}     // <- NO abrir teclado al entrar
+                style={styles.input}
+                autoFocus={false}
                 returnKeyType="search"
               />
+              <Pressable onPress={pasteFromClipboard} hitSlop={8} accessibilityLabel="Paste from clipboard">
+                <Ionicons name="clipboard-outline" size={18} color={SUB} />
+              </Pressable>
+              {!!q && (
+                <Pressable onPress={() => setQ("")} hitSlop={8} accessibilityLabel="Clear search">
+                  <Ionicons name="close-circle" size={18} color={SUB} />
+                </Pressable>
+              )}
             </View>
           </>
         }
-        rightSlot={null}
       />
 
+      {/* ===== Lista (rows con glass por defecto) ===== */}
       <Animated.SectionList<Contact>
         sections={sections as any}
         keyExtractor={(it) => it.id}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: insets.bottom + 22,
-          paddingTop: HEADER_TOTAL - 38, // deja el header “más largo” y el margen visible
+          paddingTop: HEADER_TOTAL - 38,
         }}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         SectionSeparatorComponent={() => <View style={{ height: 12 }} />}
@@ -172,6 +202,7 @@ Descárgala aquí y te mando ${TOKEN_LABEL[token] ?? "tokens"}: https://hihodl.a
         renderItem={({ item }) => {
           const name = item.hhAlias || item.alias || item.name || "Contact";
           const sub  = item.phone || item.email || (item.alias ?? "");
+
           const avatar = (
             <View style={styles.avatar}>
               <Ionicons name="person-circle" size={28} color="#9CC6D1" />
@@ -186,6 +217,7 @@ Descárgala aquí y te mando ${TOKEN_LABEL[token] ?? "tokens"}: https://hihodl.a
 
           return (
             <Row
+              containerStyle={styles.rowGlass} // <- mismo look que Receive
               leftSlot={avatar}
               labelNode={
                 <>
@@ -195,7 +227,11 @@ Descárgala aquí y te mando ${TOKEN_LABEL[token] ?? "tokens"}: https://hihodl.a
               }
               rightSlot={item.onHH ? onHHBadge : inviteBtn}
               rightIcon="chevron-forward"
-              onPress={() => item.onHH ? goAmount(item.hhAlias || item.alias || item.phone || item.email || "") : invite()}
+              onPress={() =>
+                item.onHH
+                  ? goAmount(item.hhAlias || item.alias || item.phone || item.email || "")
+                  : invite()
+              }
             />
           );
         }}
@@ -207,7 +243,9 @@ Descárgala aquí y te mando ${TOKEN_LABEL[token] ?? "tokens"}: https://hihodl.a
   );
 }
 
+/* ============== styles (default compartido con Receive) ============== */
 const styles = StyleSheet.create({
+  /* Header */
   topRow: {
     height: 44,
     flexDirection: "row",
@@ -215,30 +253,39 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
   },
-  brandBtn: { paddingHorizontal: 6, paddingVertical: 4 },
-  brand: { color: "#B9E6F2", fontWeight: "800", fontSize: 14, letterSpacing: 0.2 },
-  title: { color: TEXT, fontSize: 18, fontWeight: "800" },
-  rightBtns: { flexDirection: "row", alignItems: "center", gap: 8 },
-  roundBtn: {
-    width: 32, height: 32, borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.10)",
-    alignItems: "center", justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255,255,255,0.08)",
+  headerIconBtnBare: {
+    width: 36, height: 36, alignItems: "center", justifyContent: "center", backgroundColor: "transparent",
   },
+  rightBtns: { flexDirection: "row", alignItems: "center", gap: 8 },
+  headerIconBtn: {
+    width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  title: { color: TEXT, fontSize: 18, fontWeight: "800", textAlign: "center" },
 
+  /* Search (mismo por defecto que Receive) */
   searchInHeader: {
     borderRadius: 14,
     paddingHorizontal: 12,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: GLASS_BG,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: GLASS_BORDER,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
   input: { flex: 1, color: TEXT, fontSize: 15 },
 
-  sectionTitle: { color: SUB, fontSize: 12, marginTop: 10, marginBottom: 6 },
+  /* Section + Row (glass por defecto) */
+  sectionTitle: { color: SUB, fontSize: 12, letterSpacing: 0.3, marginTop: 10, marginBottom: 6 },
+
+  rowGlass: {
+    backgroundColor: GLASS_BG,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: GLASS_BORDER,
+    borderRadius: 18,
+    padding: 14,
+  },
 
   avatar: {
     width: 34, height: 34, borderRadius: 10,

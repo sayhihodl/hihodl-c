@@ -4,37 +4,37 @@ import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
+
 import { useContacts } from "@/store/useContacts";
 import { parseSolanaPayUrl, isBase58Sol } from "@/lib/solanaPay";
 
 type Account = "Daily" | "Savings" | "Social";
 
-export default function SendScanner() {
+export default function Scanner() {
   const { tokenId, account } = useLocalSearchParams<{ tokenId?: string; account?: Account }>();
   const token = tokenId ?? "USDC.circle";
   const acc: Account = (account as Account) ?? "Daily";
 
   const upsert = useContacts((s) => s.upsert);
 
+  // componente del escáner cargado dinámicamente
+  const [ScannerView, setScannerView] = useState<React.ComponentType<any> | null>(null);
   const [hasPerm, setHasPerm] = useState<"unknown" | "granted" | "denied">("unknown");
-  const [BarCodeScanner, setBarCodeScanner] = useState<any>(null);
   const locked = useRef(false);
 
   useEffect(() => {
-    // En web no hay cámara
     if (Platform.OS === "web") {
       setHasPerm("denied");
       return;
     }
     (async () => {
       try {
-        // 👇 import dinámico: evita cargar el nativo si tu binario no lo tiene
         const mod = await import("expo-barcode-scanner");
-        setBarCodeScanner(() => mod.BarCodeScanner);
+        setScannerView(() => mod.BarCodeScanner);
         const { status } = await mod.requestPermissionsAsync();
         setHasPerm(status === "granted" ? "granted" : "denied");
-      } catch {
-        // Si el binario no incluye el módulo nativo, caemos aquí
+      } catch (e) {
+        console.warn("expo-barcode-scanner not available in this build", e);
         setHasPerm("denied");
       }
     })();
@@ -57,7 +57,6 @@ export default function SendScanner() {
       try {
         const raw = (data || "").trim();
 
-        // Solana Pay (directo/gateway/https)
         const sp = parseSolanaPayUrl(raw);
         if (sp) {
           const uccId = upsert({
@@ -71,7 +70,6 @@ export default function SendScanner() {
           return;
         }
 
-        // Dirección SOL cruda
         if (isBase58Sol(raw)) {
           const uccId = upsert({
             displayName: raw.slice(0, 6) + "…",
@@ -84,7 +82,6 @@ export default function SendScanner() {
           return;
         }
 
-        // No reconocido
         router.back();
       } finally {
         setTimeout(() => (locked.current = false), 600);
@@ -94,12 +91,14 @@ export default function SendScanner() {
   );
 
   // Fallbacks (web / sin permisos / sin nativo)
-  if (!BarCodeScanner || hasPerm !== "granted") {
+  if (!ScannerView || hasPerm !== "granted") {
     return (
       <SafeAreaView style={styles.container}>
         <Text style={styles.text}>
           {Platform.OS === "web"
             ? "QR scanning is not available on web."
+            : hasPerm === "unknown"
+            ? "Requesting camera permission…"
             : "Camera not available. Check permissions or rebuild the app with expo-barcode-scanner."}
         </Text>
         <Pressable onPress={() => router.back()} style={styles.btn}>
@@ -111,7 +110,7 @@ export default function SendScanner() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <BarCodeScanner onBarCodeScanned={handleScan} style={{ flex: 1, width: "100%" }} />
+      <ScannerView onBarCodeScanned={handleScan} style={{ flex: 1, width: "100%" }} />
       <View style={styles.overlay}>
         <Pressable onPress={() => router.back()} style={styles.fab}>
           <Ionicons name="close" size={22} color="#fff" />

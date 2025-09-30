@@ -59,7 +59,7 @@ export default function TokenPicker() {
     );
   }, [query]);
 
-  // ir al selector de destinatario
+  // ir al selector de destinatario (antes se llamaba goAmount)
   const goRecipient = (tokenId: string) => {
     router.push({
       pathname: "/(drawer)/(tabs)/send/search",
@@ -97,16 +97,13 @@ export default function TokenPicker() {
         centerSlot={
           <>
             <View style={styles.topRow}>
-              <Pressable onPress={goBackSafe} hitSlop={10} style={styles.leftBtn}>
+              <Pressable onPress={goBackSafe} hitSlop={10} style={styles.headerIconBtnBare}>
                 <Ionicons name="close" size={22} color={TEXT} />
               </Pressable>
 
-              <View style={styles.titleWrap}>
-                <Text style={styles.title} numberOfLines={1}>Send</Text>
-              </View>
+              <Text style={styles.title} numberOfLines={1}>Send</Text>
 
-              {/* reserva simétrica para la derecha */}
-              <View style={styles.rightSpacer} />
+              <View style={styles.rightBtns} />
             </View>
 
             <View
@@ -177,43 +174,19 @@ export default function TokenPicker() {
 
 /* ============== styles ============== */
 const styles = StyleSheet.create({
-  // Header row centrada con laterales absolutos
   topRow: {
     height: 44,
-    position: "relative",
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     width: "100%",
   },
-  leftBtn: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
-    position: "absolute",
-    left: 0,
+  rightBtns: { flexDirection: "row", alignItems: "center", gap: 8 },
+  headerIconBtnBare: {
+    width: 36, height: 36, alignItems: "center", justifyContent: "center", backgroundColor: "transparent",
   },
-  rightSpacer: {
-    width: 36,
-    height: 36,
-    position: "absolute",
-    right: 0,
-  },
-  titleWrap: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-    pointerEvents: "none",
-  },
-  title: {
-    color: TEXT,
-    fontSize: 18,
-    fontWeight: "800",
-    textAlign: "center",
-  },
+  title: { color: TEXT, fontSize: 18, fontWeight: "800", textAlign: "center" },
 
-  // Search
   searchInHeader: {
     borderRadius: 14,
     paddingHorizontal: 12,
@@ -226,7 +199,6 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, color: TEXT, fontSize: 15 },
 
-  // Lista
   row: {
     backgroundColor: "rgba(3, 12, 16, 0.35)",
     borderWidth: StyleSheet.hairlineWidth,

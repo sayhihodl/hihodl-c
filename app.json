@@ -12,14 +12,16 @@
     },
     "ios": {
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Usamos Face ID/Touch ID para proteger tu cuenta."
+        "NSFaceIDUsageDescription": "Usamos Face ID/Touch ID para proteger tu cuenta.",
+        "NSCameraUsageDescription": "Usamos la cámara para escanear códigos QR de pago."
       }
     },
     "plugins": [
       "expo-font",
       "expo-secure-store",
       "expo-local-authentication",
-      "expo-router"
+      "expo-router",
+      "expo-barcode-scanner"
     ],
     "extra": {
       "EXPO_PUBLIC_FIREBASE_API_KEY": "...",
