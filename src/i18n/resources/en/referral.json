@@ -1,0 +1,40 @@
+{
+  "endsSoon": "Ends soon",
+  "heroTitle": "Earn {{amount}} per friend",
+  "lead": "Your friends have 7 days to",
+  "steps": [
+    { "title": "Sign up with your link", "sub": "And verify their identity" },
+    { "title": "Add money to their account", "sub": "Via debit card or bank transfer" },
+    { "title": "Make 3 purchases of $10+ each", "sub": "‘Cash-like’ transactions don’t count" },
+    { "title": "Order a physical card", "sub": "Add to Apple/Google Pay and go contactless" }
+  ],
+
+  "pastInvites": {
+    "title": "Past invites",
+    "empty": "No invites yet"
+  },
+
+  "status": {
+    "unlocked": "Reward unlocked",
+    "expired": "Offer ended",
+    "steps": "{{done}}/4 steps"
+  },
+
+  "promoNote": {
+    "text": "The promo is time-limited.",
+    "link": "T&Cs",
+    "tail": "apply"
+  },
+
+  "ctaInvite": "Invite friends",
+  "tcsTitle": "Conditions",
+  "tcsBody": "Each friend has 7 days from signup to complete all steps. When it ends we'll send you a push notification. It doesn't reset.",
+  "close": "Close",
+
+  "shareMessage": "Join HiHODL with my link and earn rewards: {{link}}",
+
+  "a11y": {
+    "back": "Go back",
+    "openInvite": "Open invite"
+  }
+}

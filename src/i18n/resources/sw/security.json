@@ -1,0 +1,17 @@
+{
+  "title": "Usalama",
+  "appLock": "Kufunga programu",
+  "passcode": "Nambari ya siri",
+  "enabled": "Imewezeshwa",
+  "disabled": "Imezimwa",
+  "biometrics": "Uso/Kidole cha ID",
+  "autoLock": "Kufunga kiotomatiki",
+  "sessions": "Vikao",
+  "activeSessions": "Vikao vinavyoendelea",
+  "viewDevices": "Tazama vifaa",
+  "signOutAll": "Toka kwenye vifaa vyote",
+  "confirmSignOutAll": "Hii itafuta vikao vyote vilivyopo.",
+  "recovery": "Urejeshaji",
+  "recoveryPhrase": "Maneno ya urejeshaji",
+  "backedUpVerify": "Imehifadhiwa • Hakikisha"
+}

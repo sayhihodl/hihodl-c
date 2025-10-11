@@ -1,0 +1,36 @@
+{
+  "title": "Swap",
+  "youPay": "Anda bayar",
+  "youReceive": "Anda terima",
+  "trending": "Tren",
+  "cta": { "swap": "Swap" },
+
+  "accounts": { "daily": "Harian", "savings": "Tabungan", "social": "Sosial" },
+
+  "filters": {
+    "rankBy": { "rank": "Peringkat", "volume": "Volume", "price": "Harga", "priceChange": "Perubahan Harga", "marketCap": "Kap. Pasar" },
+    "network": { "all": "Semua", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1 j", "24h": "24 j", "7d": "7 h", "30d": "30 h" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "Pengaturan swap",
+    "slippage": { "title": "Slippage", "auto": "Otomatis", "help": "Disarankan: 0,5–1% untuk pasangan besar; 2–3% untuk yang volatil." },
+    "priority": { "title": "Biaya Prioritas", "auto": "Otomatis", "help": "Prioritas lebih tinggi mempercepat konfirmasi saat padat." },
+    "tip": { "title": "Tip", "auto": "Otomatis (0,05%)", "help": "Tip kecil mendukung relayer/routing likuiditas." }
+  },
+
+  "a11y": {
+    "openSettings": "Buka pengaturan swap",
+    "selectPayToken": "Pilih token bayar",
+    "selectReceiveToken": "Pilih token terima",
+    "flip": "Tukar posisi token"
+  },
+
+  "mock": {
+    "title": "Swap (mock)",
+    "body": "Akun: {{acct}}\\nBayar: {{amount}} {{pay}}\\nTerima: {{receive}}\\nSlippage: {{slip}}\\nBiaya Prioritas: {{prio}}\\nTip: {{tip}}"
+  }
+}

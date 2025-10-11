@@ -1,0 +1,8 @@
+{
+  "language": "言語",
+  "actions": { "save": "保存", "cancel": "キャンセル", "continue": "続行" },
+  "tabs": { "home": "ホーム", "referral": "招待", "swap": "スワップ", "payments": "支払い", "discover": "発見" },
+  "status": { "connected": "接続済み", "notConnected": "未接続", "comingSoon": "近日公開", "disabledMVP": "MVPで無効" },
+  "cards": { "open": "カードを開く" },
+  "cta": { "manageCards": "ダッシュボードでカードを管理" }
+}

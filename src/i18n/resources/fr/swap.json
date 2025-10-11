@@ -1,0 +1,36 @@
+{
+  "title": "Échange",
+  "youPay": "Vous payez",
+  "youReceive": "Vous recevez",
+  "trending": "Tendance",
+  "cta": { "swap": "Échanger" },
+
+  "accounts": { "daily": "Courant", "savings": "Épargne", "social": "Social" },
+
+  "filters": {
+    "rankBy": { "rank": "Rang", "volume": "Volume", "price": "Prix", "priceChange": "Variation", "marketCap": "Capitalisation" },
+    "network": { "all": "Tous", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1 h", "24h": "24 h", "7d": "7 j", "30d": "30 j" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "Paramètres d’échange",
+    "slippage": { "title": "Slippage", "auto": "Auto", "help": "Recommandé : 0,5–1 % pour les majeures, 2–3 % pour les paires volatiles." },
+    "priority": { "title": "Frais prioritaires", "auto": "Auto", "help": "Plus de priorité accélère la confirmation en cas de congestion." },
+    "tip": { "title": "Pourboire", "auto": "Auto (0,05 %)", "help": "Un petit pourboire aide le routage/liquidity relayer." }
+  },
+
+  "a11y": {
+    "openSettings": "Ouvrir les paramètres d’échange",
+    "selectPayToken": "Choisir le jeton de paiement",
+    "selectReceiveToken": "Choisir le jeton reçu",
+    "flip": "Inverser les jetons"
+  },
+
+  "mock": {
+    "title": "Échange (démo)",
+    "body": "Compte : {{acct}}\\nPayer : {{amount}} {{pay}}\\nRecevoir : {{receive}}\\nSlippage : {{slip}}\\nFrais prioritaires : {{prio}}\\nPourboire : {{tip}}"
+  }
+}

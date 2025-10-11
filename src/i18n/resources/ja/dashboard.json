@@ -1,0 +1,61 @@
+{
+  "title": "ダッシュボード",
+
+  "accounts": {
+    "daily": "デイリー",
+    "savings": "貯蓄",
+    "social": "ソーシャル"
+  },
+
+  "actions": {
+    "receive": "受け取る",
+    "send": "送る",
+    "swap": "スワップ",
+    "cards": "カード"
+  },
+
+  "assets": {
+    "viewAll": "すべて表示",
+    "addToken": "トークンを追加",
+    "searchTokensPh": "トークンを検索 (ETH, SOL, USDC...)",
+    "recommendedNetwork": "推奨ネットワーク",
+    "tapToAdd": "タップして追加"
+  },
+
+  "dates": {
+    "today": "今日",
+    "yesterday": "昨日"
+  },
+
+  "payments": {
+    "recentActivity": "最近のアクティビティ",
+    "viewAll": "すべて表示"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "友達を招待して60€を獲得",
+      "body": "9月9日までに招待した友達ごとに60€を獲得できます。",
+      "legal": "利用規約が適用されます"
+    },
+    "keys": {
+      "title": "秘密鍵を安全に保管してください",
+      "body": "絶対に共有しないでください。私たちが尋ねることはありません。"
+    },
+    "notYourKeys": {
+      "title": "覚えておいてください：あなたの鍵でなければ、それはあなたのお金ではありません",
+      "body": "HIHODLで常に安全に。"
+    }
+  },
+
+  "a11y": {
+    "openMenu": "メニューを開く",
+    "openScanner": "スキャナーを開く",
+    "openCards": "カードを開く",
+    "toggleFiat": "タップして通貨を変更；長押しで少額残高を表示",
+    "openAsset": "{{name}} を開く",
+    "openTx": "トランザクション {{title}} を開く"
+  },
+
+  "dismiss": "閉じる"
+}

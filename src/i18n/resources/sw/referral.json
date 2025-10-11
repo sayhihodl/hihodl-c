@@ -1,0 +1,18 @@
+{
+  "endsSoon": "Inaisha hivi karibuni",
+  "heroTitle": "Pata {{amount}} kwa kila rafiki",
+  "lead": "Marafiki wako wana siku 7 kukamilisha",
+  "steps": [
+    { "title": "Jisajili kwa kutumia kiungo chako", "sub": "Na kuthibitisha utambulisho wao" },
+    { "title": "Ongeza pesa kwenye akaunti", "sub": "Kwa kadi au uhamisho wa benki" },
+    { "title": "Fanya manunuzi 3 ya $10+ kila moja", "sub": "Muamala wa aina ya ‘cash-like’ hauhesabiwi" },
+    { "title": "Agiza kadi ya plastiki", "sub": "Ongeza kwenye Apple/Google Pay na ulipe bila mguso" }
+  ],
+  "pastInvites": "Mialiko ya awali",
+  "promoNote": { "text": "Promosheni ni ya muda mfupi.", "link": "Masharti", "tail": "yanatumika" },
+  "ctaInvite": "Alika marafiki",
+  "tcsTitle": "Masharti",
+  "tcsBody": "Kila rafiki ana siku 7 tangu kujisajili kukamilisha hatua zote. Ikimalizika tutakutumia arifa. Hairekebishwi upya.",
+  "close": "Funga",
+  "shareMessage": "Jiunge na HiHODL kupitia kiungo changu upate zawadi: {{link}}"
+}

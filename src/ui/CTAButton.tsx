@@ -1,4 +1,3 @@
-// ui/CTAButton.tsx
 import React from "react";
 import {
   TouchableOpacity,
@@ -9,14 +8,14 @@ import {
   Platform,
 } from "react-native";
 import { BlurView } from "expo-blur";
-import { LinearGradient as ExpoLinearGradient } from "expo-linear-gradient"; // ✅ sin namespace
+import { LinearGradient as ExpoLinearGradient } from "expo-linear-gradient";
 import colors, { legacy as legacyColors } from "@/theme/colors";
 
 export type CTAButtonProps = {
   title: string;
   onPress: () => void;
   disabled?: boolean;
-  color?: string; // Solo para primary sin blur
+  color?: string;            // Solo para primary sin blur/solid
   style?: ViewStyle;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
@@ -24,6 +23,10 @@ export type CTAButtonProps = {
   tone?: "dark" | "light";
   backdrop?: "none" | "blur" | "solid";
   fullWidth?: boolean;
+  /** 👉 fuerza color del texto (por ej. "#fff") */
+  labelColor?: string;
+  /** 👉 tamaño visual del botón */
+  size?: "md" | "lg"; // NEW
 };
 
 export function CTAButton({
@@ -38,6 +41,8 @@ export function CTAButton({
   tone = "dark",
   backdrop = "none",
   fullWidth = true,
+  labelColor,
+  size = "lg", // NEW (por defecto igual que antes)
 }: CTAButtonProps) {
   const BRAND = colors.cta ?? legacyColors.CTA ?? "#FFB703";
   const BRAND_TEXT = colors.ctaTextOn ?? legacyColors.CTA_ON ?? "#0B0B0F";
@@ -53,7 +58,6 @@ export function CTAButton({
   const BRAND_OVERLAY = "rgba(255,191,0,0.48)";
   const BRAND_HAIRLINE = "rgba(255,191,0,0.55)";
 
-  // ✅ readonly tuple -> encaja con el tipo del prop `colors`
   const HIGHLIGHT_TOP = [
     "rgba(255,255,255,0.28)",
     "rgba(255,255,255,0.06)",
@@ -66,7 +70,7 @@ export function CTAButton({
   const isLight = isSecondary && tone === "light";
   const useBlur = backdrop === "blur";
 
-  const fg = isSecondary ? (isLight ? "#0E2330" : "#FFFFFF") : BRAND_TEXT;
+  const fg = labelColor ?? (isSecondary ? (isLight ? "#0E2330" : "#FFFFFF") : BRAND_TEXT);
 
   const borderColor = isSecondary
     ? (isLight ? GLASS_LIGHT_BORDER : GLASS_DARK_BORDER)
@@ -82,6 +86,11 @@ export function CTAButton({
     ? (isLight ? SOLID_LIGHT_BG : SOLID_DARK_BG)
     : (color ?? BRAND);
 
+  const sizeStyle =
+    size === "md"
+      ? { height: 44, borderRadius: 12 }
+      : { height: 56, borderRadius: 18 };
+
   return (
     <TouchableOpacity
       activeOpacity={0.85}
@@ -89,6 +98,7 @@ export function CTAButton({
       disabled={disabled}
       style={[
         styles.btn,
+        sizeStyle, // NEW
         fullWidth && { alignSelf: "stretch" },
         useBlur
           ? { backgroundColor: "transparent", overflow: "hidden" }
@@ -102,7 +112,7 @@ export function CTAButton({
           elevation: 6,
         },
         disabled && { opacity: 0.5 },
-        style,
+        style, // 👈 tu style al final para poder forzar opacity, etc.
       ]}
     >
       {useBlur && (
@@ -123,7 +133,6 @@ export function CTAButton({
               },
             ]}
           />
-          {/* ✅ usa el componente importado con alias + tuple readonly */}
           <ExpoLinearGradient
             colors={HIGHLIGHT_TOP}
             start={{ x: 0.5, y: 0 }}
@@ -144,8 +153,7 @@ export function CTAButton({
 
 const styles = StyleSheet.create({
   btn: {
-    height: 56,
-    borderRadius: 18,
+    // height y radius se controlan con 'size'
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,

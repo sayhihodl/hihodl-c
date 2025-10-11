@@ -1,0 +1,36 @@
+{
+  "title": "Badilishana",
+  "youPay": "Unalipa",
+  "youReceive": "Unapokea",
+  "trending": "Zinazoendelea",
+  "cta": { "swap": "Badilisha" },
+
+  "accounts": { "daily": "Ya kila siku", "savings": "Akiba", "social": "Kijamii" },
+
+  "filters": {
+    "rankBy": { "rank": "Nafasi", "volume": "Kiasi", "price": "Bei", "priceChange": "Mabadiliko ya bei", "marketCap": "Thamani ya soko" },
+    "network": { "all": "Zote", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1 saa", "24h": "24 saa", "7d": "7 siku", "30d": "30 siku" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "Mipangilio ya kubadilisha",
+    "slippage": { "title": "Slippage", "auto": "Oto", "help": "Inapendekezwa: 0.5–1% kwa jozi kubwa; 2–3% kwa zenye kuyumba." },
+    "priority": { "title": "Ada ya kipaumbele", "auto": "Oto", "help": "Kipaumbele cha juu huongeza kasi ya kuthibitisha wakati wa msongamano." },
+    "tip": { "title": "Bakshishi", "auto": "Oto (0.05%)", "help": "Bakshishi ndogo husaidia uelekezaji/relayer." }
+  },
+
+  "a11y": {
+    "openSettings": "Fungua mipangilio ya kubadilisha",
+    "selectPayToken": "Chagua tokeni ya kulipa",
+    "selectReceiveToken": "Chagua tokeni ya kupokea",
+    "flip": "Geuza tokeni"
+  },
+
+  "mock": {
+    "title": "Badilishana (mfano)",
+    "body": "Akaunti: {{acct}}\\nLipa: {{amount}} {{pay}}\\nPokea: {{receive}}\\nSlippage: {{slip}}\\nAda ya kipaumbele: {{prio}}\\nBakshishi: {{tip}}"
+  }
+}

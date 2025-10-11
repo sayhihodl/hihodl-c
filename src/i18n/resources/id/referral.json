@@ -1,0 +1,18 @@
+{
+  "endsSoon": "Segera berakhir",
+  "heroTitle": "Dapatkan {{amount}} per teman",
+  "lead": "Temanmu punya 7 hari untuk",
+  "steps": [
+    { "title": "Daftar dengan tautanmu", "sub": "Dan verifikasi identitas" },
+    { "title": "Tambahkan dana ke akun", "sub": "Lewat kartu debit atau transfer bank" },
+    { "title": "Lakukan 3 transaksi $10+ tiapnya", "sub": "Transaksi mirip tunai tidak dihitung" },
+    { "title": "Pesan kartu fisik", "sub": "Tambahkan ke Apple/Google Pay dan bayar nirsentuh" }
+  ],
+  "pastInvites": "Undangan sebelumnya",
+  "promoNote": { "text": "Promo berlaku terbatas.", "link": "S&K", "tail": "berlaku" },
+  "ctaInvite": "Undang teman",
+  "tcsTitle": "Ketentuan",
+  "tcsBody": "Setiap teman punya 7 hari sejak mendaftar untuk menyelesaikan langkah-langkahnya. Saat berakhir kami kirim notifikasi. Tidak direset.",
+  "close": "Tutup",
+  "shareMessage": "Gabung HiHODL lewat tautanku dan dapatkan hadiah: {{link}}"
+}

@@ -1,0 +1,10 @@
+{
+  "title": "Pembayaran",
+  "searchPh": "Cari",
+  "noPayments": "Tidak ada pembayaran",
+  "filters": {
+    "accountFilter": "Filter akun",
+    "selectAll": "Pilih semua",
+    "apply": "Terapkan"
+  }
+}

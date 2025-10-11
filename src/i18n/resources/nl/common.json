@@ -1,0 +1,8 @@
+{
+  "language": "Taal",
+  "actions": { "save": "Opslaan", "cancel": "Annuleren", "continue": "Doorgaan" },
+  "tabs": { "home": "Start", "referral": "Uitnodigen", "swap": "Wisselen", "payments": "Betalingen", "discover": "Ontdekken" },
+  "status": { "connected": "Verbonden", "notConnected": "Niet verbonden", "comingSoon": "Binnenkort", "disabledMVP": "Uitgeschakeld in MVP" },
+  "cards": { "open": "Kaarten openen" },
+  "cta": { "manageCards": "Kaarten beheren in Dashboard" }
+}

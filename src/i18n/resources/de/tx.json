@@ -1,0 +1,27 @@
+{
+  "received": "Erhalten",
+  "sent": "Gesendet",
+  "refunded": "Rückerstattet",
+  "date": "Datum",
+  "status": "Status",
+  "from": "Von",
+  "to": "An",
+  "network": "Netzwerk",
+  "transaction": "Transaktion",
+  "amount": "Betrag",
+  "fiat": "Fiat",
+  "networkFee": "Netzwerkgebühr",
+  "status_succeeded": "Erfolgreich",
+  "status_failed": "Fehlgeschlagen",
+  "status_pending": "Ausstehend",
+  "action_receive": "Empfangen",
+  "action_send": "Senden",
+  "action_swap": "Tauschen",
+  "viewOnExplorer": "Auf {{brand}} ansehen",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

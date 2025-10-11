@@ -1,0 +1,36 @@
+{
+  "title": "Swap",
+  "youPay": "Você paga",
+  "youReceive": "Você recebe",
+  "trending": "Em alta",
+  "cta": { "swap": "Fazer swap" },
+
+  "accounts": { "daily": "Diária", "savings": "Poupança", "social": "Social" },
+
+  "filters": {
+    "rankBy": { "rank": "Ranking", "volume": "Volume", "price": "Preço", "priceChange": "Variação", "marketCap": "Valor de mercado" },
+    "network": { "all": "Todas", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1 h", "24h": "24 h", "7d": "7 d", "30d": "30 d" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "Configurações de swap",
+    "slippage": { "title": "Slippage", "auto": "Auto", "help": "Recomendado: 0,5–1% para pares maiores; 2–3% para pares voláteis." },
+    "priority": { "title": "Taxa prioritária", "auto": "Auto", "help": "Maior prioridade acelera a confirmação durante congestionamento." },
+    "tip": { "title": "Gorjeta", "auto": "Auto (0,05%)", "help": "Pequena gorjeta ajuda o roteamento/relayer." }
+  },
+
+  "a11y": {
+    "openSettings": "Abrir configurações de swap",
+    "selectPayToken": "Selecionar token de pagamento",
+    "selectReceiveToken": "Selecionar token de recebimento",
+    "flip": "Inverter tokens"
+  },
+
+  "mock": {
+    "title": "Swap (simulado)",
+    "body": "Conta: {{acct}}\\nPagar: {{amount}} {{pay}}\\nReceber: {{receive}}\\nSlippage: {{slip}}\\nTaxa prioritária: {{prio}}\\nGorjeta: {{tip}}"
+  }
+}

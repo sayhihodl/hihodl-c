@@ -1,0 +1,27 @@
+{
+  "received": "Alındı",
+  "sent": "Gönderildi",
+  "refunded": "İade edildi",
+  "date": "Tarih",
+  "status": "Durum",
+  "from": "Kimden",
+  "to": "Kime",
+  "network": "Ağ",
+  "transaction": "İşlem",
+  "amount": "Tutar",
+  "fiat": "Fiat",
+  "networkFee": "Ağ ücreti",
+  "status_succeeded": "Başarılı",
+  "status_failed": "Başarısız",
+  "status_pending": "Beklemede",
+  "action_receive": "Al",
+  "action_send": "Gönder",
+  "action_swap": "Değiştir",
+  "viewOnExplorer": "{{brand}} üzerinde görüntüle",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

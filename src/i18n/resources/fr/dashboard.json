@@ -1,0 +1,61 @@
+{
+  "title": "Tableau de bord",
+
+  "accounts": {
+    "daily": "Quotidien",
+    "savings": "Épargne",
+    "social": "Social"
+  },
+
+  "actions": {
+    "receive": "Recevoir",
+    "send": "Envoyer",
+    "swap": "Échanger",
+    "cards": "Cartes"
+  },
+
+  "assets": {
+    "viewAll": "Voir tout",
+    "addToken": "Ajouter un token",
+    "searchTokensPh": "Rechercher des tokens (ETH, SOL, USDC...)",
+    "recommendedNetwork": "Réseau recommandé",
+    "tapToAdd": "Appuyez pour ajouter"
+  },
+
+  "dates": {
+    "today": "Aujourd'hui",
+    "yesterday": "Hier"
+  },
+
+  "payments": {
+    "recentActivity": "Activité récente",
+    "viewAll": "Voir tout"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "Invitez vos amis et gagnez 60 €",
+      "body": "Gagnez 60 € pour chaque ami invité avant le 9 septembre.",
+      "legal": "Conditions générales applicables"
+    },
+    "keys": {
+      "title": "Prenez soin de vos clés privées",
+      "body": "Ne les partagez jamais. Nous ne vous les demanderons jamais."
+    },
+    "notYourKeys": {
+      "title": "Souvenez-vous : pas vos clés, pas votre argent",
+      "body": "Restez toujours en sécurité avec HIHODL."
+    }
+  },
+
+  "a11y": {
+    "openMenu": "Ouvrir le menu",
+    "openScanner": "Ouvrir le scanner",
+    "openCards": "Ouvrir les cartes",
+    "toggleFiat": "Appuyez pour changer la devise ; appui long pour afficher les petits soldes",
+    "openAsset": "Ouvrir {{name}}",
+    "openTx": "Ouvrir la transaction {{title}}"
+  },
+
+  "dismiss": "Fermer"
+}

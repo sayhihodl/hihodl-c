@@ -1,0 +1,61 @@
+{
+  "title": "Übersicht",
+
+  "accounts": {
+    "daily": "Täglich",
+    "savings": "Sparkonto",
+    "social": "Social"
+  },
+
+  "actions": {
+    "receive": "Empfangen",
+    "send": "Senden",
+    "swap": "Tauschen",
+    "cards": "Karten"
+  },
+
+  "assets": {
+    "viewAll": "Alle anzeigen",
+    "addToken": "Token hinzufügen",
+    "searchTokensPh": "Tokens suchen (ETH, SOL, USDC...)",
+    "recommendedNetwork": "Empfohlenes Netzwerk",
+    "tapToAdd": "Zum Hinzufügen tippen"
+  },
+
+  "dates": {
+    "today": "Heute",
+    "yesterday": "Gestern"
+  },
+
+  "payments": {
+    "recentActivity": "Letzte Aktivität",
+    "viewAll": "Alle anzeigen"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "Freunde einladen und 60 € verdienen",
+      "body": "Verdiene 60 € für jeden Freund, den du bis zum 9. September einlädst.",
+      "legal": "Es gelten die AGB"
+    },
+    "keys": {
+      "title": "Achte auf deine privaten Schlüssel",
+      "body": "Teile sie niemals. Wir werden nie danach fragen."
+    },
+    "notYourKeys": {
+      "title": "Denke daran: Nicht deine Schlüssel, nicht dein Geld",
+      "body": "Bleibe sicher mit HIHODL."
+    }
+  },
+
+  "a11y": {
+    "openMenu": "Menü öffnen",
+    "openScanner": "Scanner öffnen",
+    "openCards": "Karten öffnen",
+    "toggleFiat": "Tippe, um die Währung zu wechseln; lange tippen, um kleine Salden anzuzeigen",
+    "openAsset": "{{name}} öffnen",
+    "openTx": "Transaktion {{title}} öffnen"
+  },
+
+  "dismiss": "Schließen"
+}

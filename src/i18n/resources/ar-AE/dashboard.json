@@ -1,0 +1,61 @@
+{
+  "title": "نظرة عامة",
+
+  "accounts": {
+    "daily": "اليومي",
+    "savings": "الادخار",
+    "social": "الاجتماعي"
+  },
+
+  "actions": {
+    "receive": "استلام",
+    "send": "إرسال",
+    "swap": "مبادلة",
+    "cards": "البطاقات"
+  },
+
+  "assets": {
+    "viewAll": "عرض الكل",
+    "addToken": "إضافة رمز",
+    "searchTokensPh": "ابحث عن الرموز (ETH, SOL, USDC...)",
+    "recommendedNetwork": "الشبكة الموصى بها",
+    "tapToAdd": "اضغط للإضافة"
+  },
+
+  "dates": {
+    "today": "اليوم",
+    "yesterday": "أمس"
+  },
+
+  "payments": {
+    "recentActivity": "النشاط الأخير",
+    "viewAll": "عرض الكل"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "ادعُ أصدقاءك واربح 60 يورو",
+      "body": "اربح 60€ عن كل صديق تدعوه قبل 9 سبتمبر.",
+      "legal": "تُطبق الشروط والأحكام"
+    },
+    "keys": {
+      "title": "احمِ مفاتيحك الخاصة",
+      "body": "لا تُشاركها أبدًا. ولن نطلبها منك."
+    },
+    "notYourKeys": {
+      "title": "تذكّر: ليست مفاتيحك، ليست أموالك",
+      "body": "ابقَ آمنًا مع HIHODL."
+    }
+  },
+
+  "a11y": {
+    "openMenu": "فتح القائمة",
+    "openScanner": "فتح الماسح",
+    "openCards": "فتح البطاقات",
+    "toggleFiat": "اضغط لتغيير العملة؛ اضغط مطولًا لإظهار الأرصدة الصغيرة",
+    "openAsset": "فتح {{name}}",
+    "openTx": "فتح المعاملة {{title}}"
+  },
+
+  "dismiss": "إغلاق"
+}

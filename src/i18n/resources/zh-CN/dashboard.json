@@ -1,0 +1,61 @@
+{
+  "title": "仪表板",
+
+  "accounts": {
+    "daily": "日常账户",
+    "savings": "储蓄账户",
+    "social": "社交账户"
+  },
+
+  "actions": {
+    "receive": "接收",
+    "send": "发送",
+    "swap": "兑换",
+    "cards": "卡片"
+  },
+
+  "assets": {
+    "viewAll": "查看全部",
+    "addToken": "添加代币",
+    "searchTokensPh": "搜索代币 (ETH, SOL, USDC...)",
+    "recommendedNetwork": "推荐网络",
+    "tapToAdd": "点击添加"
+  },
+
+  "dates": {
+    "today": "今天",
+    "yesterday": "昨天"
+  },
+
+  "payments": {
+    "recentActivity": "最近活动",
+    "viewAll": "查看全部"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "邀请好友并赚取60欧元",
+      "body": "在9月9日前每邀请一位好友可赚取60欧元。",
+      "legal": "适用条款与条件"
+    },
+    "keys": {
+      "title": "妥善保管您的私钥",
+      "body": "切勿分享。我们绝不会索要您的密钥。"
+    },
+    "notYourKeys": {
+      "title": "请记住：如果密钥不是您的，资金也不是您的",
+      "body": "使用 HIHODL 保持安全。"
+    }
+  },
+
+  "a11y": {
+    "openMenu": "打开菜单",
+    "openScanner": "打开扫描器",
+    "openCards": "打开卡片",
+    "toggleFiat": "点击切换货币；长按显示小额余额",
+    "openAsset": "打开 {{name}}",
+    "openTx": "打开交易 {{title}}"
+  },
+
+  "dismiss": "关闭"
+}

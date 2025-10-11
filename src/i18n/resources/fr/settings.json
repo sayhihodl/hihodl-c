@@ -1,0 +1,20 @@
+{
+  "title": "Paramètres",
+  "appearance": "Apparence",
+  "colors": "Couleurs & dégradés",
+  "currency": "Devise",
+  "notifications": "Notifications",
+  "activity": "Activité",
+  "markets": "Marchés",
+  "other": "Autres",
+  "push": "Notifications push",
+  "email": "Notifications par e-mail",
+  "incoming": "Transferts entrants",
+  "outgoing": "Transferts sortants",
+  "securityAlerts": "Alertes de sécurité",
+  "dailyPrice": "Changements de prix quotidiens",
+  "priceAlerts": "Alertes de prix personnalisées",
+  "weekly": "Résumé hebdomadaire",
+  "marketing": "Mises à jour & offres",
+  "language": "Langue"
+}

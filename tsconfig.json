@@ -9,16 +9,17 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@assets/*": ["assets/*"]
+      "@assets/*": ["assets/*"],
+      "@app/*": ["app/*"]  
     },
 
     "moduleResolution": "bundler",
-    "types": [],
+    "types": ["react", "react-native"],
 
     "allowJs": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true
   },
-  "include": ["app", "src", "index.ts", "index.tsx"]
+  "include": ["app", "src", "index.ts", "index.tsx", "src/types/svg.d.ts"]
 }

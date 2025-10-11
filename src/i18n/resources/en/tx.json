@@ -1,0 +1,27 @@
+{
+  "received": "Received",
+  "sent": "Sent",
+  "refunded": "Refunded",
+  "date": "Date",
+  "status": "Status",
+  "from": "From",
+  "to": "To",
+  "network": "Network",
+  "transaction": "Transaction",
+  "amount": "Amount",
+  "fiat": "Fiat",
+  "networkFee": "Network fee",
+  "status_succeeded": "Succeeded",
+  "status_failed": "Failed",
+  "status_pending": "Pending",
+  "action_receive": "Receive",
+  "action_send": "Send",
+  "action_swap": "Swap",
+  "viewOnExplorer": "View on {{brand}}",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

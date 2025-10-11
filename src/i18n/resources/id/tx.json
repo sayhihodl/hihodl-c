@@ -1,0 +1,27 @@
+{
+  "received": "Diterima",
+  "sent": "Dikirim",
+  "refunded": "Dikembalikan",
+  "date": "Tanggal",
+  "status": "Status",
+  "from": "Dari",
+  "to": "Ke",
+  "network": "Jaringan",
+  "transaction": "Transaksi",
+  "amount": "Jumlah",
+  "fiat": "Fiat",
+  "networkFee": "Biaya jaringan",
+  "status_succeeded": "Berhasil",
+  "status_failed": "Gagal",
+  "status_pending": "Menunggu",
+  "action_receive": "Terima",
+  "action_send": "Kirim",
+  "action_swap": "Tukar",
+  "viewOnExplorer": "Lihat di {{brand}}",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

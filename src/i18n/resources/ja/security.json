@@ -1,0 +1,17 @@
+{
+  "title": "Security",
+  "appLock": "App lock",
+  "passcode": "Passcode",
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  "biometrics": "Face/Touch ID",
+  "autoLock": "Auto-lock",
+  "sessions": "Sessions",
+  "activeSessions": "Active sessions",
+  "viewDevices": "View devices",
+  "signOutAll": "Sign out from all devices",
+  "confirmSignOutAll": "This will revoke all sessions.",
+  "recovery": "Recovery",
+  "recoveryPhrase": "Recovery phrase",
+  "backedUpVerify": "Backed up • Verify"
+}

@@ -1,0 +1,36 @@
+{
+  "title": "स्वैप",
+  "youPay": "आप भुगतान करेंगे",
+  "youReceive": "आपको मिलेगा",
+  "trending": "ट्रेंडिंग",
+  "cta": { "swap": "स्वैप करें" },
+
+  "accounts": { "daily": "डेली", "savings": "सेविंग्स", "social": "सोशल" },
+
+  "filters": {
+    "rankBy": { "rank": "रैंक", "volume": "वॉल्यूम", "price": "कीमत", "priceChange": "कीमत बदलाव", "marketCap": "मार्केट कैप" },
+    "network": { "all": "सभी", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1घं", "24h": "24घं", "7d": "7दि", "30d": "30दि" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "स्वैप सेटिंग्स",
+    "slippage": { "title": "स्लिपेज", "auto": "ऑटो", "help": "सुझाव: मेजर पेयर्स के लिए 0.5–1%, वोलाटाइल पेयर्स के लिए 2–3%." },
+    "priority": { "title": "प्रायोरिटी फीस", "auto": "ऑटो", "help": "उच्च प्राथमिकता भीड़ में पुष्टि को तेज करती है।" },
+    "tip": { "title": "टिप", "auto": "ऑटो (0.05%)", "help": "छोटी टिप रिलेयर/रूटिंग में मदद करती है।" }
+  },
+
+  "a11y": {
+    "openSettings": "स्वैप सेटिंग्स खोलें",
+    "selectPayToken": "पेमेंट टोकन चुनें",
+    "selectReceiveToken": "रिसीव टोकन चुनें",
+    "flip": "टोकन पलटें"
+  },
+
+  "mock": {
+    "title": "स्वैप (मॉक)",
+    "body": "अकाउंट: {{acct}}\\nपे: {{amount}} {{pay}}\\nरिसीव: {{receive}}\\nस्लिपेज: {{slip}}\\nप्रायोरिटी फीस: {{prio}}\\nटिप: {{tip}}"
+  }
+}

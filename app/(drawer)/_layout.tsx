@@ -1,30 +1,32 @@
-import { Drawer } from "expo-router/drawer";
-import { usePathname } from "expo-router";
-import { useWindowDimensions, View } from "react-native";
-import colors from "@/theme/colors";
+// app/(drawer)/_layout.tsx
+import { Stack } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import { SendFlowProvider } from "@/send/SendFlowProvider";
+import SendFlowHost from "@/send/SendFlowHost";
 
 export default function DrawerLayout() {
-  const pathname = usePathname();
-  const { width } = useWindowDimensions();
-  const inToken = pathname?.startsWith("/(drawer)/(tabs)/token/");
-
   return (
-    <View style={{ flex: 1, backgroundColor: colors.navBg }}>
-      <Drawer
+    <SendFlowProvider>
+      <Stack
         screenOptions={{
           headerShown: false,
-          drawerType: "front",
-          overlayColor: "transparent",
-          swipeEnabled: !inToken,
-          swipeEdgeWidth: inToken ? 0 : 30,
-          drawerStyle: {
-            width: Math.min(width * 0.9, 340),
-            backgroundColor: colors.navBg,
-          },
+          gestureEnabled: true,
+          fullScreenGestureEnabled: true,
+          gestureDirection: "horizontal",
+          // amplia el borde izquierdo para el swipe-back (iOS)
+          gestureResponseDistance: { start: 40 },
         }}
       >
-        <Drawer.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Drawer>
-    </View>
+        {/* Pilar con TabBar */}
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        {/* Pilar sin TabBar (cards, receive, send, menu, tokens, account, etc.) */}
+        <Stack.Screen name="(internal)" options={{ headerShown: false }} />
+      </Stack>
+
+      {/* Overlay global sin bloquear el borde */}
+      <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+        <SendFlowHost />
+      </View>
+    </SendFlowProvider>
   );
 }

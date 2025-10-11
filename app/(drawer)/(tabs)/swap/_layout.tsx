@@ -1,50 +1,26 @@
-// app/(tabs)/swap/_layout.tsx
-import React from "react";
-import { Platform } from "react-native";
+// app/(drawer)/(tabs)/swap/_layout.tsx
 import { Stack } from "expo-router";
-import { legacy } from "@/theme/colors";
-
-const { BG } = legacy;
+import { pushOptions, modalOptions } from "@/nav/stackOptions";
 
 export default function SwapLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: BG },
-        gestureEnabled: true,
-        fullScreenGestureEnabled: true,
-        animation: Platform.select({
-          ios: "slide_from_right",
-          android: "fade",
-          default: "fade",
-        }),
-      }}
-    >
+    <Stack screenOptions={pushOptions}>
       {/* Pantalla principal del tab */}
       <Stack.Screen name="index" />
 
       {/* Modales sobre swap */}
       <Stack.Screen
         name="select-token"
-        options={{
-          presentation: "modal",
-          animation: "slide_from_bottom",
-          gestureEnabled: true,
-        }}
+        options={modalOptions}
       />
       <Stack.Screen
         name="settings"
-        options={{
-          presentation: "modal",
-          animation: "slide_from_bottom",
-          gestureEnabled: true,
-        }}
+        options={modalOptions}
       />
 
-      {/* Si más adelante creas app/(tabs)/swap/[id].tsx, entonces añade:
+      {/* Si más adelante creas app/(drawer)/(tabs)/swap/[id].tsx:
           <Stack.Screen name="[id]" />
-       */}
+      */}
     </Stack>
   );
 }

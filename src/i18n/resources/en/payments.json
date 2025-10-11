@@ -1,0 +1,36 @@
+{
+  "searchPh": "Search",
+  "newAction": "New action",
+  "actions": {
+    "send": "Send payment",
+    "request": "Request",
+    "swap": "Swap",
+    "topup": "Top up"
+  },
+
+  
+  "filters": {
+    "accountFilter": "Account filter",
+    "selectAll": "Select all",
+    "clearAll": "Clear all",
+    "apply": "Apply",
+    "accounts": {
+      "daily": "Daily",
+      "savings": "Savings",
+      "social": "Social"
+    }
+  },
+
+  "categories": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "last7d": "Last 7 days",
+    "older": "Older"
+  },
+
+  "a11y": {
+    "openFilters": "Open account filter",
+    "applyFilters": "Apply account filters",
+    "clearFilters": "Clear all filters"
+  }
+}

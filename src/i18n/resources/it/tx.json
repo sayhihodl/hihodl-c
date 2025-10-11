@@ -1,0 +1,27 @@
+{
+  "received": "Ricevuto",
+  "sent": "Inviato",
+  "refunded": "Rimborsato",
+  "date": "Data",
+  "status": "Stato",
+  "from": "Da",
+  "to": "A",
+  "network": "Rete",
+  "transaction": "Transazione",
+  "amount": "Importo",
+  "fiat": "Fiat",
+  "networkFee": "Commissione di rete",
+  "status_succeeded": "Completata",
+  "status_failed": "Fallita",
+  "status_pending": "In sospeso",
+  "action_receive": "Ricevere",
+  "action_send": "Inviare",
+  "action_swap": "Scambiare",
+  "viewOnExplorer": "Vedi su {{brand}}",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "title": "スワップ",
+  "youPay": "支払い",
+  "youReceive": "受け取り",
+  "trending": "トレンド",
+  "cta": { "swap": "スワップする" },
+
+  "accounts": { "daily": "デイリー", "savings": "貯蓄", "social": "ソーシャル" },
+
+  "filters": {
+    "rankBy": { "rank": "順位", "volume": "出来高", "price": "価格", "priceChange": "価格変動", "marketCap": "時価総額" },
+    "network": { "all": "すべて", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1時間", "24h": "24時間", "7d": "7日", "30d": "30日" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "スワップ設定",
+    "slippage": { "title": "スリッページ", "auto": "自動", "help": "推奨：主要ペアは0.5–1%、ボラ高は2–3%。" },
+    "priority": { "title": "優先手数料", "auto": "自動", "help": "混雑時は優先度を上げると承認が早くなります。" },
+    "tip": { "title": "チップ", "auto": "自動 (0.05%)", "help": "小さなチップがリレー/ルーティングを支援します。" }
+  },
+
+  "a11y": {
+    "openSettings": "スワップ設定を開く",
+    "selectPayToken": "支払いトークンを選択",
+    "selectReceiveToken": "受取トークンを選択",
+    "flip": "トークンを入れ替え"
+  },
+
+  "mock": {
+    "title": "スワップ（モック）",
+    "body": "アカウント: {{acct}}\\n支払い: {{amount}} {{pay}}\\n受け取り: {{receive}}\\nスリッページ: {{slip}}\\n優先手数料: {{prio}}\\nチップ: {{tip}}"
+  }
+}

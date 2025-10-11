@@ -1,0 +1,10 @@
+{
+  "title": "Ödemeler",
+  "searchPh": "Ara",
+  "noPayments": "Ödeme yok",
+  "filters": {
+    "accountFilter": "Hesap filtresi",
+    "selectAll": "Tümünü seç",
+    "apply": "Uygula"
+  }
+}

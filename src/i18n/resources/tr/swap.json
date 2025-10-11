@@ -1,0 +1,36 @@
+{
+  "title": "Takas",
+  "youPay": "Ödeyeceğin",
+  "youReceive": "Alacağın",
+  "trending": "Trendler",
+  "cta": { "swap": "Takas yap" },
+
+  "accounts": { "daily": "Günlük", "savings": "Tasarruf", "social": "Sosyal" },
+
+  "filters": {
+    "rankBy": { "rank": "Sıra", "volume": "Hacim", "price": "Fiyat", "priceChange": "Fiyat Değişimi", "marketCap": "Piyasa Değeri" },
+    "network": { "all": "Tümü", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1 sa", "24h": "24 sa", "7d": "7 g", "30d": "30 g" }
+  },
+
+  "metrics": { "mc": "PD", "vol": "Hacim" },
+
+  "settings": {
+    "title": "Takas Ayarları",
+    "slippage": { "title": "Kayma (Slippage)", "auto": "Oto", "help": "Öneri: majörler için %0,5–1; oynak çiftler için %2–3." },
+    "priority": { "title": "Öncelik Ücreti", "auto": "Oto", "help": "Daha yüksek öncelik yoğunlukta onayı hızlandırır." },
+    "tip": { "title": "Bahşiş", "auto": "Oto (%0,05)", "help": "Küçük bahşiş, yönlendirme/relayer’ı destekler." }
+  },
+
+  "a11y": {
+    "openSettings": "Takas ayarlarını aç",
+    "selectPayToken": "Ödenecek token’ı seç",
+    "selectReceiveToken": "Alınacak token’ı seç",
+    "flip": "Token’ları çevir"
+  },
+
+  "mock": {
+    "title": "Takas (örnek)",
+    "body": "Hesap: {{acct}}\\nÖdeme: {{amount}} {{pay}}\\nAlım: {{receive}}\\nKayma: {{slip}}\\nÖncelik Ücreti: {{prio}}\\nBahşiş: {{tip}}"
+  }
+}

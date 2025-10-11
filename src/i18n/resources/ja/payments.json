@@ -1,0 +1,10 @@
+{
+  "title": "支払い",
+  "searchPh": "検索",
+  "noPayments": "支払いはありません",
+  "filters": {
+    "accountFilter": "アカウントのフィルター",
+    "selectAll": "すべて選択",
+    "apply": "適用"
+  }
+}

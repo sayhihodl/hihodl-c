@@ -1,0 +1,36 @@
+{
+  "title": "Hoán đổi",
+  "youPay": "Bạn trả",
+  "youReceive": "Bạn nhận",
+  "trending": "Xu hướng",
+  "cta": { "swap": "Hoán đổi" },
+
+  "accounts": { "daily": "Hằng ngày", "savings": "Tiết kiệm", "social": "Xã hội" },
+
+  "filters": {
+    "rankBy": { "rank": "Xếp hạng", "volume": "Khối lượng", "price": "Giá", "priceChange": "Biến động giá", "marketCap": "Vốn hóa" },
+    "network": { "all": "Tất cả", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1 giờ", "24h": "24 giờ", "7d": "7 ngày", "30d": "30 ngày" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "Cài đặt hoán đổi",
+    "slippage": { "title": "Độ trượt giá", "auto": "Tự động", "help": "Khuyến nghị: 0,5–1% cho cặp lớn; 2–3% cho cặp biến động." },
+    "priority": { "title": "Phí ưu tiên", "auto": "Tự động", "help": "Ưu tiên cao giúp xác nhận nhanh hơn khi mạng tắc nghẽn." },
+    "tip": { "title": "Tiền boa", "auto": "Tự động (0,05%)", "help": "Tiền boa nhỏ hỗ trợ bộ định tuyến/relayer." }
+  },
+
+  "a11y": {
+    "openSettings": "Mở cài đặt hoán đổi",
+    "selectPayToken": "Chọn token trả",
+    "selectReceiveToken": "Chọn token nhận",
+    "flip": "Đảo token"
+  },
+
+  "mock": {
+    "title": "Hoán đổi (giả lập)",
+    "body": "Tài khoản: {{acct}}\\nTrả: {{amount}} {{pay}}\\nNhận: {{receive}}\\nĐộ trượt: {{slip}}\\nPhí ưu tiên: {{prio}}\\nBoa: {{tip}}"
+  }
+}

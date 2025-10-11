@@ -1,0 +1,10 @@
+{
+  "title": "결제",
+  "searchPh": "검색",
+  "noPayments": "결제 내역이 없습니다",
+  "filters": {
+    "accountFilter": "계정 필터",
+    "selectAll": "모두 선택",
+    "apply": "적용"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "received": "ได้รับแล้ว",
+  "sent": "ส่งแล้ว",
+  "refunded": "คืนเงินแล้ว",
+  "date": "วันที่",
+  "status": "สถานะ",
+  "from": "จาก",
+  "to": "ถึง",
+  "network": "เครือข่าย",
+  "transaction": "ธุรกรรม",
+  "amount": "จำนวนเงิน",
+  "fiat": "ฟิอัต",
+  "networkFee": "ค่าธรรมเนียมเครือข่าย",
+  "status_succeeded": "สำเร็จ",
+  "status_failed": "ล้มเหลว",
+  "status_pending": "รอดำเนินการ",
+  "action_receive": "รับ",
+  "action_send": "ส่ง",
+  "action_swap": "สลับ",
+  "viewOnExplorer": "ดูบน {{brand}}",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

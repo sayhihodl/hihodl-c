@@ -1,0 +1,17 @@
+{
+  "title": "Beveiliging",
+  "appLock": "App-vergrendeling",
+  "passcode": "Toegangscode",
+  "enabled": "Ingeschakeld",
+  "disabled": "Uitgeschakeld",
+  "biometrics": "Gezichts-/vingerafdruk-ID",
+  "autoLock": "Automatische vergrendeling",
+  "sessions": "Sessies",
+  "activeSessions": "Actieve sessies",
+  "viewDevices": "Apparaten bekijken",
+  "signOutAll": "Afmelden op alle apparaten",
+  "confirmSignOutAll": "Hiermee worden alle sessies ingetrokken.",
+  "recovery": "Herstel",
+  "recoveryPhrase": "Herstelfrase",
+  "backedUpVerify": "Back-up gemaakt • Verifiëren"
+}

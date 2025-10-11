@@ -1,0 +1,18 @@
+{
+  "endsSoon": "Se termine bientôt",
+  "heroTitle": "Gagnez {{amount}} par ami",
+  "lead": "Vos amis ont 7 jours pour",
+  "steps": [
+    { "title": "S’inscrire avec votre lien", "sub": "Et vérifier leur identité" },
+    { "title": "Ajouter de l’argent sur leur compte", "sub": "Par carte ou virement bancaire" },
+    { "title": "Effectuer 3 achats de 10 $ ou plus", "sub": "Les opérations « cash-like » ne comptent pas" },
+    { "title": "Commander une carte physique", "sub": "L’ajouter à Apple/Google Pay et payer sans contact" }
+  ],
+  "pastInvites": "Invitations passées",
+  "promoNote": { "text": "L’offre est limitée dans le temps.", "link": "C.G.U.", "tail": "applicables" },
+  "ctaInvite": "Inviter des amis",
+  "tcsTitle": "Conditions",
+  "tcsBody": "Chaque ami dispose de 7 jours après l’inscription pour terminer les étapes. À la fin, nous vous enverrons une notification. Pas de réinitialisation.",
+  "close": "Fermer",
+  "shareMessage": "Rejoignez HiHODL avec mon lien et gagnez des récompenses : {{link}}"
+}

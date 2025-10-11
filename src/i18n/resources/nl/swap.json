@@ -1,0 +1,36 @@
+{
+  "title": "Swappen",
+  "youPay": "Je betaalt",
+  "youReceive": "Je ontvangt",
+  "trending": "Trends",
+  "cta": { "swap": "Swappen" },
+
+  "accounts": { "daily": "Dagelijks", "savings": "Sparen", "social": "Sociaal" },
+
+  "filters": {
+    "rankBy": { "rank": "Rang", "volume": "Volume", "price": "Prijs", "priceChange": "Prijsverandering", "marketCap": "Marktkap." },
+    "network": { "all": "Alles", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1 u", "24h": "24 u", "7d": "7 d", "30d": "30 d" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "Swap-instellingen",
+    "slippage": { "title": "Slippage", "auto": "Auto", "help": "Aanbevolen: 0,5–1% voor grote pairs, 2–3% voor volatiele pairs." },
+    "priority": { "title": "Prioriteitskosten", "auto": "Auto", "help": "Hogere prioriteit versnelt bevestiging bij drukte." },
+    "tip": { "title": "Tip", "auto": "Auto (0,05%)", "help": "Kleine tip ondersteunt relayer/liquiditeitsrouting." }
+  },
+
+  "a11y": {
+    "openSettings": "Swap-instellingen openen",
+    "selectPayToken": "Betaaltoken kiezen",
+    "selectReceiveToken": "Ontvangtoken kiezen",
+    "flip": "Tokens omwisselen"
+  },
+
+  "mock": {
+    "title": "Swap (mock)",
+    "body": "Account: {{acct}}\\nBetalen: {{amount}} {{pay}}\\nOntvangen: {{receive}}\\nSlippage: {{slip}}\\nPrioriteitskosten: {{prio}}\\nTip: {{tip}}"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "language": "Ngôn ngữ",
+  "actions": { "save": "Lưu", "cancel": "Hủy", "continue": "Tiếp tục" },
+  "tabs": { "home": "Trang chủ", "referral": "Giới thiệu", "swap": "Hoán đổi", "payments": "Thanh toán", "discover": "Khám phá" },
+  "status": { "connected": "Đã kết nối", "notConnected": "Chưa kết nối", "comingSoon": "Sắp ra mắt", "disabledMVP": "Tắt trong MVP" },
+  "cards": { "open": "Mở thẻ" },
+  "cta": { "manageCards": "Quản lý thẻ trong Bảng điều khiển" }
+}

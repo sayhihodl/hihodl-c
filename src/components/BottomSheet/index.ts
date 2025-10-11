@@ -9,4 +9,4 @@ export { default as ControlledBottomSheet } from "./ControlledBottomSheet";
 export { default as NativeModalCard } from "./NativeModalCard";
 
 // Opcional: tipos (solo si los usas en la app)
-export type { BottomSheetProps } from "./BottomSheet";
+export type { BottomSheetProps } from "./BottomKeyboardModal";

@@ -1,0 +1,8 @@
+{
+  "language": "Language",
+  "actions": { "save": "Save", "cancel": "Cancel", "continue": "Continue" },
+  "tabs": { "home": "Home", "referral": "Referral", "swap": "Swap", "payments": "Payments", "discover": "Discover" },
+  "status": { "connected": "Connected", "notConnected": "Not connected", "comingSoon": "Coming soon", "disabledMVP": "Disabled in MVP" },
+  "cards": { "open": "Open Cards" },
+  "cta": { "manageCards": "Manage cards in Dashboard" }
+}

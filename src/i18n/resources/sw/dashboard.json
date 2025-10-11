@@ -1,0 +1,37 @@
+{
+  "title": "Dashibodi",
+  "accounts": { "daily": "Kila siku", "savings": "Akiba", "social": "Jamii" },
+  "actions": { "receive": "Pokea", "send": "Tuma", "swap": "Badilisha", "cards": "Kadi" },
+  "assets": {
+    "viewAll": "Angalia zote",
+    "addToken": "Ongeza tokeni",
+    "searchTokensPh": "Tafuta tokeni (ETH, SOL, USDC...)",
+    "recommendedNetwork": "Mtandao uliopendekezwa",
+    "tapToAdd": "Gusa kuongeza"
+  },
+  "payments": { "recentActivity": "Shughuli za hivi karibuni", "viewAll": "Angalia zote" },
+  "banners": {
+    "invite": {
+      "title": "Alika marafiki upate €60",
+      "body": "Pata €60 kwa kila rafiki utakayealika kabla ya Septemba 9.",
+      "legal": "Masharti yanatumika"
+    },
+    "keys": {
+      "title": "Linda funguo zako binafsi",
+      "body": "Usizishiriki kamwe. Hatutaziomba."
+    },
+    "notYourKeys": {
+      "title": "Kumbuka: si funguo zako, si pesa zako",
+      "body": "Kaa salama ukiwa na HIHODL."
+    }
+  },
+  "a11y": {
+    "openMenu": "Fungua menyu",
+    "openScanner": "Fungua skana",
+    "openCards": "Fungua kadi",
+    "toggleFiat": "Badilisha sarafu / onyesha salio dogo",
+    "openAsset": "Fungua {{name}}",
+    "openTx": "Fungua muamala {{title}}",
+    "dismiss": "Funga"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "title": "การชำระเงิน",
+  "searchPh": "ค้นหา",
+  "noPayments": "ไม่มีการชำระเงิน",
+  "filters": {
+    "accountFilter": "ตัวกรองบัญชี",
+    "selectAll": "เลือกทั้งหมด",
+    "apply": "ยืนยัน"
+  }
+}

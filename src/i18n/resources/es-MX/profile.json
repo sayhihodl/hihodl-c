@@ -1,0 +1,16 @@
+{
+  "title": "Perfil",
+  "about": "Acerca de",
+  "username": "Usuario",
+  "helperUsername": "Debe empezar por @ y tener 3–24 caracteres (a–z, 0–9, _)",
+  "checking": "Comprobando…",
+  "available": "Usuario disponible ✓",
+  "taken": "Usuario no disponible ⚠︎",
+  "connectedAccounts": "Cuentas conectadas",
+  "email": "Email",
+  "google": "Google",
+  "selectAvatar": "Seleccionar avatar",
+  "emojis": "Emojis",
+  "collectiblesSoon": "Coleccionables • pronto",
+  "searchPlaceholder": "Buscar… cohete, luna, diamante…"
+}

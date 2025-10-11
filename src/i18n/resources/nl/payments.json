@@ -1,0 +1,10 @@
+{
+  "title": "Betalingen",
+  "searchPh": "Zoeken",
+  "noPayments": "Geen betalingen",
+  "filters": {
+    "accountFilter": "Accountfilter",
+    "selectAll": "Alles selecteren",
+    "apply": "Toepassen"
+  }
+}

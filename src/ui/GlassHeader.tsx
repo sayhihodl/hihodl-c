@@ -13,13 +13,21 @@ type GlassHeaderProps = {
   centerSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
 
+  /** Control de estética del fondo */
   blurRange?: [number, number, number];
   solidRange?: [number, number, number];
   solidColor?: string;
-  overlayColor?: string;          // NEW: color de la capa translúcida encima del blur
-  blurTint?: "dark" | "light" | "default"; // NEW: tinte del BlurView
+  overlayColor?: string;
+  blurTint?: "dark" | "light" | "default";
+
+  /** Layout */
   contentStyle?: ViewStyle;
   showBottomHairline?: boolean;
+
+  /** ⬇️ NUEVO: controla el ancho de los laterales y del centro */
+  sideWidth?: number;          // ancho de cada “side” (izq/der). Default 80
+  centerWidthPct?: number;     // porcentaje del ancho total para el centro. Si se pasa: center deja de ser flex:1
+  centerMaxWidth?: number;     // opcional: límite absoluto (px) para el centro
 };
 
 export default function GlassHeader({
@@ -31,11 +39,16 @@ export default function GlassHeader({
   rightSlot,
   blurRange = [0, 12, 60],
   solidRange = [0, 80, 140],
-  solidColor = "transparent",          // por defecto transparente (lo pinta ScreenBg)
-  overlayColor = "rgba(2,48,71,0.28)", // navy con alpha suave (HiHODL)
+  solidColor = "transparent",
+  overlayColor = "rgba(2,48,71,0.28)",
   blurTint = "default",
   contentStyle,
   showBottomHairline = false,
+
+  // 👇 nuevos props con defaults
+  sideWidth = 80,
+  centerWidthPct,
+  centerMaxWidth,
 }: GlassHeaderProps) {
   const insets = useSafeAreaInsets();
   const TOTAL_H = insets.top + innerTopPad + height;
@@ -52,6 +65,16 @@ export default function GlassHeader({
     extrapolate: "clamp",
   });
 
+  // Estilo dinámico del centro cuando se fija porcentaje / máximo
+  const centerSizing =
+    centerWidthPct != null
+      ? [{ flex: 0 }, { width: `${centerWidthPct}%` } as ViewStyle]
+      : [{ flex: 1 }];
+
+  if (centerMaxWidth && centerWidthPct != null) {
+    centerSizing.push({ maxWidth: centerMaxWidth } as ViewStyle);
+  }
+
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { height: TOTAL_H }]}>
       {/* Capa blur */}
@@ -62,7 +85,7 @@ export default function GlassHeader({
             position: "absolute",
             top: 0, left: 0, right: 0,
             height: TOTAL_H,
-            backgroundColor: overlayColor,                    // ← suave, no tan oscuro
+            backgroundColor: overlayColor,
             borderBottomWidth: StyleSheet.hairlineWidth,
             borderColor: "rgba(255,255,255,0.08)",
           }}
@@ -84,9 +107,13 @@ export default function GlassHeader({
             contentStyle,
           ]}
         >
-          <View style={styles.side}>{leftSlot}</View>
-          <View style={styles.center} pointerEvents="box-none">{centerSlot}</View>
-          <View style={[styles.side, { alignItems: "flex-end" }]}>{rightSlot}</View>
+          <View style={[styles.side, { width: sideWidth }]}>{leftSlot}</View>
+
+          <View style={[styles.center, ...centerSizing]} pointerEvents="box-none">
+            {centerSlot}
+          </View>
+
+          <View style={[styles.side, { width: sideWidth, alignItems: "flex-end" }]}>{rightSlot}</View>
         </View>
       </SafeAreaView>
 
@@ -98,8 +125,8 @@ export default function GlassHeader({
 const styles = StyleSheet.create({
   wrap: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 20 },
   rowBase: { paddingHorizontal: 16, flexDirection: "row", alignItems: "center" },
-  side: { width: 80, flexDirection: "row", alignItems: "center", gap: 10 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  side: { flexDirection: "row", alignItems: "center", gap: 10 },
+  center: { alignItems: "center", justifyContent: "center" }, // el tamaño lo controla centerSizing
   hairline: {
     position: "absolute",
     left: 0, right: 0, bottom: 0,

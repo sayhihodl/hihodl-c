@@ -1,0 +1,10 @@
+{
+  "title": "المدفوعات",
+  "searchPh": "بحث",
+  "noPayments": "لا توجد مدفوعات",
+  "filters": {
+    "accountFilter": "تصفية الحساب",
+    "selectAll": "تحديد الكل",
+    "apply": "تطبيق"
+  }
+}

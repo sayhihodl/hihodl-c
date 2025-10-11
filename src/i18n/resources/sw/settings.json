@@ -1,0 +1,20 @@
+{
+  "title": "Mipangilio",
+  "appearance": "Mwonekano",
+  "colors": "Rangi na Mielekeo",
+  "currency": "Sarafu",
+  "notifications": "Arifa",
+  "activity": "Shughuli",
+  "markets": "Masoko",
+  "other": "Mengine",
+  "push": "Arifa za push",
+  "email": "Arifa kwa barua pepe",
+  "incoming": "Miamala inayoingia",
+  "outgoing": "Miamala inayotoka",
+  "securityAlerts": "Arifa za usalama",
+  "dailyPrice": "Mabadiliko ya bei ya kila siku",
+  "priceAlerts": "Arifa za bei maalum",
+  "weekly": "Muhtasari wa kila wiki",
+  "marketing": "Taarifa na ofa za bidhaa",
+  "language": "Lugha"
+}

@@ -1,0 +1,20 @@
+{
+  "title": "Configurações",
+  "appearance": "Aparência",
+  "colors": "Cores e gradientes",
+  "currency": "Moeda",
+  "notifications": "Notificações",
+  "activity": "Atividade",
+  "markets": "Mercados",
+  "other": "Outros",
+  "push": "Notificações push",
+  "email": "Notificações por e-mail",
+  "incoming": "Transferências de entrada",
+  "outgoing": "Transferências de saída",
+  "securityAlerts": "Alertas de segurança",
+  "dailyPrice": "Variações diárias de preço",
+  "priceAlerts": "Alertas de preço personalizados",
+  "weekly": "Resumo semanal",
+  "marketing": "Novidades e ofertas",
+  "language": "Idioma"
+}

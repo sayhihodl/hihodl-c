@@ -1,0 +1,8 @@
+{
+  "language": "语言",
+  "actions": { "save": "保存", "cancel": "取消", "continue": "继续" },
+  "tabs": { "home": "首页", "referral": "邀请", "swap": "兑换", "payments": "付款", "discover": "发现" },
+  "status": { "connected": "已连接", "notConnected": "未连接", "comingSoon": "即将推出", "disabledMVP": "MVP 中已禁用" },
+  "cards": { "open": "打开卡片" },
+  "cta": { "manageCards": "在仪表板管理卡片" }
+}

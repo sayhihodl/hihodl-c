@@ -1,0 +1,10 @@
+{
+  "title": "भुगतान",
+  "searchPh": "खोजें",
+  "noPayments": "कोई भुगतान नहीं",
+  "filters": {
+    "accountFilter": "खाता फ़िल्टर",
+    "selectAll": "सभी चुनें",
+    "apply": "लागू करें"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "language": "Lugha",
+  "actions": { "save": "Hifadhi", "cancel": "Ghairi", "continue": "Endelea" },
+  "tabs": { "home": "Nyumbani", "referral": "Rufaa", "swap": "Badilisha", "payments": "Malipo", "discover": "Gundua" },
+  "status": { "connected": "Imeunganishwa", "notConnected": "Haijaunganishwa", "comingSoon": "Inakuja hivi karibuni", "disabledMVP": "Imezimwa kwenye MVP" },
+  "cards": { "open": "Fungua kadi" },
+  "cta": { "manageCards": "Dhibiti kadi kwenye Dashibodi" }
+}

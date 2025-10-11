@@ -1,0 +1,8 @@
+{
+  "language": "भाषा",
+  "actions": { "save": "सहेजें", "cancel": "रद्द करें", "continue": "जारी रखें" },
+  "tabs": { "home": "होम", "referral": "रेफ़रल", "swap": "स्वैप", "payments": "भुगतान", "discover": "खोजें" },
+  "status": { "connected": "कनेक्टेड", "notConnected": "कनेक्ट नहीं", "comingSoon": "जल्द आ रहा है", "disabledMVP": "MVP में निष्क्रिय" },
+  "cards": { "open": "कार्ड खोलें" },
+  "cta": { "manageCards": "डैशबोर्ड में कार्ड प्रबंधित करें" }
+}

@@ -1,0 +1,27 @@
+{
+  "received": "प्राप्त",
+  "sent": "भेजा गया",
+  "refunded": "रिफंड किया गया",
+  "date": "तारीख",
+  "status": "स्थिति",
+  "from": "से",
+  "to": "को",
+  "network": "नेटवर्क",
+  "transaction": "लेन-देन",
+  "amount": "राशि",
+  "fiat": "फिएट",
+  "networkFee": "नेटवर्क शुल्क",
+  "status_succeeded": "सफल",
+  "status_failed": "असफल",
+  "status_pending": "लंबित",
+  "action_receive": "प्राप्त करें",
+  "action_send": "भेजें",
+  "action_swap": "स्वैप करें",
+  "viewOnExplorer": "{{brand}} पर देखें",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "endsSoon": "Loopt binnenkort af",
+  "heroTitle": "Verdien {{amount}} per vriend",
+  "lead": "Je vrienden hebben 7 dagen om",
+  "steps": [
+    { "title": "Aanmelden met jouw link", "sub": "En hun identiteit verifiëren" },
+    { "title": "Geld toevoegen aan hun account", "sub": "Met pinpas of bankoverschrijving" },
+    { "title": "3 aankopen van $10+ doen", "sub": "‘Cash-like’ transacties tellen niet mee" },
+    { "title": "Een fysieke kaart bestellen", "sub": "Toevoegen aan Apple/Google Pay en contactloos betalen" }
+  ],
+  "pastInvites": "Eerdere uitnodigingen",
+  "promoNote": { "text": "De promo is tijdelijk.", "link": "Voorwaarden", "tail": "van toepassing" },
+  "ctaInvite": "Vrienden uitnodigen",
+  "tcsTitle": "Voorwaarden",
+  "tcsBody": "Elke vriend heeft 7 dagen na aanmelding om alle stappen te voltooien. Aan het einde sturen we een pushbericht. Reset niet.",
+  "close": "Sluiten",
+  "shareMessage": "Doe mee met HiHODL via mijn link en ontvang beloningen: {{link}}"
+}

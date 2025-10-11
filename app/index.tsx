@@ -1,12 +1,11 @@
 // app/index.tsx
-import { useEffect } from 'react';
-import { router } from 'expo-router';
+import { useEffect } from "react";
+import { router } from "expo-router";
 
 export default function Index() {
   useEffect(() => {
-    // Espera a que el RootLayout esté montado
     const id = setTimeout(() => {
-          router.replace("/(tabs)");
+      router.replace("/(drawer)/(tabs)"); // o "/(drawer)/(tabs)/(home)"
     }, 0);
     return () => clearTimeout(id);
   }, []);

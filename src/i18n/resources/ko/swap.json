@@ -1,0 +1,36 @@
+{
+  "title": "스왑",
+  "youPay": "지불",
+  "youReceive": "수령",
+  "trending": "트렌딩",
+  "cta": { "swap": "스왑하기" },
+
+  "accounts": { "daily": "일상", "savings": "저축", "social": "소셜" },
+
+  "filters": {
+    "rankBy": { "rank": "순위", "volume": "거래량", "price": "가격", "priceChange": "변동률", "marketCap": "시가총액" },
+    "network": { "all": "전체", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1시간", "24h": "24시간", "7d": "7일", "30d": "30일" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "거래량" },
+
+  "settings": {
+    "title": "스왑 설정",
+    "slippage": { "title": "슬리피지", "auto": "자동", "help": "권장: 메이저 0.5–1%, 변동성 높은 페어 2–3%." },
+    "priority": { "title": "우선 수수료", "auto": "자동", "help": "혼잡 시 우선순위를 높이면 승인 속도가 빨라집니다." },
+    "tip": { "title": "팁", "auto": "자동 (0.05%)", "help": "소액 팁은 릴레이어/라우팅을 돕습니다." }
+  },
+
+  "a11y": {
+    "openSettings": "스왑 설정 열기",
+    "selectPayToken": "지불 토큰 선택",
+    "selectReceiveToken": "수령 토큰 선택",
+    "flip": "토큰 뒤집기"
+  },
+
+  "mock": {
+    "title": "스왑(모의)",
+    "body": "계정: {{acct}}\\n지불: {{amount}} {{pay}}\\n수령: {{receive}}\\n슬리피지: {{slip}}\\n우선 수수료: {{prio}}\\n팁: {{tip}}"
+  }
+}

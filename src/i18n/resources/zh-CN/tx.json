@@ -1,0 +1,27 @@
+{
+  "received": "已接收",
+  "sent": "已发送",
+  "refunded": "已退款",
+  "date": "日期",
+  "status": "状态",
+  "from": "来自",
+  "to": "发送至",
+  "network": "网络",
+  "transaction": "交易",
+  "amount": "金额",
+  "fiat": "法币",
+  "networkFee": "网络费用",
+  "status_succeeded": "成功",
+  "status_failed": "失败",
+  "status_pending": "处理中",
+  "action_receive": "接收",
+  "action_send": "发送",
+  "action_swap": "兑换",
+  "viewOnExplorer": "在 {{brand}} 上查看",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

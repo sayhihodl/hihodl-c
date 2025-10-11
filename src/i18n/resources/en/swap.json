@@ -1,0 +1,36 @@
+{
+  "title": "Swap",
+  "youPay": "You Pay",
+  "youReceive": "You Receive",
+  "trending": "Trending",
+  "cta": { "swap": "Swap" },
+
+  "accounts": { "daily": "Daily", "savings": "Savings", "social": "Social" },
+
+  "filters": {
+    "rankBy": { "rank": "Rank", "volume": "Volume", "price": "Price", "priceChange": "Price Change", "marketCap": "Market Cap" },
+    "network": { "all": "All", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1h", "24h": "24h", "7d": "7d", "30d": "30d" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "Swap Settings",
+    "slippage": { "title": "Slippage", "auto": "Auto", "help": "Recommended: 0.5–1% for majors, 2–3% for volatile pairs." },
+    "priority": { "title": "Priority Fee", "auto": "Auto", "help": "Higher priority speeds up confirmation during congestion." },
+    "tip": { "title": "Tip", "auto": "Auto (0.05%)", "help": "Tiny tip supports relayer/liquidity routing." }
+  },
+
+  "a11y": {
+    "openSettings": "Open swap settings",
+    "selectPayToken": "Select pay token",
+    "selectReceiveToken": "Select receive token",
+    "flip": "Flip tokens"
+  },
+
+  "mock": {
+    "title": "Swap (mock)",
+    "body": "Account: {{acct}}\\nPay: {{amount}} {{pay}}\\nReceive: {{receive}}\\nSlippage: {{slip}}\\nPriority Fee: {{prio}}\\nTip: {{tip}}"
+  }
+}

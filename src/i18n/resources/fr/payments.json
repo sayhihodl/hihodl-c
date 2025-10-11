@@ -1,0 +1,10 @@
+{
+  "title": "Paiements",
+  "searchPh": "Rechercher",
+  "noPayments": "Aucun paiement",
+  "filters": {
+    "accountFilter": "Filtre de compte",
+    "selectAll": "Tout sélectionner",
+    "apply": "Appliquer"
+  }
+}

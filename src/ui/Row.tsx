@@ -1,5 +1,6 @@
+// src/ui/Row.tsx
 import React from "react";
-import { Pressable, Text, View, TextStyle, ViewStyle } from "react-native";
+import { Pressable, Text, View, StyleSheet, StyleProp, TextStyle, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { glass } from "@/ui/Glass";
 import { legacy as legacyColors } from "@/theme/colors";
@@ -7,31 +8,24 @@ import { legacy as legacyColors } from "@/theme/colors";
 const SUB = legacyColors.SUB ?? "rgba(255,255,255,0.65)";
 
 export type RowProps = {
-  /** Ícono por defecto a la izquierda (si no usas leftSlot) */
   icon?: React.ComponentProps<typeof Ionicons>["name"] | null;
-  /** Contenido custom a la izquierda (avatar, etc.). Si se provee, ignora icon */
   leftSlot?: React.ReactNode;
-  /** Línea principal (cuando no usas labelNode) */
   label?: string;
-  /** Nodo completo para la parte izquierda (para 2 líneas, etc.) */
   labelNode?: React.ReactNode;
-  /** Texto o nodo a la derecha (estado/badge) */
   value?: React.ReactNode;
-  /** Slot a la derecha (botón, badge, etc.). Ahora se renderiza ANTES del chevron */
   rightSlot?: React.ReactNode;
-
-  rightIcon?: React.ComponentProps<typeof Ionicons>["name"] | null; // null para ocultar
+  rightIcon?: React.ComponentProps<typeof Ionicons>["name"] | null;
   onPress?: () => void;
   onLongPress?: () => void;
   disabled?: boolean;
 
   /** Overrides */
-  titleStyle?: TextStyle;
-  containerStyle?: ViewStyle;
+  titleStyle?: StyleProp<TextStyle>;       // ← StyleProp
+  containerStyle?: StyleProp<ViewStyle>;   // ← StyleProp
 };
 
-export function Row({
-  icon = "chevron-forward-outline", // no se usa si hay leftSlot
+export default function Row({
+  icon = "chevron-forward-outline",
   leftSlot,
   label,
   labelNode,
@@ -50,7 +44,7 @@ export function Row({
       onLongPress={disabled ? undefined : onLongPress}
       style={({ pressed }) => [
         glass.row,
-        containerStyle,
+        containerStyle as ViewStyle,
         disabled && { opacity: 0.45 },
         pressed && !disabled && { backgroundColor: "rgba(255,255,255,0.03)" },
       ]}
@@ -61,40 +55,49 @@ export function Row({
       hitSlop={10}
       disabled={disabled}
     >
-      {/* Izquierda: avatar custom o icono */}
       {leftSlot ? (
-        <View style={{ marginRight: 10 }}>{leftSlot}</View>
+        <View style={styles.leftWrap}>{leftSlot}</View>
       ) : icon ? (
-        <Ionicons name={icon} size={18} color="#fff" style={{ marginRight: 10 }} />
+        <Ionicons name={icon} size={18} color="#fff" style={styles.leftIcon} />
       ) : null}
 
-      {/* Título / nodo de la izquierda */}
       {labelNode ? (
-        <View style={{ flex: 1 }}>{labelNode}</View>
+        <View style={styles.centerWrap} pointerEvents="box-none">
+          {labelNode}
+        </View>
       ) : (
-        <Text style={[glass.rowTitle, titleStyle]} numberOfLines={1}>
-          {label}
-        </Text>
+        <View style={styles.centerWrap} pointerEvents="box-none">
+          <Text style={[glass.rowTitle, titleStyle]} numberOfLines={1} ellipsizeMode="tail">
+            {label}
+          </Text>
+        </View>
       )}
 
-      <View style={{ flex: 1 }} />
-
-      {/* Valor a la derecha (texto simple o nodo) */}
-      {value != null ? (
-        typeof value === "string" || typeof value === "number" ? (
-          <Text numberOfLines={1} style={[glass.rowSub, { marginRight: 8 }]}>{value}</Text>
+      {value != null &&
+        (typeof value === "string" || typeof value === "number" ? (
+          <Text numberOfLines={1} style={[glass.rowSub, styles.rightWrapText]}>
+            {value}
+          </Text>
         ) : (
-          <View style={{ marginRight: 8 }}>{value}</View>
-        )
+          <View style={styles.rightWrap}>{value}</View>
+        ))}
+
+      {rightSlot ? <View style={styles.rightWrap}>{rightSlot}</View> : null}
+
+      {rightIcon ? (
+        <View style={styles.chevronWrap}>
+          <Ionicons name={rightIcon} size={16} color={SUB} />
+        </View>
       ) : null}
-
-      {/* Slot a la derecha (badge/botón) */}
-      {rightSlot ? <View style={{ marginRight: 6 }}>{rightSlot}</View> : null}
-
-      {/* Chevron (si no lo ocultas con null) */}
-      {rightIcon ? <Ionicons name={rightIcon} size={16} color={SUB} /> : null}
     </Pressable>
   );
 }
 
-export default Row;
+const styles = StyleSheet.create({
+  leftWrap: { marginRight: 10 },
+  leftIcon: { marginRight: 10 },
+  centerWrap: { flex: 1, minWidth: 0 },
+  rightWrap: { flexShrink: 0, alignItems: "flex-end", justifyContent: "center" },
+  rightWrapText: { flexShrink: 0, textAlign: "right" },
+  chevronWrap: { marginLeft: 6, flexShrink: 0 },
+});

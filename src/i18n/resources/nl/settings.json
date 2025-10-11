@@ -1,0 +1,20 @@
+{
+  "title": "Instellingen",
+  "appearance": "Weergave",
+  "colors": "Kleuren & Gradiënten",
+  "currency": "Geld",
+  "notifications": "Meldingen",
+  "activity": "Activiteit",
+  "markets": "Markten",
+  "other": "Overige",
+  "push": "Pushmeldingen",
+  "email": "E-mailmeldingen",
+  "incoming": "Inkomende transacties",
+  "outgoing": "Uitgaande transacties",
+  "securityAlerts": "Beveiligingswaarschuwingen",
+  "dailyPrice": "Dagelijkse koerswijzigingen",
+  "priceAlerts": "Aangepaste prijswaarschuwingen",
+  "weekly": "Wekelijks overzicht",
+  "marketing": "Productupdates & aanbiedingen",
+  "language": "Taal"
+}

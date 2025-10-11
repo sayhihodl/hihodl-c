@@ -1,0 +1,27 @@
+{
+  "received": "Ontvangen",
+  "sent": "Verzonden",
+  "refunded": "Terugbetaald",
+  "date": "Datum",
+  "status": "Status",
+  "from": "Van",
+  "to": "Naar",
+  "network": "Netwerk",
+  "transaction": "Transactie",
+  "amount": "Bedrag",
+  "fiat": "Fiat",
+  "networkFee": "Netwerkkosten",
+  "status_succeeded": "Geslaagd",
+  "status_failed": "Mislukt",
+  "status_pending": "In behandeling",
+  "action_receive": "Ontvangen",
+  "action_send": "Verzenden",
+  "action_swap": "Wisselen",
+  "viewOnExplorer": "Bekijk op {{brand}}",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

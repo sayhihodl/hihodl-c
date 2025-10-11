@@ -1,0 +1,18 @@
+{
+  "endsSoon": "곧 종료",
+  "heroTitle": "친구 1명당 {{amount}} 적립",
+  "lead": "친구는 완료까지 7일이 주어집니다",
+  "steps": [
+    { "title": "내 링크로 가입", "sub": "본인 인증 완료" },
+    { "title": "계정에 입금", "sub": "체크카드 또는 계좌이체" },
+    { "title": "$10 이상 결제 3회", "sub": "현금성 거래는 제외" },
+    { "title": "실물 카드 신청", "sub": "Apple/Google Pay에 추가 후 터치 결제" }
+  ],
+  "pastInvites": "지난 초대",
+  "promoNote": { "text": "프로모션은 한시적입니다.", "link": "약관", "tail": "적용" },
+  "ctaInvite": "친구 초대",
+  "tcsTitle": "조건",
+  "tcsBody": "가입 후 7일 이내 모든 단계를 완료해야 합니다. 종료 시 푸시 알림을 보내드립니다. 초기화되지 않습니다.",
+  "close": "닫기",
+  "shareMessage": "내 링크로 HiHODL에 가입하고 보상을 받아보세요: {{link}}"
+}

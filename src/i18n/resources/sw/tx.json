@@ -1,0 +1,27 @@
+{
+  "received": "Imepokelewa",
+  "sent": "Imetumwa",
+  "refunded": "Imerejeshwa",
+  "date": "Tarehe",
+  "status": "Hali",
+  "from": "Kutoka",
+  "to": "Kwa",
+  "network": "Mtandao",
+  "transaction": "Muamala",
+  "amount": "Kiasi",
+  "fiat": "Fiat",
+  "networkFee": "Ada ya mtandao",
+  "status_succeeded": "Imefanikiwa",
+  "status_failed": "Imeshindikana",
+  "status_pending": "Inasubiri",
+  "action_receive": "Pokea",
+  "action_send": "Tuma",
+  "action_swap": "Badilisha",
+  "viewOnExplorer": "Angalia kwenye {{brand}}",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "language": "Dil",
+  "actions": { "save": "Kaydet", "cancel": "İptal", "continue": "Devam et" },
+  "tabs": { "home": "Ana sayfa", "referral": "Yönlendirme", "swap": "Takas", "payments": "Ödemeler", "discover": "Keşfet" },
+  "status": { "connected": "Bağlı", "notConnected": "Bağlı değil", "comingSoon": "Yakında", "disabledMVP": "MVP'de devre dışı" },
+  "cards": { "open": "Kartları aç" },
+  "cta": { "manageCards": "Kartları Panodan yönet" }
+}

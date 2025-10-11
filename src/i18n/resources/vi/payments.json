@@ -1,0 +1,10 @@
+{
+  "title": "Thanh toán",
+  "searchPh": "Tìm kiếm",
+  "noPayments": "Không có giao dịch",
+  "filters": {
+    "accountFilter": "Bộ lọc tài khoản",
+    "selectAll": "Chọn tất cả",
+    "apply": "Áp dụng"
+  }
+}

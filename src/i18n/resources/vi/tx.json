@@ -1,0 +1,27 @@
+{
+  "received": "Đã nhận",
+  "sent": "Đã gửi",
+  "refunded": "Đã hoàn tiền",
+  "date": "Ngày",
+  "status": "Trạng thái",
+  "from": "Từ",
+  "to": "Đến",
+  "network": "Mạng lưới",
+  "transaction": "Giao dịch",
+  "amount": "Số tiền",
+  "fiat": "Tiền pháp định",
+  "networkFee": "Phí mạng",
+  "status_succeeded": "Thành công",
+  "status_failed": "Thất bại",
+  "status_pending": "Đang chờ",
+  "action_receive": "Nhận",
+  "action_send": "Gửi",
+  "action_swap": "Hoán đổi",
+  "viewOnExplorer": "Xem trên {{brand}}",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

@@ -1,6 +1,7 @@
-// app/(tabs)/(home)/_layout.tsx
+// app/(drawer)/(tabs)/(home)/_layout.tsx
+import React from "react";
 import { Slot } from "expo-router";
 
 export default function HomeLayout() {
-  return <Slot />; // 👈 default export y retorna un componente
+  return <Slot />;
 }

@@ -1,0 +1,61 @@
+{
+  "title": "Overzicht",
+
+  "accounts": {
+    "daily": "Dagelijks",
+    "savings": "Sparen",
+    "social": "Sociaal"
+  },
+
+  "actions": {
+    "receive": "Ontvangen",
+    "send": "Verzenden",
+    "swap": "Wisselen",
+    "cards": "Kaarten"
+  },
+
+  "assets": {
+    "viewAll": "Alles bekijken",
+    "addToken": "Token toevoegen",
+    "searchTokensPh": "Tokens zoeken (ETH, SOL, USDC...)",
+    "recommendedNetwork": "Aanbevolen netwerk",
+    "tapToAdd": "Tik om toe te voegen"
+  },
+
+  "dates": {
+    "today": "Vandaag",
+    "yesterday": "Gisteren"
+  },
+
+  "payments": {
+    "recentActivity": "Recente activiteit",
+    "viewAll": "Alles bekijken"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "Nodig vrienden uit en verdien €60",
+      "body": "Verdien €60 voor elke vriend die je vóór 9 september uitnodigt.",
+      "legal": "Voorwaarden zijn van toepassing"
+    },
+    "keys": {
+      "title": "Zorg goed voor je privésleutels",
+      "body": "Deel ze nooit. Wij zullen er nooit om vragen."
+    },
+    "notYourKeys": {
+      "title": "Onthoud: niet jouw sleutels, niet jouw geld",
+      "body": "Blijf veilig met HIHODL."
+    }
+  },
+
+  "a11y": {
+    "openMenu": "Menu openen",
+    "openScanner": "Scanner openen",
+    "openCards": "Kaarten openen",
+    "toggleFiat": "Tik om de valuta te wisselen; houd ingedrukt om kleine saldi te tonen",
+    "openAsset": "Open {{name}}",
+    "openTx": "Transactie {{title}} openen"
+  },
+
+  "dismiss": "Sluiten"
+}

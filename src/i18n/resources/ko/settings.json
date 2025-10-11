@@ -1,0 +1,20 @@
+{
+  "title": "Settings",
+  "appearance": "Appearance",
+  "colors": "Colors & Gradients",
+  "currency": "Currency",
+  "notifications": "Notifications",
+  "activity": "Activity",
+  "markets": "Markets",
+  "other": "Other",
+  "push": "Push notifications",
+  "email": "Email notifications",
+  "incoming": "Incoming transfers",
+  "outgoing": "Outgoing transfers",
+  "securityAlerts": "Security alerts",
+  "dailyPrice": "Daily price changes",
+  "priceAlerts": "Custom price alerts",
+  "weekly": "Weekly summary",
+  "marketing": "Product updates & offers",
+  "language": "Language"
+}

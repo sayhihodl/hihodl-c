@@ -1,22 +1,17 @@
+// app/(drawer)/(tabs)/swap/index.tsx
 import React from "react";
 import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  UIManager,
-  findNodeHandle,
-  Modal,
-  Dimensions,
-  Animated,
+  Alert, Pressable, StyleSheet, Text, TextInput, View,
+  UIManager, findNodeHandle, Modal, Dimensions, Animated,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useTranslation } from "react-i18next";
+import { preloadNamespaces } from "@/i18n/i18n";
 
+import SwapSettingsSheet from "@/swap/SwapSettingsSheet";
 import { legacy } from "@/theme/colors";
 import ScreenBg from "@/ui/ScreenBg";
 import GlassHeader from "@/ui/GlassHeader";
@@ -26,17 +21,14 @@ import { TOP_CAP } from "@/theme/gradients";
 import SegmentedPager from "@/ui/SegmentedPager";
 
 import {
-  usePortfolioStore,
-  type ChainId,
-  type CurrencyId,
-  type Position,
+  usePortfolioStore, type CurrencyId,
 } from "@/store/portfolio.store";
 import { useSwapStore } from "@/store/swap.store";
 import { useTokenCatalog } from "@/config/tokensCatalog";
 
+/* ============================ Theme / layout ============================ */
 const { TEXT } = legacy;
 
-/* ============================ Theme / layout ============================ */
 type Account = "Daily" | "Savings" | "Social";
 const ACCOUNT_IDS: Record<Account, string> = { Daily: "daily", Savings: "savings", Social: "social" };
 const ACCOUNTS: Account[] = ["Daily", "Savings", "Social"];
@@ -44,43 +36,40 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const YELLOW = "#FFB703";
 const HERO_HEIGHT = 330;
-
-/** Header spacing */
 const HEADER_HEIGHT = 70;
 const HEADER_TOPPAD = 14;
 const HEADER_TITLE_GAP = 10;
 const PILL_H = 44;
 const ICON_SZ = 32;
 
-/** Ajustes del botón de opciones (absoluto en rightSlot) */
-const RIGHT_BTN_RIGHT = 16;     // margen al borde derecho
-const RIGHT_BTN_Y_OFFSET = -21;  // ajuste fino vertical
+/* ============================ Tipos i18n/filtros ============================ */
+type ChainFilterId = "all" | "solana" | "ethereum" | "base" | "polygon" | "bitcoin";
+type TimeframeId = "1h" | "24h" | "7d" | "30d";
+type RankById = "rank" | "volume" | "price" | "priceChange" | "marketCap";
 
 /* ============================ Mock market ============================ */
-type ChainFilter = "All" | "Solana" | "Ethereum" | "Base" | "Polygon" | "Bitcoin";
-type Timeframe = "1h" | "24h" | "7d" | "30d";
-type RankBy = "Rank" | "Volume" | "Price" | "Price Change" | "Market Cap";
 type MarketRow = {
   id: string; symbol: string; name: string;
-  chain: Exclude<ChainFilter, "All">; mc_usd: number; vol_usd: number; change_pct: number; price?: number;
+  chain: Exclude<ChainFilterId, "all">; mc_usd: number; vol_usd: number; change_pct: number; price?: number;
 };
 const MARKET_MOCK: MarketRow[] = [
-  { id: "solnav", symbol: "SOLNAV", name: "SOLNAV", chain: "Solana", mc_usd: 291_000, vol_usd: 16_000, change_pct: 1112.84, price: 0.0018 },
-  { id: "pandu", symbol: "PANDU", name: "PANDU", chain: "Solana", mc_usd: 3_400_000, vol_usd: 87_000, change_pct: 11.08, price: 0.00000319 },
-  { id: "nunu", symbol: "NUNU", name: "nunu", chain: "Solana", mc_usd: 4_300_000, vol_usd: 233_000, change_pct: -4.99, price: 0.00436 },
-  { id: "stream", symbol: "STRM", name: "STREAMER", chain: "Base", mc_usd: 25_000_000, vol_usd: 390_000, change_pct: 146.85, price: 0.0263 },
-  { id: "xvm", symbol: "XVM", name: "XVM", chain: "Polygon", mc_usd: 18_000_000, vol_usd: 68_000, change_pct: 19.66, price: 0.0176 },
+  { id: "solnav", symbol: "SOLNAV", name: "SOLNAV", chain: "solana", mc_usd: 291_000, vol_usd: 16_000, change_pct: 1112.84, price: 0.0018 },
+  { id: "pandu",  symbol: "PANDU",  name: "PANDU",  chain: "solana", mc_usd: 3_400_000, vol_usd: 87_000,  change_pct: 11.08,   price: 0.00000319 },
+  { id: "nunu",   symbol: "NUNU",   name: "nunu",   chain: "solana", mc_usd: 4_300_000, vol_usd: 233_000, change_pct: -4.99,   price: 0.00436 },
+  { id: "stream", symbol: "STRM",   name: "STREAMER", chain: "base", mc_usd: 25_000_000, vol_usd: 390_000, change_pct: 146.85, price: 0.0263 },
+  { id: "xvm",    symbol: "XVM",    name: "XVM",    chain: "polygon", mc_usd: 18_000_000, vol_usd: 68_000, change_pct: 19.66,  price: 0.0176 },
 ];
 
-/* ============================ Popover ============================ */
+/* ============================ Popover genérico ============================ */
 type Anchor = { x: number; y: number; w: number; h: number };
 type MenuState = { open: boolean; anchor: Anchor | null };
 type ElemRef<T> = React.RefObject<T> | React.MutableRefObject<T | null>;
 
-function PopoverMenu({
+function PopoverMenu<T extends string>({
   visible, onClose, anchor, items, value, onSelect, maxWidth = 260,
 }: {
-  visible: boolean; onClose: () => void; anchor: Anchor | null; items: string[]; value?: string; onSelect: (v: string) => void; maxWidth?: number;
+  visible: boolean; onClose: () => void; anchor: Anchor | null;
+  items: { id: T; label: string }[]; value?: T; onSelect: (v: T) => void; maxWidth?: number;
 }) {
   if (!visible || !anchor) return null;
   const screenW = Dimensions.get("window").width;
@@ -94,11 +83,11 @@ function PopoverMenu({
       <Pressable style={styles.popoverBackdrop} onPress={onClose} />
       <View style={[styles.popover, { top, left, width }]}>
         {items.map((it, idx) => {
-          const active = value === it;
+          const active = value === it.id;
           return (
             <Pressable
-              key={it}
-              onPress={() => { onSelect(it); onClose(); }}
+              key={it.id}
+              onPress={() => { onSelect(it.id); onClose(); }}
               style={[
                 styles.popoverItem,
                 idx === 0 && styles.popoverItemFirst,
@@ -106,7 +95,7 @@ function PopoverMenu({
                 active && styles.popoverItemActive,
               ]}
             >
-              <Text style={[styles.popoverText, active && styles.popoverTextActive]}>{it}</Text>
+              <Text style={[styles.popoverText, active && styles.popoverTextActive]}>{it.label}</Text>
             </Pressable>
           );
         })}
@@ -117,29 +106,26 @@ function PopoverMenu({
 
 /* ============================ Screen ============================ */
 export default function SwapScreen() {
+  const { t, i18n } = useTranslation(["swap", "common"]);
+  React.useEffect(() => { preloadNamespaces(["swap"]); }, [i18n.language]);
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  // header blur control (vertical)
   const scrolly = React.useRef(new Animated.Value(0)).current;
-
-  // horizontal pager (accounts)
   const hScrollX = React.useRef(new Animated.Value(0)).current;
   const [index, setIndex] = React.useState(0);
+  const [settingsOpen, setSettingsOpen] = React.useState(false); // ✅ estado del sheet
 
-  const params = useLocalSearchParams<{ account?: string; currencyId?: string; fromChainId?: string; toChainId?: string }>();
+  const params = useLocalSearchParams<{ account?: string; currencyId?: string }>();
 
-  const positions = usePortfolioStore((s) => s.positions ?? []);
   const storeActive = usePortfolioStore((s: any) => s.activeAccount as Account | undefined);
-
-  // ⛽️ Store swap
   const payId = useSwapStore((s) => s.pay);
   const receiveId = useSwapStore((s) => s.receive);
   const setSwapToken = useSwapStore((s) => s.setToken);
   const swapSides = useSwapStore((s) => s.swapSides);
   const settings = useSwapStore((s) => s.settings);
 
-  // Catálogo
   const catalog = useTokenCatalog();
   const findToken = (id?: string) => catalog.find((t) => t.id === id);
 
@@ -154,13 +140,12 @@ export default function SwapScreen() {
     catalog.find((t) => t.symbol === "USDC") ??
     catalog[0];
 
-  // Defaults
   React.useEffect(() => {
     if (!payId && payToken) setSwapToken("pay", payToken.id);
     if (!receiveId && receiveToken) setSwapToken("receive", receiveToken.id);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Cuenta activa inicial
   const initialAccount: Account =
     (params.account?.toLowerCase() === "savings" && "Savings") ||
     (params.account?.toLowerCase() === "social" && "Social") ||
@@ -172,9 +157,10 @@ export default function SwapScreen() {
     setIndex(i);
   }, [initialAccount]);
 
-  const [rankBy, setRankBy] = React.useState<RankBy>("Rank");
-  const [chain, setChain] = React.useState<ChainFilter>("All");
-  const [tf, setTf] = React.useState<Timeframe>("24h");
+  // Estado de filtros
+  const [rankBy, setRankBy] = React.useState<RankById>("rank");
+  const [chain, setChain]   = React.useState<ChainFilterId>("all");
+  const [tf, setTf]         = React.useState<TimeframeId>("24h");
 
   const [amount, setAmount] = React.useState("");
 
@@ -183,52 +169,73 @@ export default function SwapScreen() {
   const openSelectToken = (side: "pay" | "receive") =>
     router.push({ pathname: "/(drawer)/(tabs)/swap/select-token", params: { side, account: ACCOUNT_IDS[ACCOUNTS[index]] } } as Href);
 
-  const openSettings = () => router.push("/(drawer)/(tabs)/swap/settings" as Href);
+  const openSettings = () => { setSettingsOpen(true); void Haptics.selectionAsync(); }; // ✅ sheet, no navegación
 
+  // Lista mock filtrada
   const filtered = React.useMemo(() => {
     return MARKET_MOCK
-      .filter((r) => chain === "All" || r.chain === chain)
+      .filter((r) => chain === "all" || r.chain === chain)
       .sort((a, b) => {
         switch (rankBy) {
-          case "Volume": return b.vol_usd - a.vol_usd;
-          case "Price": return (b.price ?? 0) - (a.price ?? 0);
-          case "Price Change": return b.change_pct - a.change_pct;
-          case "Market Cap": return b.mc_usd - a.mc_usd;
-          default: return 0;
+          case "volume":     return b.vol_usd - a.vol_usd;
+          case "price":      return (b.price ?? 0) - (a.price ?? 0);
+          case "priceChange":return b.change_pct - a.change_pct;
+          case "marketCap":  return b.mc_usd - a.mc_usd;
+          default:           return 0;
         }
       });
   }, [chain, rankBy]);
 
   /* ---------- Popovers ---------- */
   const rankBtnRef = React.useRef<View>(null);
-  const netBtnRef = React.useRef<View>(null);
+  const netBtnRef  = React.useRef<View>(null);
   const timeBtnRef = React.useRef<View>(null);
 
   const [rankMenu, setRankMenu] = React.useState<MenuState>({ open: false, anchor: null });
-  const [netMenu, setNetMenu] = React.useState<MenuState>({ open: false, anchor: null });
+  const [netMenu,  setNetMenu]  = React.useState<MenuState>({ open: false, anchor: null });
   const [timeMenu, setTimeMenu] = React.useState<MenuState>({ open: false, anchor: null });
 
   const openMenuFor = (ref: ElemRef<View>, set: React.Dispatch<React.SetStateAction<MenuState>>) => {
     const node = findNodeHandle((ref as any).current);
     if (!node) return;
-    // @ts-ignore RN types
+    // @ts-ignore
     UIManager.measureInWindow(node, (x: number, y: number, w: number, h: number) => { set({ open: true, anchor: { x, y, w, h } }); });
   };
 
-  /* ---------- Header slots ---------- */
+  /* ---------- Etiquetas i18n ---------- */
+  const { t: _t } = useTranslation(); // (ya tenemos t, pero por claridad)
+  const RANK_ITEMS: { id: RankById; label: string }[] = [
+    { id: "rank",        label: t("swap:filters.rankBy.rank", "Rank") },
+    { id: "volume",      label: t("swap:filters.rankBy.volume", "Volume") },
+    { id: "price",       label: t("swap:filters.rankBy.price", "Price") },
+    { id: "priceChange", label: t("swap:filters.rankBy.priceChange", "Price Change") },
+    { id: "marketCap",   label: t("swap:filters.rankBy.marketCap", "Market Cap") },
+  ];
+  const CHAIN_ITEMS: { id: ChainFilterId; label: string }[] = [
+    { id: "all",      label: t("swap:filters.network.all", "All") },
+    { id: "solana",   label: t("swap:filters.network.solana", "Solana") },
+    { id: "ethereum", label: t("swap:filters.network.ethereum", "Ethereum") },
+    { id: "base",     label: t("swap:filters.network.base", "Base") },
+    { id: "polygon",  label: t("swap:filters.network.polygon", "Polygon") },
+    { id: "bitcoin",  label: t("swap:filters.network.bitcoin", "Bitcoin") },
+  ];
+  const TF_ITEMS: { id: TimeframeId; label: string }[] = [
+    { id: "1h",  label: t("swap:filters.timeframe.1h",  "1h") },
+    { id: "24h", label: t("swap:filters.timeframe.24h", "24h") },
+    { id: "7d",  label: t("swap:filters.timeframe.7d",  "7d") },
+    { id: "30d", label: t("swap:filters.timeframe.30d", "30d") },
+  ];
+
+  /* ---------- Header ---------- */
   const headerCenter = (
     <View style={{ width: "100%", paddingHorizontal: 4 }}>
       <Text style={{ color: "#fff", fontSize: 18, fontWeight: "900", textAlign: "center", marginBottom: HEADER_TITLE_GAP }}>
-        Swap
+        {t("swap:title", "Swap")}
       </Text>
       <SegmentedPills
-        items={ACCOUNTS.map((a) => ({ id: ACCOUNT_IDS[a], label: a }))}
+        items={ACCOUNTS.map((a) => ({ id: ACCOUNT_IDS[a], label: t(`swap:accounts.${ACCOUNT_IDS[a]}`, a) }))}
         activeIndex={index}
-        onPress={(i) => {
-          if (i === index) return;
-          setIndex(i);
-          void Haptics.selectionAsync();
-        }}
+        onPress={(i) => { if (i !== index) { setIndex(i); void Haptics.selectionAsync(); } }}
         progress={Animated.divide(hScrollX, SCREEN_WIDTH)}
         height={PILL_H}
         pillMinWidth={68}
@@ -242,17 +249,9 @@ export default function SwapScreen() {
     </View>
   );
 
-  /* Botón de ajustes en absoluto dentro de rightSlot (fuera de la sombra de las pills) */
   const rightSlotAbsolute = (
-    <View
-      pointerEvents="box-none"
-      style={{
-        position: "absolute",
-        right: RIGHT_BTN_RIGHT,
-        top: HEADER_TITLE_GAP + (PILL_H - ICON_SZ) / 2 + RIGHT_BTN_Y_OFFSET,
-      }}
-    >
-      <Pressable onPress={openSettings} style={styles.iconBtnHeader} hitSlop={8} accessibilityLabel="Open swap settings">
+    <View pointerEvents="box-none" style={{ position: "absolute", right: 16, top: HEADER_TITLE_GAP + (PILL_H - ICON_SZ) / 2 - 21 }}>
+      <Pressable onPress={openSettings} style={styles.iconBtnHeader} hitSlop={8} accessibilityLabel={t("swap:a11y.openSettings", "Open swap settings")}>
         <Ionicons name="options-outline" size={18} color="#fff" />
       </Pressable>
     </View>
@@ -260,10 +259,20 @@ export default function SwapScreen() {
 
   const HEADER_H = insets.top + HEADER_TOPPAD + HEADER_HEIGHT;
 
-  /* ============================ Render helpers ============================ */
-  const slipLabel = settings.slippage.mode === "auto" ? "Auto" : `${settings.slippage.fixedPct}%`;
-  const prioLabel = settings.priority.mode === "auto" ? "Auto" : `${settings.priority.customSol} SOL`;
-  const tipLabel = settings.tip.mode === "auto" ? "Auto (0.05%)" : `${settings.tip.pct}%`;
+  const slipLabel = settings.slippage.mode === "auto" ? t("swap:settings.auto", "Auto") : `${settings.slippage.fixedPct}%`;
+  const prioLabel = settings.priority.mode === "auto" ? t("swap:settings.auto", "Auto") : `${settings.priority.customSol} SOL`;
+  const tipLabel  = settings.tip.mode === "auto" ? t("swap:settings.autoTip", "Auto (0.05%)") : `${settings.tip.pct}%`;
+
+  const SettingsSummary = () => (
+    <Pressable onPress={openSettings} style={{ marginTop: 10, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 12, paddingVertical: 10 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Ionicons name="options-outline" size={16} color="#cfd9de" />
+        <Text style={{ color: "#cfd9de", fontSize: 12, fontWeight: "700" }}>
+          {t("swap:settings.summary", "Settings")}: {t("swap:slippage", "Slippage")} {slipLabel} · {t("swap:priority", "Priority")} {prioLabel} · {t("swap:tip", "Tip")} {tipLabel}
+        </Text>
+      </View>
+    </Pressable>
+  );
 
   const Page = ({ acct }: { acct: Account }) => (
     <Animated.ScrollView
@@ -273,7 +282,7 @@ export default function SwapScreen() {
       showsVerticalScrollIndicator={false}
     >
       <GlassCard style={[styles.card, { paddingTop: 22 }]}>
-        <Text style={[styles.sectionTitle, { marginTop: 6 }]}>You Pay</Text>
+        <Text style={[styles.sectionTitle, { marginTop: 6 }]}>{t("swap:youPay", "You Pay")}</Text>
         <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
@@ -283,19 +292,19 @@ export default function SwapScreen() {
             value={amount}
             onChangeText={setAmount}
           />
-          <Pressable onPress={() => openSelectToken("pay")} style={styles.pill} accessibilityLabel="Select pay token">
+          <Pressable onPress={() => openSelectToken("pay")} style={styles.pill} accessibilityLabel={t("swap:a11y.selectPayToken", "Select pay token")}>
             <Text style={styles.pillTxt}>{payToken?.symbol ?? "—"}</Text>
           </Pressable>
         </View>
 
-        <Pressable onPress={doFlip} style={styles.swapIconWrap} hitSlop={8} accessibilityLabel="Flip tokens">
+        <Pressable onPress={doFlip} style={styles.swapIconWrap} hitSlop={8} accessibilityLabel={t("swap:a11y.flip", "Flip tokens")}>
           <Text style={styles.swapIcon}>⇅</Text>
         </Pressable>
 
-        <Text style={[styles.sectionTitle, { marginTop: 10 }]}>You Receive</Text>
+        <Text style={[styles.sectionTitle, { marginTop: 10 }]}>{t("swap:youReceive", "You Receive")}</Text>
         <View style={styles.inputRow}>
           <Text style={[styles.input, { color: "#9eb4bd" }]}>0</Text>
-          <Pressable onPress={() => openSelectToken("receive")} style={styles.pill} accessibilityLabel="Select receive token">
+          <Pressable onPress={() => openSelectToken("receive")} style={styles.pill} accessibilityLabel={t("swap:a11y.selectReceiveToken", "Select receive token")}>
             <Text style={styles.pillTxt}>{receiveToken?.symbol ?? "—"}</Text>
           </Pressable>
         </View>
@@ -304,40 +313,45 @@ export default function SwapScreen() {
           style={styles.primaryBtn}
           onPress={() =>
             Alert.alert(
-              "Swap (mock)",
-              `Account: ${acct}\nPay: ${amount || 0} ${payToken?.symbol ?? ""} → Receive: ${receiveToken?.symbol ?? ""}\nSlippage: ${slipLabel}\nPriority Fee: ${prioLabel}\nTip: ${tipLabel}`
+              t("swap:mock.title", "Swap (mock)"),
+              t("swap:mock.body", "Account: {{acct}}\nPay: {{amount}} {{pay}}\nReceive: {{receive}}\nSlippage: {{slip}}\nPriority Fee: {{prio}}\nTip: {{tip}}", {
+                acct, amount: amount || 0, pay: payToken?.symbol ?? "", receive: receiveToken?.symbol ?? "", slip: slipLabel, prio: prioLabel, tip: tipLabel,
+              })
             )
           }
         >
-          <Text style={styles.primaryTxt}>Swap</Text>
+          <Text style={styles.primaryTxt}>{t("swap:cta.swap", "Swap")}</Text>
         </Pressable>
+
+        {/* ✅ resumen rápido que abre el sheet */}
+        <SettingsSummary />
       </GlassCard>
 
       <View style={{ height: 14 }} />
 
       <GlassCard style={[styles.card, { paddingTop: 12 }]}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 2, marginBottom: 8 }}>
-          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "900" }}>Trending</Text>
+          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "900" }}>{t("swap:trending", "Trending")}</Text>
         </View>
 
         <View style={styles.filtersBar}>
           <View ref={rankBtnRef}>
             <Pressable onPress={() => openMenuFor(rankBtnRef, setRankMenu)} style={styles.filterBtn}>
-              <Text style={styles.filterBtnTxt}>{rankBy}</Text>
+              <Text style={styles.filterBtnTxt}>{RANK_ITEMS.find(i => i.id === rankBy)?.label}</Text>
               <Ionicons name="chevron-down" size={14} color="#fff" />
             </Pressable>
           </View>
 
           <View ref={netBtnRef}>
             <Pressable onPress={() => openMenuFor(netBtnRef, setNetMenu)} style={styles.filterBtn}>
-              <Text style={styles.filterBtnTxt}>{chain}</Text>
+              <Text style={styles.filterBtnTxt}>{CHAIN_ITEMS.find(i => i.id === chain)?.label}</Text>
               <Ionicons name="chevron-down" size={14} color="#fff" />
             </Pressable>
           </View>
 
           <View ref={timeBtnRef}>
             <Pressable onPress={() => openMenuFor(timeBtnRef, setTimeMenu)} style={styles.filterBtn}>
-              <Text style={styles.filterBtnTxt}>{tf}</Text>
+              <Text style={styles.filterBtnTxt}>{TF_ITEMS.find(i => i.id === tf)?.label}</Text>
               <Ionicons name="chevron-down" size={14} color="#fff" />
             </Pressable>
           </View>
@@ -349,8 +363,8 @@ export default function SwapScreen() {
               key={item.id}
               onPress={() =>
                 Alert.alert(
-                  "Token",
-                  `${item.name} • ${item.chain}\nMC $${fmt(item.mc_usd)} • Vol $${fmt(item.vol_usd)}\n${item.change_pct.toFixed(2)}%`
+                  t("swap:tokenSheet.title", "Token"),
+                  `${item.name} • ${CHAIN_ITEMS.find(c => c.id === item.chain)?.label}\n${t("swap:metrics.mc", "MC")} $${fmt(item.mc_usd)} • ${t("swap:metrics.vol", "Vol")} $${fmt(item.vol_usd)}\n${item.change_pct.toFixed(2)}%`
                 )
               }
               style={styles.row}
@@ -360,7 +374,7 @@ export default function SwapScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.rowSub}>${fmt(item.mc_usd)} MC   ·   ${fmt(item.vol_usd)} Vol</Text>
+                <Text style={styles.rowSub}>${fmt(item.mc_usd)} {t("swap:metrics.mc", "MC")}   ·   ${fmt(item.vol_usd)} {t("swap:metrics.vol", "Vol")}</Text>
               </View>
               <Text style={[styles.rowPrice, { color: item.change_pct >= 0 ? "#20d690" : "#ff6b6b" }]}>
                 {item.change_pct >= 0 ? "+" : ""}{item.change_pct.toFixed(2)}%
@@ -389,7 +403,6 @@ export default function SwapScreen() {
         showBottomHairline={false}
       />
 
-      {/* Pager horizontal controlado */}
       <SegmentedPager<Account>
         items={ACCOUNTS}
         index={index}
@@ -400,30 +413,36 @@ export default function SwapScreen() {
         style={{ flexGrow: 0 }}
       />
 
-      {/* Menús Popover */}
+      {/* ✅ Bottom Sheet de settings */}
+      <SwapSettingsSheet
+        visible={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
+
+      {/* Menús */}
       <PopoverMenu
         visible={rankMenu.open}
         anchor={rankMenu.anchor}
         onClose={() => setRankMenu({ open: false, anchor: null })}
-        items={["Rank", "Volume", "Price", "Price Change", "Market Cap"]}
+        items={RANK_ITEMS}
         value={rankBy}
-        onSelect={(v) => setRankBy(v as RankBy)}
+        onSelect={setRankBy}
       />
       <PopoverMenu
         visible={netMenu.open}
         anchor={netMenu.anchor}
         onClose={() => setNetMenu({ open: false, anchor: null })}
-        items={["All", "Solana", "Ethereum", "Base", "Polygon", "Bitcoin"]}
+        items={CHAIN_ITEMS}
         value={chain}
-        onSelect={(v) => setChain(v as ChainFilter)}
+        onSelect={setChain}
       />
       <PopoverMenu
         visible={timeMenu.open}
         anchor={timeMenu.anchor}
         onClose={() => setTimeMenu({ open: false, anchor: null })}
-        items={["1h", "24h", "7d", "30d"]}
+        items={TF_ITEMS}
         value={tf}
-        onSelect={(v) => setTf(v as Timeframe)}
+        onSelect={setTf}
       />
     </SafeAreaView>
   );
@@ -435,101 +454,27 @@ const fmt = (n: number) =>
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-
-  /* Botón del header */
-  iconBtnHeader: {
-    width: ICON_SZ,
-    height: ICON_SZ,
-    borderRadius: ICON_SZ / 2,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.10)",
-  },
-
-  /* Cards (Glass) */
-  card: {
-    marginHorizontal: 16,
-    paddingHorizontal: 18,
-    paddingBottom: 18,
-    borderRadius: 18,
-  },
-
-  /* Swap controls */
-  sectionTitle: {
-    color: TEXT,
-    fontSize: 12,
-    letterSpacing: 0.3,
-    marginBottom: 10,
-    fontWeight: "800",
-  },
+  iconBtnHeader: { width: ICON_SZ, height: ICON_SZ, borderRadius: ICON_SZ / 2, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.10)" },
+  card: { marginHorizontal: 16, paddingHorizontal: 18, paddingBottom: 18, borderRadius: 18 },
+  sectionTitle: { color: TEXT, fontSize: 12, letterSpacing: 0.3, marginBottom: 10, fontWeight: "800" },
   inputRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
-  input: {
-    flex: 1,
-    height: 46,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.08)",
-    paddingHorizontal: 10,
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  pill: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
+  input: { flex: 1, height: 46, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255,255,255,0.08)", paddingHorizontal: 10, color: "#fff", fontSize: 18, fontWeight: "800" },
+  pill: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.08)" },
   pillTxt: { color: "#fff", fontWeight: "700", fontSize: 12 },
   swapIconWrap: { alignItems: "center", marginVertical: 6 },
   swapIcon: { color: "#cdbdff", fontSize: 18, fontWeight: "900" },
-
-  primaryBtn: {
-    marginTop: 14,
-    height: 46,
-    borderRadius: 12,
-    backgroundColor: YELLOW,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  primaryBtn: { marginTop: 14, height: 46, borderRadius: 12, backgroundColor: YELLOW, alignItems: "center", justifyContent: "center" },
   primaryTxt: { color: "#0A1A24", fontSize: 15, fontWeight: "800" },
-
-  /* Filters */
   filtersBar: { flexDirection: "row", gap: 8, marginBottom: 10 },
-  filterBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.10)",
-  },
+  filterBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.10)" },
   filterBtnTxt: { color: "#fff", fontWeight: "800", fontSize: 12 },
-
-  /* Trending list */
   row: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
   rank: { color: "#9eb4bd", fontWeight: "800", fontSize: 12 },
   rowName: { color: "#fff", fontWeight: "700", fontSize: 14 },
   rowSub: { color: "#9eb4bd", fontSize: 12, marginTop: 2 },
   rowPrice: { fontWeight: "800", fontSize: 13 },
-
-  /* Popover */
   popoverBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "transparent" },
-  popover: {
-    position: "absolute",
-    backgroundColor: "rgba(20,27,33,0.98)",
-    borderRadius: 14,
-    paddingVertical: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.09)",
-    minWidth: 180,
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 10,
-  },
+  popover: { position: "absolute", backgroundColor: "rgba(20,27,33,0.98)", borderRadius: 14, paddingVertical: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255,255,255,0.09)", minWidth: 180, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, elevation: 10 },
   popoverItem: { paddingHorizontal: 14, paddingVertical: 10 },
   popoverItemFirst: { borderTopLeftRadius: 14, borderTopRightRadius: 14 },
   popoverItemLast: { borderBottomLeftRadius: 14, borderBottomRightRadius: 14 },

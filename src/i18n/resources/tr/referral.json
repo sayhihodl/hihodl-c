@@ -1,0 +1,18 @@
+{
+  "endsSoon": "Yakında bitiyor",
+  "heroTitle": "Arkadaş başına {{amount}} kazan",
+  "lead": "Arkadaşlarının tamamlaması için 7 günü var",
+  "steps": [
+    { "title": "Bağlantınla kayıt olsun", "sub": "Ve kimliğini doğrulasın" },
+    { "title": "Hesabına para eklesin", "sub": "Kartla veya banka havalesiyle" },
+    { "title": "10$+ tutarında 3 alışveriş yapsın", "sub": "‘Nakit benzeri’ işlemler sayılmaz" },
+    { "title": "Fiziksel kart sipariş etsin", "sub": "Apple/Google Pay’e ekleyip temassız ödesin" }
+  ],
+  "pastInvites": "Geçmiş davetler",
+  "promoNote": { "text": "Kampanya sürelidir.", "link": "Şartlar", "tail": "geçerlidir" },
+  "ctaInvite": "Arkadaşları davet et",
+  "tcsTitle": "Koşullar",
+  "tcsBody": "Her arkadaşın, kayıttan itibaren 7 gün içinde adımları tamamlar. Bittiğinde bildirim göndeririz. Sıfırlanmaz.",
+  "close": "Kapat",
+  "shareMessage": "Bağlantımla HiHODL’a katıl ve ödüller kazan: {{link}}"
+}

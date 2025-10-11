@@ -1,0 +1,10 @@
+{
+  "title": "Malipo",
+  "searchPh": "Tafuta",
+  "noPayments": "Hakuna malipo",
+  "filters": {
+    "accountFilter": "Kichujio cha akaunti",
+    "selectAll": "Chagua zote",
+    "apply": "Tumia"
+  }
+}

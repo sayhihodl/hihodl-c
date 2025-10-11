@@ -1,0 +1,17 @@
+{
+  "title": "Sécurité",
+  "appLock": "Verrouillage de l’application",
+  "passcode": "Code d’accès",
+  "enabled": "Activé",
+  "disabled": "Désactivé",
+  "biometrics": "Face/Touch ID",
+  "autoLock": "Verrouillage automatique",
+  "sessions": "Sessions",
+  "activeSessions": "Sessions actives",
+  "viewDevices": "Voir les appareils",
+  "signOutAll": "Se déconnecter de tous les appareils",
+  "confirmSignOutAll": "Cela révoquera toutes les sessions.",
+  "recovery": "Récupération",
+  "recoveryPhrase": "Phrase de récupération",
+  "backedUpVerify": "Sauvegardé • Vérifier"
+}

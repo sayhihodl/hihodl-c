@@ -98,3 +98,9 @@ export const legacy = {
 } as const;
 
 export default colors;
+
+export const glass = {
+  sheetTint:  "rgba(6,14,20,0.55)",   // fondo del modal — más sólido
+  cardOnSheet:"rgba(255,255,255,0.08)",// fondo de los rows sobre el modal
+  cardBorder: "rgba(255,255,255,0.12)",// borde para separar del blur
+} as const;

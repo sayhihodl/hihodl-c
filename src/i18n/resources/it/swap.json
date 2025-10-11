@@ -1,0 +1,36 @@
+{
+  "title": "Swap",
+  "youPay": "Paghi",
+  "youReceive": "Ricevi",
+  "trending": "Tendenza",
+  "cta": { "swap": "Esegui swap" },
+
+  "accounts": { "daily": "Giornaliero", "savings": "Risparmio", "social": "Social" },
+
+  "filters": {
+    "rankBy": { "rank": "Classifica", "volume": "Volume", "price": "Prezzo", "priceChange": "Variazione", "marketCap": "Capitalizzazione" },
+    "network": { "all": "Tutte", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1 h", "24h": "24 h", "7d": "7 g", "30d": "30 g" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "Impostazioni swap",
+    "slippage": { "title": "Slippage", "auto": "Auto", "help": "Consigliato: 0,5–1% per i principali; 2–3% per coppie volatili." },
+    "priority": { "title": "Commissione prioritaria", "auto": "Auto", "help": "Priorità più alta accelera la conferma durante la congestione." },
+    "tip": { "title": "Mancia", "auto": "Auto (0,05%)", "help": "Una piccola mancia aiuta il relayer/routing di liquidità." }
+  },
+
+  "a11y": {
+    "openSettings": "Apri impostazioni dello swap",
+    "selectPayToken": "Seleziona token di pagamento",
+    "selectReceiveToken": "Seleziona token di ricezione",
+    "flip": "Inverti token"
+  },
+
+  "mock": {
+    "title": "Swap (mock)",
+    "body": "Conto: {{acct}}\\nPaghi: {{amount}} {{pay}}\\nRicevi: {{receive}}\\nSlippage: {{slip}}\\nComm. prioritaria: {{prio}}\\nMancia: {{tip}}"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "title": "Panoramica",
+
+  "accounts": {
+    "daily": "Quotidiano",
+    "savings": "Risparmio",
+    "social": "Social"
+  },
+
+  "actions": {
+    "receive": "Ricevere",
+    "send": "Inviare",
+    "swap": "Scambiare",
+    "cards": "Carte"
+  },
+
+  "assets": {
+    "viewAll": "Vedi tutto",
+    "addToken": "Aggiungi token",
+    "searchTokensPh": "Cerca token (ETH, SOL, USDC...)",
+    "recommendedNetwork": "Rete consigliata",
+    "tapToAdd": "Tocca per aggiungere"
+  },
+
+  "dates": {
+    "today": "Oggi",
+    "yesterday": "Ieri"
+  },
+
+  "payments": {
+    "recentActivity": "Attività recente",
+    "viewAll": "Vedi tutto"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "Invita amici e guadagna 60 €",
+      "body": "Guadagna 60 € per ogni amico invitato entro il 9 settembre.",
+      "legal": "Si applicano Termini e Condizioni"
+    },
+    "keys": {
+      "title": "Proteggi le tue chiavi private",
+      "body": "Non condividerle mai. Non te le chiederemo mai."
+    },
+    "notYourKeys": {
+      "title": "Ricorda: non le tue chiavi, non i tuoi fondi",
+      "body": "Resta al sicuro con HIHODL."
+    }
+  },
+
+  "a11y": {
+    "openMenu": "Apri menu",
+    "openScanner": "Apri scanner",
+    "openCards": "Apri carte",
+    "toggleFiat": "Tocca per cambiare valuta; tieni premuto per mostrare i piccoli saldi",
+    "openAsset": "Apri {{name}}",
+    "openTx": "Apri transazione {{title}}"
+  },
+
+  "dismiss": "Chiudi"
+}

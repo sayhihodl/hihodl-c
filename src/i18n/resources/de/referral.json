@@ -1,0 +1,18 @@
+{
+  "endsSoon": "Endet bald",
+  "heroTitle": "Verdiene {{amount}} pro Freund",
+  "lead": "Deine Freunde haben 7 Tage, um",
+  "steps": [
+    { "title": "Mit deinem Link registrieren", "sub": "Und ihre Identität verifizieren" },
+    { "title": "Geld auf das Konto einzahlen", "sub": "Per Karte oder Banküberweisung" },
+    { "title": "3 Käufe über 10 $ tätigen", "sub": "„Cash-like“-Transaktionen zählen nicht" },
+    { "title": "Physische Karte bestellen", "sub": "Zu Apple/Google Pay hinzufügen und kontaktlos zahlen" }
+  ],
+  "pastInvites": "Frühere Einladungen",
+  "promoNote": { "text": "Die Aktion ist zeitlich begrenzt.", "link": "AGB", "tail": "gelten" },
+  "ctaInvite": "Freunde einladen",
+  "tcsTitle": "Bedingungen",
+  "tcsBody": "Jeder Freund hat ab der Anmeldung 7 Tage, um alle Schritte abzuschließen. Am Ende senden wir eine Push-Benachrichtigung. Keine Zurücksetzung.",
+  "close": "Schließen",
+  "shareMessage": "Tritt HiHODL über meinen Link bei und erhalte Rewards: {{link}}"
+}

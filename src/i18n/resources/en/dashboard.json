@@ -1,0 +1,61 @@
+{
+  "title": "Dashboard",
+
+  "accounts": {
+    "daily": "Daily",
+    "savings": "Savings",
+    "social": "Social"
+  },
+
+  "actions": {
+    "receive": "Receive",
+    "send": "Send",
+    "swap": "Swap",
+    "cards": "Cards"
+  },
+
+  "assets": {
+    "viewAll": "View all",
+    "addToken": "Add token",
+    "searchTokensPh": "Search tokens (ETH, SOL, USDC...)",
+    "recommendedNetwork": "Recommended network",
+    "tapToAdd": "Tap to add"
+  },
+
+  "dates": {
+    "today": "Today",
+    "yesterday": "Yesterday"
+  },
+
+  "payments": {
+    "recentActivity": "Recent activity",
+    "viewAll": "View all"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "Invite friends and earn €60",
+      "body": "Earn €60 for every friend you invite before September 9.",
+      "legal": "Terms and conditions apply"
+    },
+    "keys": {
+      "title": "Take care of your private keys",
+      "body": "Never share them. We will never ask for them."
+    },
+    "notYourKeys": {
+      "title": "Remember: not your keys, not your money",
+      "body": "Stay safe with HIHODL."
+    }
+  },
+
+  "a11y": {
+    "openMenu": "Open menu",
+    "openScanner": "Open scanner",
+    "openCards": "Open cards",
+    "toggleFiat": "Tap to switch currency; long press to toggle small balances",
+    "openAsset": "Open {{name}}",
+    "openTx": "Open transaction {{title}}"
+  },
+
+  "dismiss": "Close"
+}

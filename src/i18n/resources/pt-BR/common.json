@@ -1,0 +1,8 @@
+{
+  "language": "Idioma",
+  "actions": { "save": "Salvar", "cancel": "Cancelar", "continue": "Continuar" },
+  "tabs": { "home": "Início", "referral": "Indicações", "swap": "Troca", "payments": "Pagamentos", "discover": "Descobrir" },
+  "status": { "connected": "Conectado", "notConnected": "Não conectado", "comingSoon": "Em breve", "disabledMVP": "Desativado no MVP" },
+  "cards": { "open": "Abrir cartões" },
+  "cta": { "manageCards": "Gerir cartões no Dashboard" }
+}

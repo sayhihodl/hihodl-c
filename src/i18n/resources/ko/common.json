@@ -1,0 +1,8 @@
+{
+  "language": "언어",
+  "actions": { "save": "저장", "cancel": "취소", "continue": "계속" },
+  "tabs": { "home": "홈", "referral": "추천", "swap": "스왑", "payments": "결제", "discover": "탐색" },
+  "status": { "connected": "연결됨", "notConnected": "연결 안 됨", "comingSoon": "곧 제공", "disabledMVP": "MVP에서 비활성화" },
+  "cards": { "open": "카드 열기" },
+  "cta": { "manageCards": "대시보드에서 카드 관리" }
+}

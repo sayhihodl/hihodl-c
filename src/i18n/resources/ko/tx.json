@@ -1,0 +1,27 @@
+{
+  "received": "수신됨",
+  "sent": "전송됨",
+  "refunded": "환불됨",
+  "date": "날짜",
+  "status": "상태",
+  "from": "보낸 사람",
+  "to": "받는 사람",
+  "network": "네트워크",
+  "transaction": "트랜잭션",
+  "amount": "금액",
+  "fiat": "법정화폐",
+  "networkFee": "네트워크 수수료",
+  "status_succeeded": "성공",
+  "status_failed": "실패",
+  "status_pending": "대기 중",
+  "action_receive": "받기",
+  "action_send": "보내기",
+  "action_swap": "스왑",
+  "viewOnExplorer": "{{brand}}에서 보기",
+  "explorers": {
+    "etherscan": "이더스캔",
+    "basescan": "베이스스캔",
+    "polygonscan": "폴리곤스캔",
+    "solscan": "솔스캔"
+  }
+}

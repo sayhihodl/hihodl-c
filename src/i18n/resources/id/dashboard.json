@@ -1,0 +1,61 @@
+{
+  "title": "Dasbor",
+
+  "accounts": {
+    "daily": "Harian",
+    "savings": "Tabungan",
+    "social": "Sosial"
+  },
+
+  "actions": {
+    "receive": "Terima",
+    "send": "Kirim",
+    "swap": "Tukar",
+    "cards": "Kartu"
+  },
+
+  "assets": {
+    "viewAll": "Lihat semua",
+    "addToken": "Tambahkan token",
+    "searchTokensPh": "Cari token (ETH, SOL, USDC...)",
+    "recommendedNetwork": "Jaringan yang direkomendasikan",
+    "tapToAdd": "Ketuk untuk menambahkan"
+  },
+
+  "dates": {
+    "today": "Hari ini",
+    "yesterday": "Kemarin"
+  },
+
+  "payments": {
+    "recentActivity": "Aktivitas terbaru",
+    "viewAll": "Lihat semua"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "Undang teman dan dapatkan €60",
+      "body": "Dapatkan €60 untuk setiap teman yang kamu undang sebelum 9 September.",
+      "legal": "Syarat dan ketentuan berlaku"
+    },
+    "keys": {
+      "title": "Jaga kunci privat Anda",
+      "body": "Jangan pernah membagikannya. Kami tidak akan pernah memintanya."
+    },
+    "notYourKeys": {
+      "title": "Ingat: bukan kuncimu, bukan uangmu",
+      "body": "Tetap aman bersama HIHODL."
+    }
+  },
+
+  "a11y": {
+    "openMenu": "Buka menu",
+    "openScanner": "Buka pemindai",
+    "openCards": "Buka kartu",
+    "toggleFiat": "Ketuk untuk ganti mata uang; tekan lama untuk menampilkan saldo kecil",
+    "openAsset": "Buka {{name}}",
+    "openTx": "Buka transaksi {{title}}"
+  },
+
+  "dismiss": "Tutup"
+}

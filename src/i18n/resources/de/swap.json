@@ -1,0 +1,36 @@
+{
+  "title": "Tauschen",
+  "youPay": "Du zahlst",
+  "youReceive": "Du erhältst",
+  "trending": "Trends",
+  "cta": { "swap": "Tauschen" },
+
+  "accounts": { "daily": "Alltag", "savings": "Sparen", "social": "Social" },
+
+  "filters": {
+    "rankBy": { "rank": "Rang", "volume": "Volumen", "price": "Preis", "priceChange": "Preisänderung", "marketCap": "Marktkap." },
+    "network": { "all": "Alle", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1 Std", "24h": "24 Std", "7d": "7 T", "30d": "30 T" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "Swap-Einstellungen",
+    "slippage": { "title": "Slippage", "auto": "Auto", "help": "Empfohlen: 0,5–1 % für große Paare, 2–3 % für volatile Paare." },
+    "priority": { "title": "Prioritätsgebühr", "auto": "Auto", "help": "Höhere Priorität beschleunigt Bestätigungen bei Überlastung." },
+    "tip": { "title": "Trinkgeld", "auto": "Auto (0,05 %)", "help": "Kleines Trinkgeld unterstützt Relayer/Routing." }
+  },
+
+  "a11y": {
+    "openSettings": "Swap-Einstellungen öffnen",
+    "selectPayToken": "Zahl-Token auswählen",
+    "selectReceiveToken": "Empfangs-Token auswählen",
+    "flip": "Tokens tauschen"
+  },
+
+  "mock": {
+    "title": "Tausch (Mock)",
+    "body": "Konto: {{acct}}\\nZahlung: {{amount}} {{pay}}\\nErhalt: {{receive}}\\nSlippage: {{slip}}\\nPrioritätsgebühr: {{prio}}\\nTrinkgeld: {{tip}}"
+  }
+}

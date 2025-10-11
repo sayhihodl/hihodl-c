@@ -1,0 +1,36 @@
+{
+  "title": "兑换",
+  "youPay": "支付",
+  "youReceive": "收到",
+  "trending": "趋势",
+  "cta": { "swap": "兑换" },
+
+  "accounts": { "daily": "日用账户", "savings": "储蓄账户", "social": "社交账户" },
+
+  "filters": {
+    "rankBy": { "rank": "排行", "volume": "成交量", "price": "价格", "priceChange": "涨跌幅", "marketCap": "市值" },
+    "network": { "all": "全部", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1小时", "24h": "24小时", "7d": "7天", "30d": "30天" }
+  },
+
+  "metrics": { "mc": "市值", "vol": "量" },
+
+  "settings": {
+    "title": "兑换设置",
+    "slippage": { "title": "滑点", "auto": "自动", "help": "建议：主流币 0.5–1%，波动较大 2–3%。" },
+    "priority": { "title": "优先费用", "auto": "自动", "help": "提高优先级可在拥堵时加快确认。" },
+    "tip": { "title": "小费", "auto": "自动（0.05%）", "help": "少量小费有助于转发/流动性路由。" }
+  },
+
+  "a11y": {
+    "openSettings": "打开兑换设置",
+    "selectPayToken": "选择支付代币",
+    "selectReceiveToken": "选择接收代币",
+    "flip": "互换代币"
+  },
+
+  "mock": {
+    "title": "兑换（模拟）",
+    "body": "账户：{{acct}}\\n支付：{{amount}} {{pay}}\\n收到：{{receive}}\\n滑点：{{slip}}\\n优先费：{{prio}}\\n小费：{{tip}}"
+  }
+}

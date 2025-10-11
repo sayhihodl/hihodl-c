@@ -1,0 +1,18 @@
+{
+  "endsSoon": "Sắp kết thúc",
+  "heroTitle": "Nhận {{amount}} cho mỗi bạn bè",
+  "lead": "Bạn bè của bạn có 7 ngày để hoàn thành",
+  "steps": [
+    { "title": "Đăng ký bằng liên kết của bạn", "sub": "Và xác minh danh tính" },
+    { "title": "Nạp tiền vào tài khoản", "sub": "Qua thẻ ghi nợ hoặc chuyển khoản" },
+    { "title": "Thực hiện 3 giao dịch từ $10+", "sub": "Giao dịch kiểu ‘tiền mặt’ không tính" },
+    { "title": "Đặt thẻ vật lý", "sub": "Thêm vào Apple/Google Pay để thanh toán không chạm" }
+  ],
+  "pastInvites": "Lời mời trước đây",
+  "promoNote": { "text": "Khuyến mãi có thời hạn.", "link": "Điều khoản", "tail": "áp dụng" },
+  "ctaInvite": "Mời bạn bè",
+  "tcsTitle": "Điều kiện",
+  "tcsBody": "Mỗi bạn có 7 ngày kể từ khi đăng ký để hoàn tất. Kết thúc chúng tôi sẽ gửi thông báo. Không đặt lại.",
+  "close": "Đóng",
+  "shareMessage": "Tham gia HiHODL bằng liên kết của tôi để nhận thưởng: {{link}}"
+}

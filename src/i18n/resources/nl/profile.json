@@ -1,0 +1,16 @@
+{
+  "title": "Profiel",
+  "about": "Over",
+  "username": "Gebruikersnaam",
+  "helperUsername": "Moet beginnen met @ en 3–24 tekens bevatten (a–z, 0–9, _)",
+  "checking": "Controleren…",
+  "available": "Gebruikersnaam is beschikbaar ✓",
+  "taken": "Gebruikersnaam is niet beschikbaar ⚠︎",
+  "connectedAccounts": "Verbonden accounts",
+  "email": "E-mail",
+  "google": "Google",
+  "selectAvatar": "Avatar kiezen",
+  "emojis": "Emojis",
+  "collectiblesSoon": "Collectibles • binnenkort",
+  "searchPlaceholder": "Zoeken… raket, maan, diamant…"
+}

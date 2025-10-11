@@ -1,0 +1,27 @@
+{
+  "received": "受信済み",
+  "sent": "送信済み",
+  "refunded": "返金済み",
+  "date": "日付",
+  "status": "ステータス",
+  "from": "送信者",
+  "to": "受信者",
+  "network": "ネットワーク",
+  "transaction": "トランザクション",
+  "amount": "金額",
+  "fiat": "法定通貨",
+  "networkFee": "ネットワーク手数料",
+  "status_succeeded": "成功",
+  "status_failed": "失敗",
+  "status_pending": "保留中",
+  "action_receive": "受け取る",
+  "action_send": "送る",
+  "action_swap": "スワップ",
+  "viewOnExplorer": "{{brand}} で表示",
+  "explorers": {
+    "etherscan": "Etherscan",
+    "basescan": "BaseScan",
+    "polygonscan": "PolygonScan",
+    "solscan": "Solscan"
+  }
+}

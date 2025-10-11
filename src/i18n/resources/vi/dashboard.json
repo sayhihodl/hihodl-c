@@ -1,0 +1,61 @@
+{
+  "title": "Bảng điều khiển",
+
+  "accounts": {
+    "daily": "Hàng ngày",
+    "savings": "Tiết kiệm",
+    "social": "Xã hội"
+  },
+
+  "actions": {
+    "receive": "Nhận",
+    "send": "Gửi",
+    "swap": "Hoán đổi",
+    "cards": "Thẻ"
+  },
+
+  "assets": {
+    "viewAll": "Xem tất cả",
+    "addToken": "Thêm token",
+    "searchTokensPh": "Tìm token (ETH, SOL, USDC...)",
+    "recommendedNetwork": "Mạng được đề xuất",
+    "tapToAdd": "Nhấn để thêm"
+  },
+
+  "dates": {
+    "today": "Hôm nay",
+    "yesterday": "Hôm qua"
+  },
+
+  "payments": {
+    "recentActivity": "Hoạt động gần đây",
+    "viewAll": "Xem tất cả"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "Mời bạn bè và nhận €60",
+      "body": "Nhận €60 cho mỗi người bạn được mời trước ngày 9 tháng 9.",
+      "legal": "Áp dụng điều khoản và điều kiện"
+    },
+    "keys": {
+      "title": "Bảo vệ khóa riêng tư của bạn",
+      "body": "Không bao giờ chia sẻ. Chúng tôi sẽ không bao giờ yêu cầu."
+    },
+    "notYourKeys": {
+      "title": "Hãy nhớ: không có khóa, không có tiền",
+      "body": "Giữ an toàn cùng HIHODL."
+    }
+  },
+
+  "a11y": {
+    "openMenu": "Mở menu",
+    "openScanner": "Mở trình quét",
+    "openCards": "Mở thẻ",
+    "toggleFiat": "Chạm để đổi đơn vị tiền; nhấn giữ để hiển thị số dư nhỏ",
+    "openAsset": "Mở {{name}}",
+    "openTx": "Mở giao dịch {{title}}"
+  },
+
+  "dismiss": "Đóng"
+}

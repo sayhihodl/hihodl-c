@@ -1,17 +1,7 @@
-import React from "react";
-import { Platform } from "react-native";
+// app/(drawer)/(internal)/referral/_layout.tsx
 import { Stack } from "expo-router";
+import { pushOptions } from "@/nav/stackOptions";
 
 export default function ReferralStack() {
-  return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        gestureEnabled: true,
-        fullScreenGestureEnabled: true,
-        animation: Platform.select({ ios: "slide_from_right", android: "fade", default: "fade" }),
-        contentStyle: { backgroundColor: "#0D1820" },
-      }}
-    />
-  );
+  return <Stack screenOptions={pushOptions} />;
 }

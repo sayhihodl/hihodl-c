@@ -65,9 +65,17 @@ export function useSmartBack({
 
   const attachToNavigation = React.useCallback(
     (navigation: any) => {
-      const parent = navigation.getParent?.(drawerId) ?? navigation.getParent?.();
-      parent?.dispatch?.(DrawerActions.closeDrawer());
-      parent?.setOptions?.({ swipeEnabled: false, swipeEdgeWidth: 0 });
+      // Busca el primer ancestro que sea un Drawer
+      let parent = navigation?.getParent?.(drawerId) ?? navigation?.getParent?.();
+      const isDrawer = (nav: any) => nav?.getState?.()?.type === "drawer";
+      while (parent && !isDrawer(parent)) {
+        parent = parent.getParent?.();
+      }
+      // Solo cierra si realmente estamos dentro de un Drawer
+      if (parent && isDrawer(parent)) {
+        parent.dispatch?.(DrawerActions.closeDrawer());
+        parent.setOptions?.({ swipeEnabled: false, swipeEdgeWidth: 0 });
+      }
 
       const subBefore = navigation.addListener("beforeRemove", (e: any) => {
         if (e?.data?.action?.type === "REPLACE") return;

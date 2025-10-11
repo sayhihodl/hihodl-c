@@ -1,0 +1,10 @@
+{
+  "title": "付款",
+  "searchPh": "搜索",
+  "noPayments": "暂无付款记录",
+  "filters": {
+    "accountFilter": "账户筛选",
+    "selectAll": "全选",
+    "apply": "应用"
+  }
+}

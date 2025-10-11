@@ -1,0 +1,36 @@
+{
+  "title": "مبادلة",
+  "youPay": "ستدفع",
+  "youReceive": "ستستلم",
+  "trending": "الرائج",
+  "cta": { "swap": "مبادلة" },
+
+  "accounts": { "daily": "اليومية", "savings": "الادخار", "social": "الاجتماعي" },
+
+  "filters": {
+    "rankBy": { "rank": "الترتيب", "volume": "الحجم", "price": "السعر", "priceChange": "تغير السعر", "marketCap": "القيمة السوقية" },
+    "network": { "all": "الكل", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1س", "24h": "24س", "7d": "7أ", "30d": "30أ" }
+  },
+
+  "metrics": { "mc": "القيمة", "vol": "الحجم" },
+
+  "settings": {
+    "title": "إعدادات المبادلة",
+    "slippage": { "title": "الانزلاق السعري", "auto": "تلقائي", "help": "موصى به: ‎0.5–1٪ للأزواج الكبرى، ‎2–3٪ للأزواج المتقلبة." },
+    "priority": { "title": "رسوم أولوية", "auto": "تلقائي", "help": "الأولوية الأعلى تُسرّع التأكيد عند الازدحام." },
+    "tip": { "title": "إكرامية", "auto": "تلقائي (0.05٪)", "help": "إكرامية صغيرة تدعم الموجّه/المُرحِّل." }
+  },
+
+  "a11y": {
+    "openSettings": "فتح إعدادات المبادلة",
+    "selectPayToken": "اختر رمز الدفع",
+    "selectReceiveToken": "اختر رمز الاستلام",
+    "flip": "تبديل الرموز"
+  },
+
+  "mock": {
+    "title": "مبادلة (تجريب)",
+    "body": "الحساب: {{acct}}\\nالدفع: {{amount}} {{pay}}\\nالاستلام: {{receive}}\\nالانزلاق: {{slip}}\\nرسوم الأولوية: {{prio}}\\nإكرامية: {{tip}}"
+  }
+}

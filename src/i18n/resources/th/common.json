@@ -1,0 +1,8 @@
+{
+  "language": "ภาษา",
+  "actions": { "save": "บันทึก", "cancel": "ยกเลิก", "continue": "ดำเนินการต่อ" },
+  "tabs": { "home": "หน้าแรก", "referral": "แนะนำ", "swap": "สลับ", "payments": "การชำระเงิน", "discover": "สำรวจ" },
+  "status": { "connected": "เชื่อมต่อแล้ว", "notConnected": "ยังไม่เชื่อมต่อ", "comingSoon": "เร็วๆ นี้", "disabledMVP": "ปิดใช้งานใน MVP" },
+  "cards": { "open": "เปิดบัตร" },
+  "cta": { "manageCards": "จัดการบัตรในแดชบอร์ด" }
+}

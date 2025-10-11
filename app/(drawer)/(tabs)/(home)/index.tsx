@@ -1,5 +1,5 @@
 // app/(tabs)/(home)/index.tsx
-import BottomSheet from "@/components/BottomSheet/BottomSheet";
+import BottomSheet from "@/components/BottomSheet/BottomKeyboardModal";
 import TransactionDetailsSheet, { type TxDetails } from "@/components/tx/TransactionDetailsSheet";
 import { DEFAULT_TOKEN_ICON, TOKEN_ICONS } from "@/config/iconRegistry";
 import {
@@ -21,6 +21,7 @@ import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams, usePathname, type Href } from "expo-router";
+import { useSendFlow } from "@/send/SendFlowProvider";
 import { useProfileStore } from "@/store/profile";
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { displayAmount } from "@/utils/money";
@@ -47,6 +48,10 @@ import {
 } from "react-native";
 import PagerView from "react-native-pager-view";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage"; 
+import { useTranslation } from "react-i18next";
+import { preloadNamespaces, setLang } from "@/i18n/i18n";
+import type { TFunction } from "i18next";
 
 /* ====== colores base + styles PRIMERO ====== */
 const BG = colors.navBg;
@@ -218,7 +223,6 @@ const CURRENCY_SYMBOL: Record<CurrencyId | "BTC.native" | "DAI.maker", string> =
 };
 
 const HIT = { top: 8, bottom: 8, left: 8, right: 8 } as const;
-
 const PAGE_GAP_LEFT = 18;
 const PAGE_GAP_RIGHT = 18;
 const HERO_HEIGHT = 330;
@@ -293,7 +297,7 @@ const TokenIcon = memo(function TokenIcon({ currencyId, chains = [] as ChainId[]
   const def = TOKEN_ICON_OVERRIDES?.[currencyId] ?? TOKEN_ICONS[currencyId as CurrencyId] ?? DEFAULT_TOKEN_ICON;
   const isNative = !!CURRENCY_NATIVE_CHAIN[currencyId as CurrencyId] || currencyId === "BTC.native";
   const baseChains: ChainId[] = isNative ? [] : Array.isArray(chains) ? chains : [];
-
+  const { open: openSend } = useSendFlow();  
   const ordered = orderChainsForBadge(baseChains, 99);
   const primary = ordered[0];
   const extraCount = Math.max(0, ordered.length - (primary ? 1 : 0));
@@ -468,28 +472,58 @@ export function buildSplitRows(positions: Position[]) {
 
 /* =========================  Mock de payments ========================= */
 export type PaymentKind = "in" | "out" | "refund";
-export type PaymentItem = { id: string; title: string; when: string; amount: string; type: PaymentKind };
-
-export const PAYMENTS_MOCK: Record<"Daily" | "Savings" | "Social", PaymentItem[]> = {
-  Daily: [
-    { id: "a1", title: "@satoshi", when: "Yesterday, 22:27", amount: "+ USDT 19.00", type: "in" },
-    { id: "a2", title: "Apple inc.", when: "27 May, 09:05", amount: "- USDC 124.24", type: "out" },
-    { id: "a3", title: "@helloalex", when: "Yesterday, 21:17", amount: "- USDT 15.00", type: "out" },
-    { id: "a4", title: "@gerard", when: "Yesterday, 20:02", amount: "- USDT 49.00", type: "refund" },
-    { id: "a5", title: "@maria", when: "Today, 11:14", amount: "+ USDC 35.80", type: "in" },
-    { id: "a6", title: "Netflix", when: "Today, 08:40", amount: "- USDC 12.99", type: "out" },
-  ],
-  Savings: [
-    { id: "s1", title: "@satoshi", when: "Yesterday, 22:27", amount: "+ USDT 19.00", type: "in" },
-    { id: "s2", title: "Apple inc.", when: "27 May, 09:05", amount: "- USDC 124.24", type: "out" },
-    { id: "s3", title: "@helloalex", when: "Yesterday, 21:17", amount: "- USDT 15.00", type: "out" },
-    { id: "s4", title: "@gerard", when: "Yesterday, 20:02", amount: "- USDT 49.00", type: "refund" },
-  ],
-  Social: [
-    { id: "p1", title: "@friend1", when: "Yesterday, 18:22", amount: "+ USDT 7.00", type: "in" },
-    { id: "p2", title: "@friend2", when: "Yesterday, 16:03", amount: "- USDT 4.20", type: "out" },
-  ],
+export type PaymentItem = {
+  id: string;
+  title: string;
+  date: string | Date;   // <-- antes 'when: string'
+  amount: string;
+  type: PaymentKind;
 };
+
+function formatWhen(dt: string | Date, locale: string, t: TFunction) {
+  const d = typeof dt === "string" ? new Date(dt) : dt;
+  const now = new Date();
+
+  const isSameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const yest = new Date(now);
+  yest.setDate(now.getDate() - 1);
+
+  const timeTxt = new Intl.DateTimeFormat(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+
+  if (isSameDay(d, now))  return `${t("dashboard:dates.today", { defaultValue: "Today" })}, ${timeTxt}`;
+  if (isSameDay(d, yest)) return `${t("dashboard:dates.yesterday", { defaultValue: "Yesterday" })}, ${timeTxt}`;
+
+  const dateTxt = new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" }).format(d);
+  return `${dateTxt}, ${timeTxt}`;
+}
+
+export const PAYMENTS_MOCK = {
+  Daily: [
+    { id: "a1", title: "@satoshi",  date: new Date(Date.now() - 1000 * 60 * 60 * 11), amount: "+ USDT 19.00", type: "in" },
+    { id: "a2", title: "Apple inc.", date: "2025-05-27T09:05:00Z",                   amount: "- USDC 124.24", type: "out" },
+    { id: "a3", title: "@helloalex", date: new Date(Date.now() - 1000 * 60 * 60 * 13), amount: "- USDT 15.00", type: "out" },
+    { id: "a4", title: "@gerard",    date: new Date(Date.now() - 1000 * 60 * 60 * 14), amount: "- USDT 49.00", type: "refund" },
+  ],
+
+  Savings: [
+    { id: "s1", title: "@satoshi",   date: new Date(Date.now() - 1000 * 60 * 60 * 11), amount: "+ USDT 19.00", type: "in" },
+    { id: "s2", title: "Apple inc.", date: "2025-05-27T09:05:00Z",                    amount: "- USDC 124.24", type: "out" },
+    { id: "s3", title: "@helloalex", date: new Date(Date.now() - 1000 * 60 * 60 * 13), amount: "- USDT 15.00", type: "out" },
+    { id: "s4", title: "@gerard",    date: new Date(Date.now() - 1000 * 60 * 60 * 14), amount: "- USDT 49.00", type: "refund" },
+  ],
+
+  Social: [
+    { id: "p1", title: "@friend1", date: new Date(Date.now() - 1000 * 60 * 60 * 18), amount: "+ USDT 7.00", type: "in" },
+    { id: "p2", title: "@friend2", date: new Date(Date.now() - 1000 * 60 * 60 * 20), amount: "- USDT 4.20", type: "out" },
+  ],
+} satisfies Record<Account, PaymentItem[]>;
 
 /* =========================  Banners / UI ========================= */
 type BannerItem = {
@@ -560,6 +594,9 @@ const BannerCarousel = memo(function BannerCarousel({
   onPressCta?: (b: BannerItem) => void;
   width: number;
 }) {
+
+  const { t } = useTranslation(["dashboard", "common"]);
+
   const CARD_W = width - BODY_PAD * 2 - PEEK;
 
   const [index, setIndex] = useState(0);
@@ -597,9 +634,14 @@ const BannerCarousel = memo(function BannerCarousel({
                 )}
               </View>
 
-              <Pressable onPress={() => onDismiss(item.id)} style={{ marginLeft: 8, marginTop: 2, alignSelf: "flex-start" }} hitSlop={10} accessibilityLabel="Dismiss">
-                <Ionicons name="close" size={13} color={CLOSE_COLOR} />
-              </Pressable>
+              <Pressable
+              onPress={() => onDismiss(item.id)}
+              style={{ marginLeft: 8, marginTop: 2, alignSelf: "flex-start" }}
+              hitSlop={10}
+              accessibilityLabel={t("dashboard:dismiss", "Dismiss")}
+            >
+              <Ionicons name="close" size={13} color={CLOSE_COLOR} />
+            </Pressable>
             </View>
           </View>
         )}
@@ -618,6 +660,27 @@ const BannerCarousel = memo(function BannerCarousel({
 
 /* =========================  MAIN SCREEN  ========================= */
 export default function Dashboard() {
+  // 1) Estos hooks SÍ pueden ir antes del guard
+  
+  const { t, i18n } = useTranslation();
+  const [readyI18n, setReadyI18n] = useState(false);
+  console.log("🌐 i18n.language:", i18n.language, "→ resolved:", i18n.resolvedLanguage);
+  
+  useEffect(() => {
+  let alive = true;
+  (async () => {
+    await preloadNamespaces(["dashboard", "common", "tx"]);
+    if (alive) setReadyI18n(true);
+  })();
+  return () => { alive = false; };
+}, [i18n.language]);
+
+const tt = useMemo(() => {
+  if (!readyI18n) return ((k: string, def?: string) => def ?? k) as any;
+  const lng = i18n.resolvedLanguage ?? i18n.language ?? "en";
+  return i18n.getFixedT(lng, "dashboard");
+}, [readyI18n, i18n.resolvedLanguage, i18n.language]);
+
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { account: accountParam } = useLocalSearchParams<{ account?: string }>();
@@ -627,24 +690,14 @@ export default function Dashboard() {
  const pathname = usePathname();
 
 const openTokenDetails = useCallback((
-  arg: string | { id: string; chainId?: string | null; account: string }
-) => {
-  const tokenKey =
-    typeof arg === "string"
-      ? arg
-      : `${arg.id}::${arg.chainId ?? ""}::${arg.account}`;
+    arg: string | { id: string; chainId?: string | null; account: string }
+  ) => {
+    const tokenKey = typeof arg === "string" ? arg : `${arg.id}::${arg.chainId ?? ""}::${arg.account}`;
+    const href: Href = { pathname: "/(drawer)/(tabs)/token/[tokenId]" as const, params: { tokenId: tokenKey } };
+    if (pathname?.startsWith("/(drawer)/(tabs)/token/")) router.replace(href);
+    else router.push(href);
+  }, [pathname]);
 
-  const href: Href = {
-    pathname: "/(drawer)/(tabs)/token/[tokenId]" as const,
-    params: { tokenId: tokenKey },
-  };
-   // 👉 si ya estamos en un token, NO apilamos otro: reemplazamos
-  if (pathname?.startsWith("/(drawer)/(tabs)/token/")) {
-    router.replace(href);
-  } else {
-    router.push(href);
-  }
-}, [pathname]);
 
  const edgeSwipeLockRef = useRef(false);
  const inToken = pathname?.startsWith("/(tabs)/token/");
@@ -736,39 +789,41 @@ const onPageScroll = useCallback((e: any) => {
     const amt = sign * parseFloat(m[3].replace(",", ""));
     return { dir: sign >= 0 ? ("in" as const) : ("out" as const), sym, amt };
   };
+  
+// al abrir el TransactionDetailsSheet
 
-  const openTxDetails = useCallback((p: PaymentItem) => {
-    const { dir, sym, amt } = parseAmount(p.amount);
-    setTxPayment({
-      id: p.id,
-      dir,
-      when: p.when,
-      peer: p.title,
-      status: "Succeeded",
-      tokenSymbol: sym,
-      tokenAmount: amt,
-    });
-    setTxSheetOpen(true);
-  }, []);
+const openTxDetails = useCallback((p: PaymentItem) => {
+  const { dir, sym, amt } = parseAmount(p.amount);
+  setTxPayment({
+    id: p.id,
+    dir,
+    when: formatWhen(p.date, i18n.resolvedLanguage ?? i18n.language ?? "en", t),
+    peer: p.title,
+    status: "Succeeded",
+    tokenSymbol: sym,
+    tokenAmount: amt,
+  });
+  setTxSheetOpen(true);
+}, [i18n.resolvedLanguage, i18n.language, t]);
 
-  const closeTxDetails = useCallback(() => {
-    setTxSheetOpen(false);
-    setTxPayment(null);
-  }, []);
+const closeTxDetails = useCallback(() => {
+  setTxSheetOpen(false);
+  setTxPayment(null);
+}, []);
 
   /* ---------- Navegación ---------- */
- const push = useCallback((p: Href) => router.navigate(p), []);
-
+const push = useCallback((p: Href) => router.navigate(p), []);
+const { open: openSend } = useSendFlow(); 
 // Acciones desde el sheet de transacción
 const onTxReceive = useCallback(() => {
   closeTxDetails();
-  router.navigate(href("/(drawer)/(tabs)/receive", { account: ACCOUNT_IDS[account] }));
+  router.navigate(href("/(drawer)/(internal)/receive", { account: ACCOUNT_IDS[account] }));
 }, [closeTxDetails, account]);
 
 const onTxSend = useCallback(() => {
   closeTxDetails();
-  router.navigate(href("/(drawer)/(tabs)/send", { account: ACCOUNT_IDS[account] }));
-}, [closeTxDetails, account]);
+  openSend({ startAt: "search", account: ACCOUNT_IDS[account] });
+}, [closeTxDetails, openSend, account]);
 
 const onTxSwap = useCallback(() => {
   closeTxDetails();
@@ -777,13 +832,13 @@ const onTxSwap = useCallback(() => {
 
 // Accesos directos (hero actions / etc.)
 const goReceive = useCallback(
-  () => push(href("/(drawer)/(tabs)/receive", { account: ACCOUNT_IDS[account] })),
+  () => push(href("/(drawer)/(internal)/receive", { account: ACCOUNT_IDS[account] })),
   [push, account]
 );
 
 const goSend = useCallback(
-  () => push(href("/(drawer)/(tabs)/send", { account: ACCOUNT_IDS[account] })),
-  [push, account]
+  () => openSend({ startAt: "search", account: ACCOUNT_IDS[account] }),
+  [openSend, account]
 );
 
 const goSwap = useCallback(
@@ -793,7 +848,7 @@ const goSwap = useCallback(
 
 const goCards = useCallback(() => {
   router.navigate({
-    pathname: "/(drawer)/(tabs)/cards/[id]",
+    pathname: "/(drawer)/(internal)/cards/[id]",
     params: { id: "general", account: ACCOUNT_IDS[account] },
   });
 }, [account]);
@@ -810,8 +865,8 @@ const goAllTokens = useCallback(
 
 const openScanner = useCallback(() => {
   void Haptics.selectionAsync();
-  router.push("/(drawer)/(tabs)/receive/scanner" as Href);
-}, []);
+  router.push("/(drawer)/(internal)/receive/scanner" as Href);
+}, []);                                                                   
 
 
 
@@ -819,9 +874,38 @@ const openScanner = useCallback(() => {
   const paymentsForAccount = useMemo<PaymentItem[]>(() => PAYMENTS_MOCK[account] ?? [], [account]);
   const paymentsTop = useMemo(() => paymentsForAccount.slice(0, 4), [paymentsForAccount]);
   const showPaymentsViewAll = paymentsForAccount.length > 4;
-
+ 
   const [addTokenQuery, setAddTokenQuery] = useState("");
-  const [banners, setBanners] = useState<BannerItem[]>(BANNERS_SEED);
+const [banners, setBanners] = useState<BannerItem[]>([]);
+
+useEffect(() => {
+  if (!readyI18n) return;                 // <-- clave
+  const lng = i18n.resolvedLanguage ?? i18n.language ?? "en";
+  const tt = i18n.getFixedT(lng, "dashboard");
+
+  setBanners([
+    {
+      id: "invite-60",
+      title: tt("banners.invite.title", "Invite friends, earn €60"),
+      body:  tt("banners.invite.body",  "Earn €60 for each friend you invite by 9 September."),
+      until: tt("banners.invite.legal", "T&Cs apply"),
+      tint: "#7CC2D1",
+    },
+    {
+      id: "keys-safety",
+      title: tt("banners.keys.title", "Take care of your private keys"),
+      body:  tt("banners.keys.body",  "Never share them. We will never ask for them."),
+      tint: "#FFB703",
+    },
+    {
+      id: "always-private",
+      title: tt("banners.notYourKeys.title", "Remember: not your keys, not your money"),
+      body:  tt("banners.notYourKeys.body",  "Stay safe with HIHODL."),   
+      tint: "#A68CFF",
+    },
+  ]);
+}, [i18n.resolvedLanguage, readyI18n]); 
+
   const dismissBanner = useCallback((_id: string) => setBanners([]), []);
   const pressBannerCta = useCallback((b: BannerItem) => {
     if (b.cta?.href) router.navigate(b.cta.href as Href);
@@ -896,10 +980,15 @@ const openScanner = useCallback(() => {
     [positionsSeeded]
   );
 
-  const formatFiat = useMemo(() => {
-    const f = makeFiatFormatter(fiat);
-    return (usdAmount: number) => f.format(fiat === "USD" ? usdAmount : usdAmount * FX.EUR);
-  }, [fiat]);
+ const formatFiat = useMemo(() => {
+  const nf = new Intl.NumberFormat(i18n.language, {
+    style: "currency",
+    currency: fiat,
+    maximumFractionDigits: 2,
+  });
+  return (usdAmount: number) =>
+    nf.format(fiat === "USD" ? usdAmount : usdAmount * FX.EUR);
+}, [i18n.language, fiat]);
 
 
 
@@ -1042,7 +1131,7 @@ const FixedHeader = () => (
         onPress={() => router.push("/menu")}
         hitSlop={HIT}
         accessibilityRole="button"
-        accessibilityLabel="Open menu"
+        accessibilityLabel={tt("a11y.openMenu", "Abrir menú")}
       >
         {/* Avatar circular con emoji */}
         <View style={styles.avatar}>
@@ -1057,7 +1146,7 @@ const FixedHeader = () => (
           onPress={openScanner}
           hitSlop={HIT}
           accessibilityRole="button"
-          accessibilityLabel="Open scanner"
+          accessibilityLabel={tt("a11y.openScanner", "Abrir escáner")}
         >
           <Ionicons name="scan-outline" size={20} color="#fff" />
         </Pressable>
@@ -1068,7 +1157,7 @@ const FixedHeader = () => (
     onPress={goCards}
     hitSlop={HIT}
     accessibilityRole="button"
-    accessibilityLabel="Open cards"
+    accessibilityLabel={tt("a11y.openCards", "Abrir tarjetas")}
   >
     <Ionicons name="card-outline" size={20} color="#fff" />
     </Pressable>
@@ -1130,7 +1219,7 @@ const FixedHeader = () => (
           style={({ pressed }) => [styles.tokenRow, pressed && { opacity: 0.85 }]}
           hitSlop={6}
           accessibilityRole="button"
-          accessibilityLabel={`Open ${item.name}`}
+          accessibilityLabel={t("dashboard:a11y.openAsset", { defaultValue: "Open {{name}}", name: item.name })}
         >
           <View style={styles.tokenLeft}>
             <TokenIcon currencyId={item.currencyId} chains={item.chains} />
@@ -1173,12 +1262,19 @@ const FixedHeader = () => (
       <View style={{ flex: 1, paddingTop: Math.max(6, topPad), paddingHorizontal: HERO_HPAD }}>
         {/* Tabs */}
         <View style={{ marginTop: 6, alignItems: "center" }}>
+          
   <SegmentedPills
-    items={ACCOUNTS_ORDER.map((a) => ({ id: ACCOUNT_IDS[a], label: a }))}
-    activeIndex={accountIndex}
-    onPress={(i) => {
-  if (i === accountIndex) return;
-  void Haptics.selectionAsync();
+  items={ACCOUNTS_ORDER.map((a) => ({
+  id: ACCOUNT_IDS[a],
+  label: tt(
+    `accounts.${ACCOUNT_IDS[a]}`, // daily / savings / social
+    a
+  ),
+}))}
+  activeIndex={accountIndex}
+  onPress={(i) => {
+    if (i === accountIndex) return;
+    void Haptics.selectionAsync();
 
   ignoreNextOnPageRef.current = true;
   // salto instantáneo del pager
@@ -1224,7 +1320,7 @@ const FixedHeader = () => (
               hitSlop={HIT}
               style={[styles.fiatToggle, { marginLeft: 4 }]}
               accessibilityRole="button"
-              accessibilityLabel="Tap to switch currency, long press to toggle small balances"
+             accessibilityLabel={t("dashboard:a11y.toggleFiat", "Tap to switch currency, long press to toggle small balances")}
             >
               <Text style={styles.fiatToggleTxt}>{fiat}</Text>
             </Pressable>
@@ -1234,11 +1330,27 @@ const FixedHeader = () => (
         {/* Acciones */}
         <View style={styles.actionsSwipeArea}>
           <View style={styles.actionsRowFixed}>
-            <MiniAction icon="qr-code-outline" label="Receive" onPress={goReceive} />
-            <MiniAction icon="paper-plane-outline" label="Send" onPress={goSend} />
-            <MiniAction icon="swap-horizontal" label="Swap" onPress={goSwap} />
-              <MiniAction icon="card-outline" label="Cards" onPress={goCards} />
-          </View>
+          <MiniAction
+            icon="qr-code-outline"
+            label={tt("actions.receive", "Receive")}
+            onPress={goReceive}
+          />
+          <MiniAction
+            icon="paper-plane-outline"
+            label={tt("actions.send", "Send")}
+            onPress={goSend}
+          />
+          <MiniAction
+            icon="swap-horizontal"
+            label={tt("actions.swap", "Swap")}
+            onPress={goSwap}
+          />
+          <MiniAction
+            icon="card-outline"
+            label={tt("actions.cards", "Cards")}
+            onPress={goCards}
+          />
+        </View>
         </View>
       </View>
     );
@@ -1280,6 +1392,17 @@ const FixedHeader = () => (
       return hasFree;
     });
   }, [addTokenQuery, ownedKeys]);
+
+  // ✅ pon esto aquí, después de todos los useXxx
+if (!readyI18n) {
+  return (
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator />
+      </View>
+    </SafeAreaView>
+  );
+}
 
 
 /* ===================== RENDER ===================== */
@@ -1401,76 +1524,97 @@ return (
 
         {/* Assets */}
         <GlassCard>
-          <FlatList
-            data={topRows}
-            keyExtractor={keyToken}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={styles.sep} />}
-            renderItem={renderTokenItem}
-            getItemLayout={getTokenItemLayout}
-            ListFooterComponent={() =>
-              showViewAll ? (
-                <Pressable style={styles.addTokenBtn} onPress={goAllTokens} hitSlop={8}>
-                  <Text style={styles.viewAll}>View all</Text>
-                </Pressable>
-              ) : (
-                <Pressable style={styles.addTokenBtn} onPress={openAddTokenSheet} hitSlop={8}>
-                  <Text style={styles.addTokenTxt}>Add Token</Text>
-                </Pressable>
-              )
-            }
-          />
+       <FlatList
+        data={topRows}
+        keyExtractor={keyToken}
+        scrollEnabled={false}
+        ItemSeparatorComponent={() => <View style={styles.sep} />}
+        renderItem={renderTokenItem}
+        getItemLayout={getTokenItemLayout}
+        ListFooterComponent={
+          showViewAll ? (
+            <Pressable style={styles.addTokenBtn} onPress={goAllTokens} hitSlop={8}>
+              <Text style={styles.viewAll}>{tt("assets.viewAll", "View all")}</Text>
+            </Pressable>
+          ) : (
+            <Pressable style={styles.addTokenBtn} onPress={openAddTokenSheet} hitSlop={8}>
+              <Text style={styles.addTokenTxt}>{tt("assets.addToken", "Add Token")}</Text>
+            </Pressable>
+          )
+        }
+      />
         </GlassCard>
 
         {/* Payments */}
-        <GlassCard>
-          <FlatList
-            data={paymentsTop}
-            keyExtractor={(i) => i.id}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={styles.sep} />}
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() => openTxDetails(item)}
-                style={({ pressed }) => [styles.activityRow, pressed && { opacity: 0.85 }]}
-                hitSlop={HIT}
-                accessibilityRole="button"
-                accessibilityLabel={`Open ${item.title} transaction`}
-              >
-                <View style={styles.activityLeft}>
-                  <Avatar title={item.title} type={item.type} />
-                  <View>
-                    <Text style={styles.activityTitle}>{item.title}</Text>
-                    <Text style={styles.activityWhen}>{item.when}</Text>
-                  </View>
-                </View>
-                <Text style={styles.activityAmt}>{item.amount}</Text>
-              </Pressable>
-            )}
-            ListFooterComponent={
-              showPaymentsViewAll ? (
-                <Pressable
-                  onPress={() => goPaymentsFor(account)}
-                  style={{ paddingVertical: 14, alignItems: "center" }}
-                  hitSlop={8}
-                >
-                  <Text style={styles.viewAll}>View all</Text>
-                </Pressable>
-              ) : null
-            }
-          />
-        </GlassCard>
+        {/* Payments */}
+<GlassCard>
+  <FlatList
+    data={paymentsTop}
+    keyExtractor={(i) => i.id}
+    scrollEnabled={false}
+    ItemSeparatorComponent={() => <View style={styles.sep} />}
+
+    /* 👇 Encabezado traducido */
+    ListHeaderComponent={
+      <View style={{ paddingVertical: 8 }}>
+        <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>
+          {tt("payments.recentActivity", "Recent activity")}
+        </Text>
+      </View>
+    }
+
+    renderItem={({ item }) => (
+      <Pressable
+        onPress={() => openTxDetails(item)}
+        style={({ pressed }) => [styles.activityRow, pressed && { opacity: 0.85 }]}
+        hitSlop={HIT}
+        accessibilityRole="button"
+        accessibilityLabel={t("dashboard:a11y.openTx", {
+          defaultValue: "Open {{title}} transaction",
+          title: item.title,
+        })}
+      >
+        <View style={styles.activityLeft}>
+          <Avatar title={item.title} type={item.type} />
+          <View>
+            <Text style={styles.activityTitle}>{item.title}</Text>
+            <Text style={styles.activityWhen}>
+            {formatWhen(item.date, i18n.resolvedLanguage ?? i18n.language ?? "en", t)}
+          </Text>
+          </View>
+        </View>
+        <Text style={styles.activityAmt}>{item.amount}</Text>
+      </Pressable>
+    )}
+
+    /* Footer con “Ver todo / Alles bekijken” */
+    ListFooterComponent={
+      showPaymentsViewAll ? (
+        <Pressable
+          onPress={() => goPaymentsFor(account)}
+          style={{ paddingVertical: 14, alignItems: "center" }}
+          hitSlop={8}
+        >
+          <Text style={styles.viewAll}>
+            {tt("payments.viewAll", "View all")}
+          </Text>
+        </Pressable>
+      ) : null
+    }
+  />
+</GlassCard>
       </View>
     </Animated.ScrollView>
 
     {/* ===== Transaction Details – BottomSheet ===== */}
-    <BottomSheet
+       <BottomSheet
       visible={txSheetOpen}
       onClose={closeTxDetails}
       maxHeightPct={0.9}
-      backgroundColor={colors.sheetBgSolid}
+      glassTintRGBA={colors.sheetBgSolid}
+      blurIntensity={40}
       showHandle
-      backdropOpacity={0.5}
+      scrimOpacity={0.5}
     >
       {txPayment && (
         <TransactionDetailsSheet
@@ -1484,25 +1628,27 @@ return (
     </BottomSheet>
 
     {/* ===== Add Token – BottomSheet ===== */}
-    <BottomSheet
+      <BottomSheet
       visible={addTokenSheetOpen}
       onClose={closeAddTokenSheet}
+      minHeightPct={0.6}
       maxHeightPct={0.8}
-      backgroundColor={colors.sheetBgSolid}
+      glassTintRGBA={colors.sheetBgSolid}
       showHandle
-      avoidKeyboard={false}
-      backdropOpacity={0.5}
+      scrimOpacity={0.5}
     >
       <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
         <View style={{ alignItems: "center", marginTop: 6, marginBottom: 8 }}>
-          <Text style={{ color: colors.sheetText, fontWeight: "800", fontSize: 18 }}>Add token</Text>
+          <Text style={{ color: colors.sheetText, fontWeight: "800", fontSize: 18 }}>
+        {tt("assets.addToken", "Add Token")}
+        </Text>
         </View>
 
         <View style={{ marginBottom: 10 }}>
           <TextInput
             value={addTokenQuery}
             onChangeText={setAddTokenQuery}
-            placeholder="Search tokens (ETH, SOL, USDC...)"
+            placeholder={tt("assets.searchTokensPh", "Search tokens (ETH, SOL, USDC...)")}
             placeholderTextColor="rgba(255,255,255,0.55)"
             style={{
               height: 40,
@@ -1570,8 +1716,10 @@ return (
 
                 <View style={{ alignItems: "flex-end" }}>
                   <Text style={{ color: colors.sheetTextDim, fontSize: 12 }}>
-                    {chains.length > 1 ? "Recommended network" : "Tap to add"}
-                  </Text>
+                  {chains.length > 1
+                  ? tt("assets.recommendedNetwork", "Recommended network")
+                  : tt("assets.tapToAdd", "Tap to add")}
+                </Text>
                 </View>
               </Pressable>
             );

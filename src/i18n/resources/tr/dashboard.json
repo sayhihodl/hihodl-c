@@ -1,0 +1,61 @@
+{
+  "title": "Genel Bakış",
+
+  "accounts": {
+    "daily": "Günlük",
+    "savings": "Birikim",
+    "social": "Sosyal"
+  },
+
+  "actions": {
+    "receive": "Al",
+    "send": "Gönder",
+    "swap": "Takas",
+    "cards": "Kartlar"
+  },
+
+  "assets": {
+    "viewAll": "Tümünü görüntüle",
+    "addToken": "Token ekle",
+    "searchTokensPh": "Token ara (ETH, SOL, USDC...)",
+    "recommendedNetwork": "Önerilen ağ",
+    "tapToAdd": "Eklemek için dokun"
+  },
+
+  "dates": {
+    "today": "Bugün",
+    "yesterday": "Dün"
+  },
+
+  "payments": {
+    "recentActivity": "Son aktiviteler",
+    "viewAll": "Tümünü görüntüle"
+  },
+
+  "banners": {
+    "invite": {
+      "title": "Arkadaşlarını davet et, 60 € kazan",
+      "body": "9 Eylülden önce davet ettiğin her arkadaş için 60 € kazan.",
+      "legal": "Şartlar ve Koşullar geçerlidir"
+    },
+    "keys": {
+      "title": "Özel anahtarlarına dikkat et",
+      "body": "Asla paylaşma. Biz asla istemeyiz."
+    },
+    "notYourKeys": {
+      "title": "Unutma: Senin anahtarın değilse, senin paran değildir",
+      "body": "HIHODL ile güvende kal."
+    }
+  },
+
+  "a11y": {
+    "openMenu": "Menüyü aç",
+    "openScanner": "Taramayı aç",
+    "openCards": "Kartları aç",
+    "toggleFiat": "Para birimini değiştirmek için dokun; küçük bakiyeleri göstermek için basılı tut",
+    "openAsset": "{{name}} öğesini aç",
+    "openTx": "{{title}} işlemini aç"
+  },
+
+  "dismiss": "Kapat"
+}

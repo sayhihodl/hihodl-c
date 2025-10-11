@@ -1,0 +1,36 @@
+{
+  "title": "สวอป",
+  "youPay": "คุณจ่าย",
+  "youReceive": "คุณได้รับ",
+  "trending": "กำลังมาแรง",
+  "cta": { "swap": "สวอป" },
+
+  "accounts": { "daily": "กระเป๋าหลัก", "savings": "ออมทรัพย์", "social": "โซเชียล" },
+
+  "filters": {
+    "rankBy": { "rank": "อันดับ", "volume": "ปริมาณ", "price": "ราคา", "priceChange": "การเปลี่ยนแปลงราคา", "marketCap": "มูลค่าตลาด" },
+    "network": { "all": "ทั้งหมด", "solana": "Solana", "ethereum": "Ethereum", "base": "Base", "polygon": "Polygon", "bitcoin": "Bitcoin" },
+    "timeframe": { "1h": "1 ชม.", "24h": "24 ชม.", "7d": "7 วัน", "30d": "30 วัน" }
+  },
+
+  "metrics": { "mc": "MC", "vol": "Vol" },
+
+  "settings": {
+    "title": "การตั้งค่าสวอป",
+    "slippage": { "title": "สลิปเพจ", "auto": "อัตโนมัติ", "help": "แนะนำ: 0.5–1% สำหรับคู่หลัก, 2–3% สำหรับคู่ที่ผันผวน." },
+    "priority": { "title": "ค่าธรรมเนียมลำดับความสำคัญ", "auto": "อัตโนมัติ", "help": "เพิ่มลำดับความสำคัญช่วยให้ยืนยันเร็วขึ้นเมื่อแออัด." },
+    "tip": { "title": "ทิป", "auto": "อัตโนมัติ (0.05%)", "help": "ทิปเล็กน้อยช่วยสนับสนุนการเราท์/รีเลย์." }
+  },
+
+  "a11y": {
+    "openSettings": "เปิดการตั้งค่าสวอป",
+    "selectPayToken": "เลือกโทเคนที่จะจ่าย",
+    "selectReceiveToken": "เลือกโทเคนที่จะรับ",
+    "flip": "สลับโทเคน"
+  },
+
+  "mock": {
+    "title": "สวอป (จำลอง)",
+    "body": "บัญชี: {{acct}}\\nจ่าย: {{amount}} {{pay}}\\nรับ: {{receive}}\\nสลิปเพจ: {{slip}}\\nค่าลำดับความสำคัญ: {{prio}}\\nทิป: {{tip}}"
+  }
+}

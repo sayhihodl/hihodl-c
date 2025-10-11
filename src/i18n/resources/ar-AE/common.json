@@ -1,0 +1,12 @@
+{
+  "language": "اللغة",
+  "actions": { "save": "حفظ", "cancel": "إلغاء", "continue": "متابعة" },
+  "status": {
+    "connected": "متصل",
+    "notConnected": "غير متصل",
+    "comingSoon": "قريبًا",
+    "disabledMVP": "معطّل في MVP"
+  },
+  "cards": { "open": "فتح البطاقات" },
+  "cta": { "manageCards": "إدارة البطاقات في لوحة التحكم" }
+}

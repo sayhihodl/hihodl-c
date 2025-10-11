@@ -1,0 +1,8 @@
+{
+  "language": "Bahasa",
+  "actions": { "save": "Simpan", "cancel": "Batal", "continue": "Lanjut" },
+  "tabs": { "home": "Beranda", "referral": "Rujukan", "swap": "Tukar", "payments": "Pembayaran", "discover": "Jelajahi" },
+  "status": { "connected": "Tersambung", "notConnected": "Tidak tersambung", "comingSoon": "Segera hadir", "disabledMVP": "Dinonaktifkan di MVP" },
+  "cards": { "open": "Buka kartu" },
+  "cta": { "manageCards": "Kelola kartu di Dasbor" }
+}

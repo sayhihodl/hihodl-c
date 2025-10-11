@@ -46,19 +46,38 @@ export default function HeaderBar({
 
 const styles = StyleSheet.create({
   topRow: {
-    height: 44,
+    height: 36, // ↓ antes 44 → más fino, Phantom-style
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
+    paddingHorizontal: 4, // un poco más compacto
   },
   headerIconBtnBare: {
-    width: 36, height: 36, alignItems: "center", justifyContent: "center", backgroundColor: "transparent",
+    width: 30, // ↓ antes 36
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
   },
   headerIconBtn: {
-    width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center",
+    width: 30,
+    height: 30,
+    borderRadius: 15, // sigue centrado
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.06)",
   },
-  rightBtns: { flexDirection: "row", alignItems: "center", gap: 8 },
-  title: { color: TEXT, fontSize: 18, fontWeight: "800", textAlign: "center" },
+  rightBtns: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6, // ↓ antes 8
+  },
+  title: {
+    color: TEXT,
+    fontSize: 16, // ↓ antes 18
+    fontWeight: "800",
+    textAlign: "center",
+    letterSpacing: -0.3,
+  },
 });

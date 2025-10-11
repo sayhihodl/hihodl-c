@@ -1,0 +1,18 @@
+{
+  "endsSoon": "Termina pronto",
+  "heroTitle": "Gana {{amount}} por amigo",
+  "lead": "Tus amigos tienen 7 días para",
+  "steps": [
+    { "title": "Registrarse con tu enlace", "sub": "Y verificar su identidad" },
+    { "title": "Añadir dinero a su cuenta", "sub": "Con tarjeta o transferencia bancaria" },
+    { "title": "Hacer 3 compras de 10 $ o más", "sub": "Las operaciones tipo ‘cash-like’ no cuentan" },
+    { "title": "Pedir una tarjeta física", "sub": "Añádela a Apple/Google Pay y paga sin contacto" }
+  ],
+  "pastInvites": "Invitaciones anteriores",
+  "promoNote": { "text": "La promoción tiene tiempo limitado.", "link": "Términos", "tail": "aplican" },
+  "ctaInvite": "Invitar amigos",
+  "tcsTitle": "Condiciones",
+  "tcsBody": "Cada amigo tiene 7 días desde el registro para completar los pasos. Al finalizar te enviaremos una notificación. No se reinicia.",
+  "close": "Cerrar",
+  "shareMessage": "Únete a HiHODL con mi enlace y gana recompensas: {{link}}"
+}

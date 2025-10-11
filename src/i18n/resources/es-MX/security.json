@@ -1,0 +1,17 @@
+{
+  "title": "Seguridad",
+  "appLock": "Bloqueo de app",
+  "passcode": "Código",
+  "enabled": "Activado",
+  "disabled": "Desactivado",
+  "biometrics": "Face/Touch ID",
+  "autoLock": "Bloqueo automático",
+  "sessions": "Sesiones",
+  "activeSessions": "Sesiones activas",
+  "viewDevices": "Ver dispositivos",
+  "signOutAll": "Cerrar sesión en todos los dispositivos",
+  "confirmSignOutAll": "Esto revocará todas las sesiones.",
+  "recovery": "Recuperación",
+  "recoveryPhrase": "Frase de recuperación",
+  "backedUpVerify": "Con copia • Verificar"
+}
