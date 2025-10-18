@@ -16,6 +16,7 @@ import { parseRecipient } from "@/send/parseRecipient";
 import { ChainBadge } from "@/lib/chainBadges";
 import { getLabel, setLabel } from "@/send/addressBook";
 import type { ChainKey, Account } from "@/send/types";
+import { toAccount } from "@/send/types";
 import { useSendFlow } from "@/send/SendFlowProvider";
 import BottomKeyboardModal from "@/components/BottomSheet/BottomKeyboardModal";
 
@@ -69,10 +70,8 @@ export default function StepSearch({ dragGateRef }: StepSearchProps) {
   const insets = useSafeAreaInsets();
   const { state: flow, patch, goTo } = useSendFlow();
 
-  const bgAccount: Account | undefined = useMemo(() => {
-    const a = (flow.account ?? "daily").toLowerCase();
-    return a === "daily" || a === "savings" || a === "social" ? (a as Account) : undefined;
-  }, [flow.account]);
+  // Account de fondo normalizado y tipado
+  const bgAccount: Account = useMemo(() => toAccount(flow.account), [flow.account]);
 
   // Header metrics (= Receive)
   const TITLE_H = 44, ROW_SEARCH_GAP = 14, SEARCH_H = 50, AFTER_SEARCH_GAP = 10, HEADER_INNER_TOP = 6;
@@ -166,7 +165,7 @@ export default function StepSearch({ dragGateRef }: StepSearchProps) {
       chain: payload.chain,
       resolved: payload.resolvedAddress,
       label: payload.label,
-      account: (flow.account ?? "daily").toLowerCase(),
+      account: toAccount(flow.account),
     });
     goTo("token");
   }, [patch, goTo, flow.account]);
@@ -282,13 +281,7 @@ export default function StepSearch({ dragGateRef }: StepSearchProps) {
                 labelNode={
                   <View style={styles.labelWrap}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      <Text
-                        style={styles.alias}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        {title}
-                      </Text>
+                      <Text style={styles.alias} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
                       <Pressable onPress={() => openEdit(addr, detectedLabel)} hitSlop={8} accessibilityLabel="Edit label">
                         <Text style={styles.edit}>Edit</Text>
                       </Pressable>
@@ -390,13 +383,12 @@ export default function StepSearch({ dragGateRef }: StepSearchProps) {
         scrollEventThrottle={16}
       />
 
-      {/* Modal Edit label (sin cambios de lógica) */}
+      {/* Modal Edit label */}
       <BottomKeyboardModal
         visible={editOpen}
         onClose={() => setEditOpen(false)}
         scrimOpacity={0.4}
         blurIntensity={60}
-        glassTintRGBA="rgba(6,14,20,0.55)"
         autoFocusRef={editInputRef}
         dragAnywhere
         dragCloseThreshold={100}
@@ -469,7 +461,6 @@ const styles = StyleSheet.create({
 
   rowGlass: { backgroundColor: GLASS_BG, borderRadius: 18, padding: 14 },
 
-  /* 🔑 Deja que el bloque de textos use TODO el ancho posible */
   labelWrap: { flex: 1, minWidth: 0 },
 
   avatar: {
@@ -477,7 +468,6 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center"
   },
 
-  // Alias menos “gordo” para que quepa más
   alias: { color: "#fff", fontWeight: "500", fontSize: 15 },
   phone: { color: SUB, fontSize: 12, marginTop: 2 },
   inviteBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: "rgba(255,183,3,0.25)" },

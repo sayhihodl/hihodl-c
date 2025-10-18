@@ -1,4 +1,3 @@
-// src/send/types.ts
 export type ChainKey =
   | "solana" | "ethereum" | "polygon" | "bsc" | "base" | "avalanche"
   | "tron" | "algorand" | "sui" | "uniswap" | "chainlink" | "hihodl";
@@ -9,24 +8,30 @@ export type RecipientKind =
 export type ParsedRecipient = {
   kind: RecipientKind;
   toRaw: string;
-  // cuando aplique
   toChain?: ChainKey;
-  resolved?: { // p.ej. ENS -> 0x..., alias -> wallet(s)
-    address?: string;
-    chain?: ChainKey;
-  };
-  display?: string;    // apodo/alias/short
-  error?: string;      // si el input parece válido pero falla la validación extra
+  resolved?: { address?: string; chain?: ChainKey };
+  display?: string;
+  error?: string;
 };
-export type Account = "Daily" | "Savings" | "Social";
+
+// ✅ Unificación en minúsculas
+export type Account = "daily" | "savings" | "social";
+export const ACCOUNTS = ["daily", "savings", "social"] as const;
+
+// Normalizador seguro (case-insensitive) -> Account
+export function toAccount(v: unknown): Account {
+  const s = typeof v === "string" ? v.toLowerCase() : "";
+  return (ACCOUNTS as readonly string[]).includes(s) ? (s as Account) : "daily";
+}
+
 export type RecentItem = {
-  id: string; // uid local
+  id: string;
   displayName: string;
   type: RecipientKind;
   raw: string;
   lastNetwork?: ChainKey;
-  lastToken?: string;     // "USDC" | "ETH"…
+  lastToken?: string;
   lastAmount?: number;
-  lastAt: string;         // ISO
+  lastAt: string; // ISO
   meta?: { nickname?: string; ensAvatar?: string; note?: string };
 };

@@ -21,7 +21,7 @@ import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams, usePathname, type Href } from "expo-router";
-import { useSendFlow } from "@/send/SendFlowProvider";
+
 import { useProfileStore } from "@/store/profile";
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { displayAmount } from "@/utils/money";
@@ -297,7 +297,6 @@ const TokenIcon = memo(function TokenIcon({ currencyId, chains = [] as ChainId[]
   const def = TOKEN_ICON_OVERRIDES?.[currencyId] ?? TOKEN_ICONS[currencyId as CurrencyId] ?? DEFAULT_TOKEN_ICON;
   const isNative = !!CURRENCY_NATIVE_CHAIN[currencyId as CurrencyId] || currencyId === "BTC.native";
   const baseChains: ChainId[] = isNative ? [] : Array.isArray(chains) ? chains : [];
-  const { open: openSend } = useSendFlow();  
   const ordered = orderChainsForBadge(baseChains, 99);
   const primary = ordered[0];
   const extraCount = Math.max(0, ordered.length - (primary ? 1 : 0));
@@ -813,7 +812,6 @@ const closeTxDetails = useCallback(() => {
 
   /* ---------- Navegación ---------- */
 const push = useCallback((p: Href) => router.navigate(p), []);
-const { open: openSend } = useSendFlow(); 
 // Acciones desde el sheet de transacción
 const onTxReceive = useCallback(() => {
   closeTxDetails();
@@ -822,8 +820,11 @@ const onTxReceive = useCallback(() => {
 
 const onTxSend = useCallback(() => {
   closeTxDetails();
-  openSend({ startAt: "search", account: ACCOUNT_IDS[account] });
-}, [closeTxDetails, openSend, account]);
+  router.navigate({
+    pathname: "/(drawer)/(internal)/send",
+    params: { account: ACCOUNT_IDS[account], startAt: "search", mode: "send" },
+  });
+}, [closeTxDetails, account]);
 
 const onTxSwap = useCallback(() => {
   closeTxDetails();
@@ -836,10 +837,12 @@ const goReceive = useCallback(
   [push, account]
 );
 
-const goSend = useCallback(
-  () => openSend({ startAt: "search", account: ACCOUNT_IDS[account] }),
-  [openSend, account]
-);
+const goSend = useCallback(() => {
+  router.navigate({
+    pathname: "/(drawer)/(internal)/send",
+    params: { account: ACCOUNT_IDS[account], startAt: "search", mode: "send" },
+  });
+}, [account]);
 
 const goSwap = useCallback(
   () => router.navigate(`/(drawer)/(tabs)/swap?account=${ACCOUNT_IDS[account]}`),

@@ -1,13 +1,14 @@
 // src/ui/icons/token-icon.tsx
 import React, { memo } from "react";
 import { Image, StyleSheet, type StyleProp, type ImageStyle } from "react-native";
-import { TOKEN_ICONS, DEFAULT_TOKEN_ICON, type IconDef } from "../../config/iconRegistry";
+import { TOKEN_ICONS, DEFAULT_TOKEN_ICON, type IconDef } from "@/config/iconRegistry";
+import RemoteTokenIcon from "./RemoteTokenIcon";
 
 type Props = {
   currencyId: string;
   size?: number;
-  rounded?: number;                 // por defecto círculo
-  style?: StyleProp<ImageStyle>;    // <- evita el error de tipos
+  rounded?: number;
+  style?: StyleProp<ImageStyle>;
 };
 
 export const TokenIcon = memo(function TokenIcon({
@@ -16,8 +17,12 @@ export const TokenIcon = memo(function TokenIcon({
   rounded,
   style,
 }: Props) {
-  const def: IconDef = TOKEN_ICONS[currencyId] ?? DEFAULT_TOKEN_ICON;
+  const def: IconDef | undefined = TOKEN_ICONS[currencyId];
 
+  // 1) Si NO hay icono estático → intenta remoto
+  if (!def) return <RemoteTokenIcon currencyId={currencyId} size={size} rounded={rounded} style={style} />;
+
+  // 2) Icono estático (svg o img)
   if (def.kind === "svg") {
     const SvgComp = def.Comp;
     return <SvgComp width={size} height={size} />;
@@ -35,3 +40,5 @@ export const TokenIcon = memo(function TokenIcon({
 const styles = StyleSheet.create({
   img: { overflow: "hidden" },
 });
+
+export default TokenIcon;

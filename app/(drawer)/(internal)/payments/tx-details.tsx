@@ -1,364 +1,195 @@
-import React, { useMemo, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Animated,
-  Share,
-  Platform,
-} from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+// app/(internal)/payments/tx-details.tsx
+import React from "react";
+import { View, Text, StyleSheet, Pressable, Linking } from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import * as Clipboard from "expo-clipboard";
-import * as Haptics from "expo-haptics";
-
 import ScreenBg from "@/ui/ScreenBg";
-import GlassHeader from "@/ui/GlassHeader";
-import Row from "@/ui/Row";
-import { GlassCard } from "@/ui/Glass";
-import { legacy as legacyColors, glass as glassColors } from "@/theme/colors";
+import { renderChainBadge, mapChainKeyToChainId, renderTokenIcon } from "@/config/iconRegistry";
 
-const TEXT = legacyColors.TEXT ?? "#fff";
-const SUB  = legacyColors.SUB  ?? "rgba(255,255,255,0.65)";
-const GLASS_BG     = glassColors.cardOnSheet ?? "rgba(3,12,16,0.35)";
-const GLASS_BORDER = glassColors.cardBorder  ?? "rgba(255,255,255,0.08)";
+const BG = "#0D1820";
+const TEXT = "#fff";
+const SUB = "rgba(255,255,255,0.65)";
+const CARD = "rgba(255,255,255,0.06)";
+const BORDER = "rgba(255,255,255,0.10)";
 
-type Payment = {
-  id: string;
-  direction: "in" | "out";             // in = received, out = sent
-  token: string;                       // e.g. USDC
-  amount: number;                      // positive number
-  fiatAmount?: number;                 // optional
-  account: "Daily" | "Savings" | "Social";
-  counterparty: { name?: string; alias?: string; address?: string };
-  status: "confirmed" | "pending" | "failed";
-  createdAt: number;                   // ms epoch
-  chain: "solana" | "ethereum" | "base" | "polygon" | "bitcoin";
-  txHash?: string;
-  memo?: string;
-  iconEmoji?: string;
-};
+export default function TxDetails() {
+  const p = useLocalSearchParams<{
+    id?: string; dir?: "in" | "out"; token?: string; amount?: string; fiat?: string;
+    status?: string; dateISO?: string; time?: string; chain?: "Solana" | "Base" | "Ethereum";
+    txHash?: string; memo?: string; name?: string; handle?: string;
+  }>();
 
-/** --------- helpers de store segura (no rompe si no existe) --------- */
-const getPaymentByIdSafe = (id: string): Payment | undefined => {
-  try {
-    // @ts-ignore
-    const { usePaymentsStore } = require("@/store/payments.store");
-    const st = usePaymentsStore.getState?.();
-    return st?.byId?.(id) || st?.items?.find?.((p: Payment) => p.id === id);
-  } catch {
-    return undefined;
-  }
-};
+  const amountStr = `${p?.dir === "out" ? "-" : "+"}${p?.amount ?? "0"} ${p?.token ?? ""}`;
+  const approxFiat = p?.fiat ? `≈ ${p.fiat}` : "";
+  const chainId = mapChainKeyToChainId((p?.chain || "base").toLowerCase() as any);
 
-/** fallback por si no hay store (útil en dev) */
-const MOCK: Payment = {
-  id: "mock",
-  direction: "out",
-  token: "USDC",
-  amount: 12.99,
-  fiatAmount: 12.99,
-  account: "Daily",
-  counterparty: { name: "Netflix", alias: "@netflix", address: "0x4f7c...f11a" },
-  status: "confirmed",
-  createdAt: Date.now() - 1000 * 60 * 60 * 2,
-  chain: "base",
-  txHash: "0x9e8f...d1a2c4",
-  memo: "Subscription",
-  iconEmoji: "🎬",
-};
+  const dateStr = p?.dateISO
+    ? new Date(String(p.dateISO)).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit", year: "numeric" })
+    : "";
+  const timeStr = p?.time ?? "";
 
-const fmtMoney = (n?: number) =>
-  typeof n === "number" ? n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—";
-
-const fmtDateTime = (ts: number) => {
-  try {
-    const d = new Date(ts);
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-  } catch {
-    return "—";
-  }
-};
-
-export default function PaymentDetailScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id: string }>();
-
-  const scrolly = useRef(new Animated.Value(0)).current;
-
-  const payment: Payment = useMemo(() => {
-    if (!id) return MOCK;
-    return getPaymentByIdSafe(id) ?? { ...MOCK, id };
-  }, [id]);
-
-  const sign = payment.direction === "out" ? "-" : "+";
-  const title = payment.direction === "out" ? "Payment" : "Received";
-
-  const copy = async (text?: string) => {
-    if (!text) return;
-    await Clipboard.setStringAsync(text);
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const handleOpenExplorer = () => {
+    if (p?.txHash) {
+      // ajusta por chain (ejemplo simple)
+      const base = p.chain === "Solana"
+        ? "https://solscan.io/tx/"
+        : p.chain === "Ethereum"
+        ? "https://etherscan.io/tx/"
+        : "https://basescan.org/tx/";
+      Linking.openURL(base + p.txHash);
+    }
   };
-
-  const shareTx = async () => {
-    const msg = [
-      `${title} ${sign}${fmtMoney(payment.amount)} ${payment.token}`,
-      `Account: ${payment.account}`,
-      `Counterparty: ${payment.counterparty.alias ?? payment.counterparty.name ?? payment.counterparty.address ?? "—"}`,
-      `Status: ${payment.status}`,
-      `Network: ${String(payment.chain).toUpperCase()}`,
-      payment.txHash ? `Tx: ${payment.txHash}` : "",
-      payment.memo ? `Memo: ${payment.memo}` : "",
-    ].filter(Boolean).join("\n");
-    try { await Share.share({ message: msg }); } catch {}
-  };
-
-  const openExplorer = () => {
-    // delega en router si tienes webview/handler, o lanza Linking
-    try {
-      // @ts-ignore
-      const { Linking } = require("react-native");
-      const net = payment.chain;
-      const tx = payment.txHash;
-      if (!tx) return;
-      const url =
-        net === "solana" ? `https://solscan.io/tx/${tx}`
-        : net === "base" ? `https://basescan.org/tx/${tx}`
-        : net === "polygon" ? `https://polygonscan.com/tx/${tx}`
-        : net === "ethereum" ? `https://etherscan.io/tx/${tx}`
-        : `https://www.blockchain.com/explorer/transactions/${net}/${tx}`;
-      Linking.openURL(url);
-    } catch {}
-  };
-
-  /* ---------------- UI ---------------- */
-
-  const HEADER_H = 68;
-  const HEADER_TOPPAD = 14;
-
-  const Left = (
-    <Pressable
-      onPress={() => router.back()}
-      style={styles.headerBtn}
-      hitSlop={10}
-      accessibilityLabel="Back"
-    >
-      <Ionicons name="chevron-back" size={22} color={TEXT} />
-    </Pressable>
-  );
-
-  const Right = (
-    <View style={{ flexDirection: "row", gap: 8 }}>
-      <Pressable onPress={shareTx} style={styles.headerBtn} hitSlop={10} accessibilityLabel="Share">
-        <Ionicons name="share-outline" size={18} color={TEXT} />
-      </Pressable>
-    </View>
-  );
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <ScreenBg account={payment.account} height={280} />
+    <View style={styles.screen}>
+      <ScreenBg account="Daily" height={200} showTopSeam />
 
-      <GlassHeader
-        scrolly={scrolly}
-        height={HEADER_H}
-        innerTopPad={HEADER_TOPPAD}
-        blurTint="dark"
-        leftSlot={Left}
-        rightSlot={Right}
-        centerSlot={
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {title}
-          </Text>
-        }
-        overlayColor="rgba(2,48,71,0.28)"
-        showBottomHairline={false}
-      />
+      {/* Header */}
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} hitSlop={10}>
+          <Ionicons name="chevron-back" size={22} color="#fff" />
+        </Pressable>
+        <Text style={styles.headerTitle}>Payment</Text>
+        <Pressable onPress={() => { /* compartir recibo */ }} hitSlop={10}>
+          <Ionicons name="share-outline" size={22} color="#fff" />
+        </Pressable>
+      </View>
 
-      <Animated.ScrollView
-        contentContainerStyle={{ paddingTop: HEADER_H + insets.top + 8, paddingBottom: insets.bottom + 32 }}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrolly } } }], { useNativeDriver: true })}
-        scrollEventThrottle={16}
-      >
-        {/* Hero amount */}
-        <View style={styles.hero}>
-          <Text style={styles.heroAmount}>
-            {sign}{fmtMoney(payment.amount)} {payment.token}
-          </Text>
-          {typeof payment.fiatAmount === "number" && (
-            <Text style={styles.heroSub}>≈ ${fmtMoney(payment.fiatAmount)}</Text>
-          )}
-          <View style={styles.badges}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeTxt}>{payment.account}</Text>
-            </View>
-            <View style={[styles.badge, { backgroundColor: "rgba(255,255,255,0.08)" }]}>
-              <Text style={styles.badgeTxt}>{String(payment.chain).toUpperCase()}</Text>
-            </View>
-            {payment.status !== "confirmed" && (
-              <View style={[styles.badge, { backgroundColor: payment.status === "pending" ? "rgba(255,183,3,0.28)" : "rgba(255,107,107,0.28)" }]}>
-                <Text style={[styles.badgeTxt, { color: "#fff" }]}>
-                  {payment.status === "pending" ? "Pending" : "Failed"}
-                </Text>
-              </View>
-            )}
+      {/* Amount */}
+      <View style={{ alignItems: "center", marginTop: 10 }}>
+        <Text style={styles.amount}>{amountStr}</Text>
+        {!!approxFiat && <Text style={styles.approx}>{approxFiat}</Text>}
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+          <View style={styles.pill}><Text style={styles.pillText}>Daily</Text></View>
+          <View style={styles.pill}>
+            {renderChainBadge(chainId, { size: 14, chip: false })}
+            <Text style={[styles.pillText, { marginLeft: 6 }]}>{p.chain?.toUpperCase()}</Text>
           </View>
         </View>
+      </View>
 
-        {/* Counterparty */}
-        <GlassCard style={[styles.card, { paddingVertical: 14 }]}>
-          <Row
-            leftSlot={
-              <View style={styles.avatar}>
-                <Text style={{ color: "#9CC6D1", fontSize: 18 }}>{payment.iconEmoji ?? "💸"}</Text>
-              </View>
-            }
-            labelNode={
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.name} numberOfLines={1}>
-                  {payment.counterparty.name ?? payment.counterparty.alias ?? "Counterparty"}
-                </Text>
-                <Text style={styles.sub} numberOfLines={1}>
-                  {payment.counterparty.alias ?? payment.counterparty.address ?? ""}
-                </Text>
-              </View>
-            }
-            rightIcon={null}
-          />
-        </GlassCard>
+      {/* Counterparty card */}
+      <View style={[styles.card, { marginTop: 16 }]}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          {renderTokenIcon(p?.token === "USDT" ? "USDT.tether" : "USDC.circle", { size: 36, inner: 24, withCircle: true })}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.counterTitle}>{p?.name || "Contact"}</Text>
+            <Text style={styles.counterSub}>{p?.handle || ""}</Text>
+          </View>
+        </View>
+      </View>
 
-        {/* Details */}
-        <GlassCard style={styles.card}>
-          <Row
-            leftSlot={<Text style={styles.rowTitle}>Status</Text>}
-            value={<Text style={styles.rowValue}>
-              {payment.status === "confirmed" ? "Confirmed" : payment.status === "pending" ? "Pending" : "Failed"}
-            </Text>}
-            rightIcon={null}
-          />
-          <View style={styles.sep} />
-          <Row
-            leftSlot={<Text style={styles.rowTitle}>Date</Text>}
-            value={<Text style={styles.rowValue}>{fmtDateTime(payment.createdAt)}</Text>}
-            rightIcon={null}
-          />
-          <View style={styles.sep} />
-          <Row
-            leftSlot={<Text style={styles.rowTitle}>Network</Text>}
-            value={<Text style={styles.rowValue}>{String(payment.chain).toUpperCase()}</Text>}
-            rightIcon={null}
-          />
-          {!!payment.txHash && (
-            <>
-              <View style={styles.sep} />
-              <Row
-                leftSlot={<Text style={styles.rowTitle}>Transaction</Text>}
-                value={
-                  <Pressable onPress={() => copy(payment.txHash)}>
-                    <Text style={[styles.rowValue, { textDecorationLine: "underline" }]}>
-                      {Platform.select({
-                        ios: `${payment.txHash.slice(0, 10)}…${payment.txHash.slice(-8)}`,
-                        android: `${payment.txHash.slice(0, 12)}…${payment.txHash.slice(-10)}`,
-                        default: payment.txHash,
-                      })}
-                    </Text>
-                  </Pressable>
-                }
-                rightIcon="open-outline"
-                onPress={openExplorer}
-              />
-            </>
-          )}
-          {!!payment.memo && (
-            <>
-              <View style={styles.sep} />
-              <Row
-                leftSlot={<Text style={styles.rowTitle}>Memo</Text>}
-                value={<Text style={styles.rowValue}>{payment.memo}</Text>}
-                rightIcon={null}
-              />
-            </>
-          )}
-        </GlassCard>
+      {/* Info card */}
+      <View style={[styles.card, { marginTop: 14, paddingHorizontal: 0 }]}>
+        <Row label="Status" value={capitalize(p?.status || "confirmed")} />
+        <Separator />
+        <Row label="Date" value={`${dateStr} ${timeStr}`} />
+        <Separator />
+        <Row label="Network" value={String(p?.chain || "").toUpperCase()} />
+        <Separator />
+        <Row
+          label="Transaction"
+          value={shortHash(p?.txHash)}
+          onPressIcon={p?.txHash ? handleOpenExplorer : undefined}
+        />
+        <Separator />
+        <Row label="Memo" value={p?.memo || "—"} dim />
+      </View>
 
-        {/* Actions */}
-        <GlassCard style={[styles.card, { paddingVertical: 12 }]}>
-          <Row
-            icon="share-outline"
-            label="Share receipt"
-            rightIcon={null}
-            onPress={shareTx}
-          />
-          {!!payment.txHash && (
-            <>
-              <View style={styles.sep} />
-              <Row
-                icon="open-outline"
-                label="View on explorer"
-                rightIcon={null}
-                onPress={openExplorer}
-              />
-            </>
-          )}
-          {!!payment.counterparty.address && (
-            <>
-              <View style={styles.sep} />
-              <Row
-                icon="copy-outline"
-                label="Copy address"
-                rightIcon={null}
-                onPress={() => copy(payment.counterparty.address)}
-              />
-            </>
-          )}
-        </GlassCard>
-      </Animated.ScrollView>
-    </SafeAreaView>
+      {/* Actions card */}
+      <View style={[styles.card, { marginTop: 14, paddingHorizontal: 0 }]}>
+        <ActionRow icon="share-outline" label="Share receipt" onPress={() => { /* compartir */ }} />
+        <Separator />
+        <ActionRow icon="open-outline" label="View on explorer" onPress={handleOpenExplorer} />
+      </View>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  headerBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    alignItems: "center", justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  headerTitle: { color: TEXT, fontSize: 18, fontWeight: "900", textAlign: "center" },
+function Separator() {
+  return <View style={sepStyles.sep} />;
+}
 
-  hero: { alignItems: "center", paddingHorizontal: 16, marginBottom: 8 },
-  heroAmount: { color: TEXT, fontSize: 28, fontWeight: "900" },
-  heroSub: { color: SUB, marginTop: 6, fontSize: 13 },
-  badges: { flexDirection: "row", gap: 8, marginTop: 10 },
-  badge: {
-    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.10)",
+const sepStyles = StyleSheet.create({
+  sep: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    marginLeft: 14,      // alinear con el contenido
+    marginRight: 14,
   },
-  badgeTxt: { color: "#E7F1F5", fontSize: 12, fontWeight: "800" },
+});
+/* ---------- small components ---------- */
+function Row({ label, value, dim, onPressIcon }:{label:string; value?:string; dim?:boolean; onPressIcon?:()=>void}) {
+  return (
+    <View style={rowStyles.wrap}>
+      <Text style={rowStyles.label}>{label}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Text style={[rowStyles.value, dim && { color: SUB }]} numberOfLines={1}>{value ?? ""}</Text>
+        {onPressIcon && (
+          <Pressable onPress={onPressIcon} hitSlop={10}>
+            <Ionicons name="open-outline" size={18} color="#BFD4DB" />
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+}
+function ActionRow({ icon, label, onPress }:{icon:any; label:string; onPress:()=>void}) {
+  return (
+    <Pressable onPress={onPress} style={actStyles.wrap}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Ionicons name={icon} size={18} color="#BFD4DB" />
+        <Text style={actStyles.text}>{label}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={16} color="#BFD4DB" />
+    </Pressable>
+  );
+}
+function shortHash(h?: string) { if (!h) return "—"; return h.length > 12 ? `${h.slice(0,6)}…${h.slice(-6)}` : h; }
+function capitalize(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+/* ---------- styles ---------- */
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: BG },
+  header: {
+    height: 54, paddingHorizontal: 14, flexDirection: "row",
+    alignItems: "center", justifyContent: "space-between"
+  },
+  headerTitle: { color: TEXT, fontWeight: "900", fontSize: 18 },
+
+  amount: { color: TEXT, fontSize: 28, fontWeight: "900" },
+  approx: { color: SUB, fontSize: 14, marginTop: 4 },
+
+  pill: {
+    flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 10, height: 28, borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.10)"
+  },
+  pillText: { color: TEXT, fontWeight: "700", fontSize: 12 },
 
   card: {
-    backgroundColor: GLASS_BG,
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: GLASS_BORDER,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    marginHorizontal: 16,
-    marginTop: 12,
+    marginHorizontal: 14, padding: 14, borderRadius: 16,
+    backgroundColor: CARD, borderWidth: StyleSheet.hairlineWidth, borderColor: BORDER
   },
 
-  avatar: {
-    width: 36, height: 36, borderRadius: 12,
-    alignItems: "center", justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
+  counterTitle: { color: TEXT, fontWeight: "800", fontSize: 16 },
+  counterSub: { color: SUB, fontWeight: "600", fontSize: 12 },
+});
+
+const rowStyles = StyleSheet.create({
+  wrap: {
+    paddingHorizontal: 14, paddingVertical: 14,
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between"
   },
-
-  name: { color: TEXT, fontSize: 16, fontWeight: "800" },
-  sub: { color: SUB, fontSize: 12, marginTop: 2 },
-
-  rowTitle: { color: TEXT, fontSize: 14, fontWeight: "800" },
-  rowValue: { color: SUB, fontSize: 13, fontWeight: "700" },
-  sep: { height: StyleSheet.hairlineWidth, backgroundColor: GLASS_BORDER, marginVertical: 8 },
+  label: { color: TEXT, fontWeight: "800", fontSize: 14 },
+  value: { color: TEXT, fontWeight: "700", fontSize: 14, maxWidth: 190 },
+});
+const actStyles = StyleSheet.create({
+  wrap: {
+    paddingHorizontal: 14, paddingVertical: 14,
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between"
+  },
+  text: { color: TEXT, fontWeight: "800", fontSize: 14 },
 });

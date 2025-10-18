@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { View, Text, StyleSheet, TextInput, Pressable, Animated, Image } from "react-native";
+import { View, Text, StyleSheet, TextInput, Pressable, Animated, Image, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,32 +8,31 @@ import { router } from "expo-router";
 import ScreenBg from "@/ui/ScreenBg";
 import GlassHeader from "@/ui/GlassHeader";
 import { GlassCard } from "@/ui/Glass";
-import BottomKeyboardModal from "@/components/BottomSheet/BottomKeyboardModal";
+import AccountFilterSheet from "@/payments/AccountFilterSheet";
 
 const BG = "#0D1820";
 const AVATAR_SIZE = 34;
-const CHIPS_H = 34; // altura de cada chip
+const CHIPS_H = 34;
 
-type AccountKey = "all" | "daily" | "savings" | "social";
+type SingleAccount = "daily" | "savings" | "social";
 
 type Thread = {
   id: string;
   name: string;
   alias: string;
   avatar?: string;
-  lastMsg: string;
+  lastMsg: string;   // origen crudo (p.ej. "–15 USDT", "paid 5 DAI", "request 2 USDC", "split pending")
   lastTime: string;
+  lastTs?: number; 
   unread?: boolean;
   isGroup?: boolean;
   favourite?: boolean;
-  /** opcional: cuando lo añadas podremos filtrar de verdad por cuenta */
-  account?: Exclude<AccountKey, "all">;
+  account?: SingleAccount;
 };
 
-// 👇 solo usuarios/grupos HiHODL (nada de merchants)
 const MOCK_THREADS: Thread[] = [
   { id: "2",  name: "@helloalex", alias: "@helloalex", lastMsg: "–15 USDT",         lastTime: "21:17", favourite: true, account: "daily" },
-  { id: "3",  name: "@friend2",   alias: "@friend2",   lastMsg: "–4.20 USDT",       lastTime: "16:03", isGroup: true,   account: "social" },
+  { id: "3",  name: "@friend2",   alias: "@friend2",   lastMsg: "+4.20 USDT",       lastTime: "16:03", isGroup: true,   account: "social" }, // ejemplo recibido
   { id: "4",  name: "@maria",     alias: "@maria",     lastMsg: "request 2 USDC",   lastTime: "09:12",                  account: "savings" },
   { id: "5",  name: "@satoshi",   alias: "@satoshi",   lastMsg: "paid 0.001 BTC",   lastTime: "08:40",                  account: "daily" },
   { id: "6",  name: "@luna",      alias: "@luna",      lastMsg: "–7.50 USDC",       lastTime: "08:20",                  account: "social" },
@@ -48,7 +47,7 @@ const MOCK_THREADS: Thread[] = [
   { id: "15", name: "@pablo",     alias: "@pablo",     lastMsg: "paid 9 USDT",      lastTime: "Sab",                    account: "daily" },
   { id: "16", name: "@noa",       alias: "@noa",       lastMsg: "request 1.5 USDC", lastTime: "Sab", favourite: true,   account: "savings" },
   { id: "17", name: "@lucas",     alias: "@lucas",     lastMsg: "–22 USDT",         lastTime: "Sab",                    account: "daily" },
-  { id: "18", name: "@julia",     alias: "@julia",     lastMsg: "paid 0.2 SOL",     lastTime: "Vie",                    account: "daily" },
+  { id: "18", name: "@julia",     alias: "@julia",     lastMsg: "+0.2 SOL",         lastTime: "Vie",                    account: "daily" },
   { id: "19", name: "@groupBBQ",  alias: "@groupBBQ",  lastMsg: "split settled",    lastTime: "Vie", isGroup: true,     account: "social" },
   { id: "20", name: "@nina",      alias: "@nina",      lastMsg: "–3.33 USDC",       lastTime: "Vie",                    account: "savings" },
   { id: "21", name: "@omar",      alias: "@omar",      lastMsg: "paid 4 USDT",      lastTime: "Jue",                    account: "daily" },
@@ -56,6 +55,78 @@ const MOCK_THREADS: Thread[] = [
 ];
 
 type Filter = "all" | "groups" | "favs";
+
+// ===== Store seguro (selección multi-cuentas) =====
+function usePaymentsFilterStoreSafe() {
+  try {
+    const { usePaymentsFilterStore } = require("@/store/paymentsFilter.store");
+    return usePaymentsFilterStore() as {
+      selected: { Daily: boolean; Savings: boolean; Social: boolean };
+    };
+  } catch {
+    const mem = (global as any).__paymentsFilterMemSel ||= {
+      selected: { Daily: true, Savings: true, Social: true },
+    };
+    return mem as { selected: { Daily: boolean; Savings: boolean; Social: boolean } };
+  }
+}
+
+/** Convierte el lastMsg crudo a la frase normalizada pedida */
+
+function formatThreadTime(ts?: number, fallback?: string) {
+  if (!ts) return fallback ?? "";
+  const d = new Date(ts);
+
+  const today = new Date();
+  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const startDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+  const diffDays = Math.floor((startToday - startDay) / 86400000);
+
+  // Hoy -> HH:mm
+  if (diffDays === 0) {
+    return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  }
+
+  // Últimos 7 días -> día corto
+  if (diffDays > 0 && diffDays < 7) {
+    return d.toLocaleDateString(undefined, { weekday: "short" }); // Lun, Mar, Mié...
+  }
+
+  // Mismo año -> 12 May
+  const sameYear = d.getFullYear() === today.getFullYear();
+  if (sameYear) {
+    return d.toLocaleDateString(undefined, { day: "2-digit", month: "short" }); // 12 may
+  }
+
+  // Años anteriores -> 12 May 2024
+  return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function formatLastActivity(raw: string): string {
+  const msg = raw.trim();
+
+  // –12.3 USDT  |  -12.3 USDT  -> sent
+  const reMinus = /^[–-]\s*([\d.,]+)\s*([A-Z]+)\b/;
+  // +12.3 USDT  -> received
+  const rePlus  = /^\+\s*([\d.,]+)\s*([A-Z]+)\b/;
+  // paid 5 DAI -> sent
+  const rePaid  = /\bpaid\s+([\d.,]+)\s*([A-Z]+)\b/i;
+  // request 2 USDC / requested 2 USDC -> requested
+  const reReq   = /\brequest(?:ed)?\s+([\d.,]+)\s*([A-Z]+)\b/i;
+  // split pending/settled
+  const reSplit = /\bsplit\s+(pending|settled)\b/i;
+
+  let m: RegExpExecArray | null;
+
+  if ((m = rePlus.exec(msg)))    return `You received ${m[1]} ${m[2]}`;
+  if ((m = reMinus.exec(msg)))   return `You sent ${m[1]} ${m[2]}`;
+  if ((m = rePaid.exec(msg)))    return `You sent ${m[1]} ${m[2]}`;
+  if ((m = reReq.exec(msg)))     return `You requested ${m[1]} ${m[2]}`;
+  if ((m = reSplit.exec(msg)))   return `Split ${m[1].toLowerCase()}`;
+
+  return msg; // fallback
+}
 
 export default function PaymentsHome() {
   const { t } = useTranslation(["payments"]);
@@ -65,10 +136,18 @@ export default function PaymentsHome() {
   const [search, setSearch] = useState("");
   const [phIdx, setPhIdx] = useState(0);
   const [filter, setFilter] = useState<Filter>("all");
-  const [accountFilter, setAccountFilter] = useState<AccountKey>("all");
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
 
-  // Placeholders rotatorios (base)
+  const { selected } = usePaymentsFilterStoreSafe();
+  const selectedKeys = useMemo(
+    () =>
+      (Object.entries(selected) as Array<[keyof typeof selected, boolean]>)
+        .filter(([, v]) => v)
+        .map(([k]) => k.toLowerCase() as SingleAccount),
+    [selected]
+  );
+  const isAllAccounts = selectedKeys.length === 3;
+
   const PHRASES = useMemo(
     () => [
       t("payments:searchPh", "Search"),
@@ -83,46 +162,45 @@ export default function PaymentsHome() {
     return () => clearInterval(id);
   }, [PHRASES.length]);
 
-  // Placeholder contextual
   const searchPh = useMemo(() => {
     const base = PHRASES[phIdx];
-    if (accountFilter === "all") return base;
-    const scope = accountFilter === "daily" ? "Daily" : accountFilter === "savings" ? "Savings" : "Social";
-    return `${base} in ${scope}`;
-  }, [PHRASES, phIdx, accountFilter]);
-
-  // Etiqueta del chip Accounts
-  const accountLabel = useMemo(() => {
-    switch (accountFilter) {
-      case "daily": return "Accounts · Daily";
-      case "savings": return "Accounts · Savings";
-      case "social": return "Accounts · Social";
-      default: return "Accounts";
+    if (isAllAccounts) return base;
+    if (selectedKeys.length === 1) {
+      const scope = selectedKeys[0] === "daily" ? "Daily" : selectedKeys[0] === "savings" ? "Savings" : "Social";
+      return `${base} in ${scope}`;
     }
-  }, [accountFilter]);
+    return base;
+  }, [PHRASES, phIdx, isAllAccounts, selectedKeys]);
 
-  // Filtro + búsqueda (incluye cuenta)
+  const accountLabel = useMemo(() => {
+    if (selectedKeys.length === 1) {
+      const k = selectedKeys[0];
+      return k === "daily" ? "Daily" : k === "savings" ? "Savings" : "Social";
+    }
+    return "Accounts";
+  }, [selectedKeys]);
+
   const filtered = useMemo(() => {
     const byFilter = (x: Thread) =>
       filter === "all" ? true : filter === "groups" ? !!x.isGroup : !!x.favourite;
 
-    const byAccount = (x: Thread) =>
-      accountFilter === "all" ? true : x.account === accountFilter;
+    const byAccount = (x: Thread) => {
+      if (isAllAccounts) return true;
+      if (!x.account) return true;
+      return selectedKeys.includes(x.account);
+    };
 
     const bySearch = (x: Thread) =>
       (x.name + x.alias).toLowerCase().includes(search.toLowerCase());
 
     return MOCK_THREADS.filter(byFilter).filter(byAccount).filter(bySearch);
-  }, [search, filter, accountFilter]);
+  }, [search, filter, isAllAccounts, selectedKeys]);
 
-  // Altura real del header (igual estética Home)
-  const HEADER_H = insets.top + 6 + 54;
+  const HEADER_H = insets.top + 6+ 54;
 
-  // Chips como header de la lista (se ocultan al hacer scroll)
   const ChipsHeader = () => (
     <View style={{ paddingTop: HEADER_H + 8 }}>
-      <View style={styles.chipsRow}>
-        {/* Accounts (abre BottomSheet) */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
         <Pressable
           onPress={() => setAccountSheetOpen(true)}
           style={[styles.chip, styles.chipPrimary, { height: CHIPS_H }]}
@@ -133,12 +211,11 @@ export default function PaymentsHome() {
           <Text style={[styles.chipLabel, { fontWeight: "800" }]} numberOfLines={1}>
             {accountLabel}
           </Text>
-          {accountFilter !== "all" ? <View style={styles.dot} /> : null}
+          {!isAllAccounts ? <View style={styles.dot} /> : null}
         </Pressable>
 
-        <View style={{ flex: 1 }} />
+        <View style={{ width: 8 }} />
 
-        {/* Filtros sociales a la derecha */}
         {(
           [
             { k: "all", label: t("payments:filters.all", "All") },
@@ -158,9 +235,8 @@ export default function PaymentsHome() {
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
 
-      {/* separador sutil */}
       <View style={styles.separator} />
     </View>
   );
@@ -169,7 +245,6 @@ export default function PaymentsHome() {
     <View style={styles.screen}>
       <ScreenBg account="Daily" height={160} showTopSeam />
 
-      {/* ===== HEADER FIJO ===== */}
       <GlassHeader
         scrolly={scrolly}
         blurTint="dark"
@@ -213,50 +288,53 @@ export default function PaymentsHome() {
         contentStyle={{ paddingHorizontal: 12 }}
       />
 
-      {/* ===== LISTA (chips dentro como header) ===== */}
       <Animated.FlatList
         data={filtered}
         keyExtractor={(i: Thread) => i.id}
         ListHeaderComponent={ChipsHeader}
-        renderItem={({ item }: { item: Thread }) => (
-          <Pressable
-            style={styles.threadCard}
-            onPress={() =>
-              router.push({
-                pathname: "/(internal)/payments/thread",
-                params: { id: item.id, name: item.name, alias: item.alias },
-              })
-            }
-          >
-            <GlassCard style={styles.threadGlass}>
-              <View style={styles.threadRow}>
-                <View style={styles.avatarWrap}>
-                  {item.avatar ? (
-                    <Image source={{ uri: item.avatar }} style={styles.avatar} />
-                  ) : (
-                    <View
-                      style={[
-                        styles.avatar,
-                        { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)" },
-                      ]}
-                    >
-                      <Text style={{ color: "#9CC6D1", fontWeight: "900" }}>
-                        {item.name.slice(0, 1).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-                </View>
+        renderItem={({ item }: { item: Thread }) => {
+          const subtitle = formatLastActivity(item.lastMsg);
+          const rightTime = formatThreadTime(item.lastTs, item.lastTime); 
+          return (
+            <Pressable
+              style={styles.threadCard}
+              onPress={() =>
+                router.push({
+                  pathname: "/(internal)/payments/thread",
+                  params: { id: item.id, name: item.name, alias: item.alias },
+                })
+              }
+            >
+              <GlassCard style={styles.threadGlass}>
+                <View style={styles.threadRow}>
+                  <View style={styles.avatarWrap}>
+                    {item.avatar ? (
+                      <Image source={{ uri: item.avatar }} style={styles.avatar} />
+                    ) : (
+                      <View
+                        style={[
+                          styles.avatar,
+                          { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)" },
+                        ]}
+                      >
+                        <Text style={{ color: "#9CC6D1", fontWeight: "900" }}>
+                          {item.name.slice(0, 1).toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
 
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={styles.threadName} numberOfLines={1}>{item.name}</Text>
-                  <Text style={styles.threadMsg} numberOfLines={1}>{item.lastMsg}</Text>
-                </View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={styles.threadName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.threadMsg} numberOfLines={1}>{subtitle}</Text>
+                  </View>
 
-                <Text style={styles.threadTime}>{item.lastTime}</Text>
-              </View>
-            </GlassCard>
-          </Pressable>
-        )}
+                  <Text style={styles.threadTime}>{item.lastTime}</Text>
+                </View>
+              </GlassCard>
+            </Pressable>
+          );
+        }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 80 }}
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
@@ -269,39 +347,7 @@ export default function PaymentsHome() {
         removeClippedSubviews
       />
 
-      {/* ===== BottomSheet: Accounts ===== */}
-      {accountSheetOpen && (
-        <BottomKeyboardModal
-  visible={accountSheetOpen}
-  onClose={() => setAccountSheetOpen(false)}
->
-  {/* Header del sheet (DIY) */}
-  <View style={styles.sheetHeader}>
-    <Text style={styles.sheetTitle}>
-      {t("payments:accounts.title", "Select account")}
-    </Text>
-  </View>
-
-  {([
-    { k: "all",     label: "All Accounts" },
-    { k: "daily",   label: "Daily" },
-    { k: "savings", label: "Savings" },
-    { k: "social",  label: "Social" },
-  ] as const).map((opt) => {
-    const active = accountFilter === opt.k;
-    return (
-      <Pressable
-        key={opt.k}
-        onPress={() => { setAccountFilter(opt.k); setAccountSheetOpen(false); }}
-        style={[styles.row, active && { backgroundColor: "rgba(255,255,255,0.06)" }]}
-      >
-        <Text style={[styles.rowLabel, active && { fontWeight: "800" }]}>{opt.label}</Text>
-        {active ? <Ionicons name="checkmark" size={18} color="#DFF5FF" /> : null}
-      </Pressable>
-    );
-  })}
-</BottomKeyboardModal>
-      )}
+      <AccountFilterSheet visible={accountSheetOpen} onClose={() => setAccountSheetOpen(false)} />
     </View>
   );
 }
@@ -325,39 +371,20 @@ const styles = StyleSheet.create({
 
   rightBtns: { flexDirection: "row", alignItems: "center", gap: 12 },
 
-  chipsRow: {
-    flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 16,
-    flexWrap: "wrap",
-    alignItems: "center",
-  },
+  chipsRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, gap: 8 },
   chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.10)",
+    flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 12, borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.10)", flexShrink: 0,
   },
   chipActive: { backgroundColor: "rgba(255,255,255,0.18)" },
   chipLabel: { color: "#fff", fontSize: 12, letterSpacing: -0.2 },
-
-  chipPrimary: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(223,245,255,0.25)",
-    maxWidth: 200,
-  },
-  dot: {
-    width: 6, height: 6, borderRadius: 3, marginLeft: 6,
-    backgroundColor: "#FFB703",
-  },
+  chipPrimary: { borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(223,245,255,0.25)" },
+  dot: { width: 6, height: 6, borderRadius: 3, marginLeft: 6, backgroundColor: "#FFB703" },
 
   separator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    marginTop: 8,
-    marginHorizontal: 16,
-    borderRadius: 1,
+    height: StyleSheet.hairlineWidth, backgroundColor: "rgba(255,255,255,0.08)",
+    marginTop: 8, marginBottom: 12, marginHorizontal: 16, borderRadius: 1,
   },
 
   addChipBtn: {
@@ -373,26 +400,6 @@ const styles = StyleSheet.create({
   avatarWrap: { width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: 18, overflow: "hidden" },
   avatar: { width: "100%", height: "100%", borderRadius: 18 },
   threadName: { color: "#fff", fontWeight: "800", fontSize: 15, letterSpacing: -0.2 },
-  threadMsg: { color: "rgba(255,255,255,0.65)", fontSize: 13, marginTop: 2 },
+  threadMsg: { color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 2 }, // un pelín más claro
   threadTime: { color: "rgba(255,255,255,0.55)", fontSize: 12 },
-
-  // Sheet rows
-  row: {
-    height: 48, paddingHorizontal: 16,
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    borderRadius: 10, marginBottom: 8,
-  },
-  rowLabel: { color: "#fff", fontSize: 14 },
-
-  sheetHeader: {
-  paddingHorizontal: 16,
-  paddingTop: 8,
-  paddingBottom: 12,
-},
-sheetTitle: {
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: "800",
-},
-
 });

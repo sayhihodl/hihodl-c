@@ -1,368 +1,384 @@
 // src/send/steps/StepToken.tsx
-import React, { useMemo, useRef, useCallback, useState } from "react";
+import React, { useMemo, useRef, useCallback, useState, useEffect } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Animated,
-  Platform,
-  TextInput,
-  Keyboard, // opcional: para cerrar al seleccionar
+  View, Text, StyleSheet, Pressable, Animated, Platform, TextInput, Keyboard, Image, FlatList
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-
+import { SvgUri } from "react-native-svg";
+import { BlurView } from "expo-blur";
 import GlassHeader from "@/ui/GlassHeader";
-import Row from "@/ui/Row";
 import { legacy, glass } from "@/theme/colors";
 import type { ChainKey } from "@/send/types";
 import { useSendFlow } from "@/send/SendFlowProvider";
+import type { TokenMeta } from "@/send/SendFlowProvider";
 
-// iconos base (svg)
-import { TOKEN_ICONS, DEFAULT_TOKEN_ICON } from "@/config/iconRegistry";
-// builder con reglas de prioridad/coherencia
-import { buildSendChoices } from "@/config/sendChoices";
+import { renderTokenIcon, iconKeyForTokenId } from "@/config/iconRegistry";
+import { useRecentTokens } from "@/hooks/useRecentTokens";
+import { HighlightedText } from "@/utils/highlight";
 
-// mini-badges
+import { multichainSearch, type MCGroup, type MCItem } from "@/services/multichainSearch";
+// ⬇️ añade TextInput al import de tipos si no estaba
+import type { TextInput as RNTextInput } from "react-native"; // 👈 solo para el tipo del ref
 import SolBadge from "@assets/chains/Solana-chain.svg";
 import EthBadge from "@assets/chains/ETH-chain.svg";
 import BaseBadge from "@assets/chains/Base-chain.svg";
 import PolyBadge from "@assets/chains/Polygon-chain.svg";
 
-type Account = "Daily" | "Savings" | "Social";
-const { TEXT, SUB } = legacy;
+const { SUB } = legacy;
 const GLASS_BG = glass.cardOnSheet;
 const GLASS_BORDER = glass.cardBorder;
 
-/* ====== mini badge mapping ====== */
 const CHAIN_MINI: Partial<Record<ChainKey, React.ComponentType<any>>> = {
-  solana: SolBadge,
-  ethereum: EthBadge,
-  base: BaseBadge,
-  polygon: PolyBadge,
+  solana: SolBadge, ethereum: EthBadge, base: BaseBadge, polygon: PolyBadge,
 };
 
-/* ====== tamaños ====== */
 const AVATAR = 34;
 const MINI_BADGE = 18;
 const MINI_INNER = 18;
 
-/* ====== icono de token con mini-badge de red ====== */
-function TokenWithMini({
-  tokenId,
-  bestNet,
-}: {
-  tokenId: keyof typeof TOKEN_ICONS | string;
-  bestNet: ChainKey;
-}) {
-  const def = (TOKEN_ICONS as any)[tokenId] ?? DEFAULT_TOKEN_ICON;
+function useDebounced<T>(val: T, ms = 220) {
+  const [v, setV] = useState(val);
+  useEffect(() => { const h = setTimeout(() => setV(val), ms); return () => clearTimeout(h); }, [val, ms]);
+  return v;
+}
+
+/* token icon + mini chain, con soporte de iconUrl remoto */
+function TokenWithMini({ iconKey, bestNet, iconUrl }: { iconKey?: string; bestNet: ChainKey; iconUrl?: string }) {
   const Mini = CHAIN_MINI[bestNet];
+  const safeKey = (iconKey || "generic").toLowerCase();
+  const url = (iconUrl || "").trim();
+  const isSvg = !!url && url.toLowerCase().endsWith(".svg");
+
   return (
     <View style={{ width: AVATAR, height: AVATAR, position: "relative" }}>
-      {def.kind === "svg" ? (
-        <def.Comp width={AVATAR} height={AVATAR} />
+      {url ? (
+        isSvg ? <SvgUri width={AVATAR} height={AVATAR} uri={url} /> :
+        <Image source={{ uri: url }} style={{ width: AVATAR, height: AVATAR, borderRadius: 8 }} resizeMode="cover" />
       ) : (
-        <def.Img width={AVATAR} height={AVATAR} />
+        renderTokenIcon(safeKey, { size: AVATAR, inner: AVATAR - 2, withCircle: false })
       )}
       {!!Mini && (
-        <View style={styles.miniBadge}>
-          <Mini width={MINI_INNER} height={MINI_INNER} />
-        </View>
+        <View style={styles.miniBadge}><Mini width={MINI_INNER} height={MINI_INNER} /></View>
       )}
     </View>
   );
 }
 
 type StepTokenProps = {
-  /** Alias o nombre a mostrar en el título */
   title: string;
-  /** Cuenta activa (para futuros matices visuales si hiciera falta) */
-  account?: Account;
-  /** Red ya seleccionada en el paso anterior (limita el builder) */
   selectedChain?: ChainKey;
-  /** Callback cuando el user elige token */
   onPick?: (sel: { tokenId: string; bestNet: ChainKey }) => void;
-  /** Volver al paso anterior */
   onBack?: () => void;
-  /** Opcional: catálogo custom (tests/demos) */
-  choicesOverride?: Array<{ id: string; label: string; bestNet: ChainKey }>;
+  onTopChange?: (atTop: boolean) => void;
+
+  /** Cuando el header lo pinta el modal */
+  useExternalHeader?: boolean;
+  /** Estado controlado del search (desde el modal) */
+  searchValue?: string;
+  onChangeSearch?: (t: string) => void;
+  /** Ref del input del header del modal */
+  searchInputRef?: React.RefObject<RNTextInput | null>;
 };
 
 export default function StepToken({
   title,
-  account = "Daily",
   selectedChain,
   onPick,
   onBack,
-  choicesOverride,
+  onTopChange,
+  useExternalHeader,
+  searchValue,
+  onChangeSearch,
+  searchInputRef,
 }: StepTokenProps) {
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
-  const { patch, goTo } = useSendFlow(); // ✅ hooks dentro del componente
 
-  // ===== filtro =====
-  const [q, setQ] = useState("");
+  const atTopRef = useRef(true);
+  const lastSentTop = useRef<boolean | null>(null);
+  const dragStartY = useRef(0);
+  const usingExtHeader = !!useExternalHeader; 
+  const { patch, goTo } = useSendFlow();
 
-  // redes del destinatario
-  const recipientChains = useMemo<ChainKey[] | undefined>(() => {
+  const [qInternal, setQInternal] = useState("");
+  const q = (searchValue ?? qInternal);
+  const setQ = (onChangeSearch ?? setQInternal);
+  const dq = useDebounced(q.trim(), 220);
+
+  const { recent, add: addRecent } = useRecentTokens();
+  const [groups, setGroups] = useState<MCGroup[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // redes permitidas según destino (pero si hay query, buscamos en todas)
+  const allowChains = useMemo<ChainKey[] | undefined>(() => {
+    if (dq) return undefined; // 👈 Súper buscador: sin filtros cuando hay texto
     if (!selectedChain) return undefined;
     if (selectedChain === "solana") return ["solana"];
     if (["base", "polygon", "ethereum"].includes(selectedChain))
       return ["base", "polygon", "ethereum"] as ChainKey[];
     return undefined;
-  }, [selectedChain]);
+  }, [selectedChain, dq]);
 
-  // catálogo
-  const allChoices = useMemo(() => {
-    const base = choicesOverride ?? buildSendChoices(recipientChains);
-    // Preferimos SOLANA para stables si el destinatario la permite
-    const solanaAllowed = !recipientChains || recipientChains.includes("solana");
-    if (!solanaAllowed) return base;
-    return base.map((t) =>
-      t.id === "usdc" || t.id === "usdt" ? { ...t, bestNet: "solana" as ChainKey } : t
+  // fetch federado
+  useEffect(() => {
+    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : (null as any);
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await multichainSearch(dq, allowChains as any);
+        if (mounted) setGroups(res);
+      } catch {/* noop */}
+      finally { if (mounted) setLoading(false); }
+    })();
+    return () => { mounted = false; ctrl?.abort?.(); };
+  }, [dq, allowChains]);
+
+  // “Recent” (sin query)
+  const recentRows: MCItem[] = useMemo(() => {
+    if (dq || !recent?.length || !groups.length) return [];
+    const flat = groups.flatMap((g) => g.items);
+    const byId = new Map(flat.map((i) => [i.id, i]));
+    return recent.map((id) => byId.get(id)).filter(Boolean) as MCItem[];
+  }, [dq, recent, groups]);
+
+  // pick (elige la mejor chain del grupo, o el item dado)
+  const pickItem = useCallback((it: MCItem) => {
+    const cleanSymbol = (it.symbol || it.name || "TOKEN").split(".")[0].toUpperCase();
+    const iconKey = iconKeyForTokenId(it.id) ?? (it.symbol || "generic").toLowerCase();
+
+    const meta: TokenMeta & { iconUrl?: string } = {
+      id: it.id,
+      chain: it.chain,
+      symbol: cleanSymbol,
+      displaySymbol: cleanSymbol,
+      name: it.name || cleanSymbol,
+      brand: it.brand,
+      displayName: cleanSymbol,
+      iconKey,
+      decimals: it.decimals ?? 6,
+      iconUrl: it.iconUrl,
+    };
+
+    patch({ token: meta as any, tokenId: meta.id, chain: meta.chain, amount: "" });
+    Promise.resolve(addRecent(meta.id)).catch(() => {});
+    onPick?.({ tokenId: meta.id, bestNet: meta.chain as ChainKey });
+    setQ("");
+    Keyboard.dismiss();
+    goTo("amount");
+  }, [addRecent, goTo, onPick, patch]);
+
+  // render de cada item (una chain concreta)
+  const renderMCItem = (item: MCItem) => {
+    const disabled = item.reason === "unsupported_chain";
+
+
+
+    return (
+      <Pressable
+        key={`${item.id}-${item.chain}`}
+        onPress={() => !disabled && pickItem(item)}
+        disabled={disabled}
+        style={[
+          styles.rowGlass,
+          { flexDirection: "row", alignItems: "center" },
+          disabled && { opacity: 0.5 },
+        ]}
+        {...({ accessibilityLabel: `Pick ${item.symbol} on ${String(item.chain)}` } as any)}
+      >
+        <TokenWithMini
+          iconKey={iconKeyForTokenId(item.id) ?? item.id}
+          bestNet={item.chain}
+          iconUrl={item.iconUrl}
+        />
+
+        <View style={[styles.labelWrap, { marginLeft: 12 }]}>
+          <HighlightedText
+            text={`${item.symbol}`}
+            query={dq}
+            style={styles.alias}
+            highlightStyle={{ color: "#FFD86A", fontWeight: "700" }}
+            numberOfLines={1}
+          />
+          {item.reason === "needs_meta" && (
+            <Text style={[styles.phone, { color: "#F3C969" }]}>Metadata missing</Text>
+          )}
+          {item.reason === "unsupported_chain" && (
+            <Text style={[styles.phone, { color: "#FF7676" }]}>Unsupported chain</Text>
+          )}
+          {!item.reason && !!item.name && (
+            <Text style={styles.phone}>{item.name}</Text>
+          )}
+        </View>
+
+        <Ionicons name="chevron-forward" size={18} color="#AFC9D6" />
+      </Pressable>
     );
-  }, [recipientChains, choicesOverride]);
+  };
 
-  const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    if (!needle) return allChoices;
-    return allChoices.filter(
-      (t) =>
-        t.label.toLowerCase().includes(needle) ||
-        t.id.toLowerCase().includes(needle)
-    );
-  }, [q, allChoices]);
+  const HEADER_CONTENT_H = 44 + 16 + 50 + 10;
+  const HEADER_TOTAL = insets.top + 6 + HEADER_CONTENT_H;
+  // arriba, junto a otros useRef
+  const inputRef = useRef<TextInput>(null);
+  // emitir gate al montar
+  useEffect(() => {
+    if (lastSentTop.current !== atTopRef.current) {
+      lastSentTop.current = atTopRef.current;
+      onTopChange?.(atTopRef.current);
+    }
+  }, [onTopChange]);
 
-  // secciones
-  const recommended = filtered.slice(0, Math.min(4, filtered.length));
-  const rest = filtered.slice(recommended.length);
-  const sections = useMemo(
-    () => [
-      ...(recommended.length
-        ? [{ title: "Recommended", key: "rec", data: recommended }]
-        : []),
-      ...(rest.length ? [{ title: "All tokens", key: "all", data: rest }] : []),
-    ],
-    [filtered]
-  );
+useEffect(() => {
+  // Debug visual y por consola
+  const count = groups.flatMap(g => g.items).length;
+  console.debug("[StepToken] groups", groups.length, "items", count);
+}, [groups]);
 
-  const HEADER_INNER_TOP = 6;
-  const TITLE_H = 44;
-  const ROW_SEARCH_GAP = 16;
-  const SEARCH_H = 50;
-  const AFTER_SEARCH_GAP = 10;
-  const HEADER_CONTENT_H = TITLE_H + ROW_SEARCH_GAP + SEARCH_H + AFTER_SEARCH_GAP;
-  const HEADER_TOTAL = insets.top + HEADER_INNER_TOP + HEADER_CONTENT_H;
 
-  const handlePick = useCallback(
-    (t: { id: string; label: string; bestNet: ChainKey }) => {
-      // Guarda token+chain y resetea cantidad
-      patch({ tokenId: t.id, chain: t.bestNet, amount: "" });
-      onPick?.({ tokenId: t.id, bestNet: t.bestNet });
-      // UX: cerrar teclado y limpiar query
-      setQ("");
-      Keyboard.dismiss();
-      // Avanza a amount
-      goTo("amount");
-    },
-    [patch, goTo, onPick]
-  );
-
-  const keyExtractor = useCallback(
-    (it: { id: string }, idx: number) => `${it.id}-${idx}`,
-    []
-  );
-
-  const renderItem = useCallback(
-    ({ item }: { item: { id: string; label: string; bestNet: ChainKey } }) => (
-      <Row
-        containerStyle={styles.rowGlass}
-        leftSlot={<TokenWithMini tokenId={item.id} bestNet={item.bestNet} />}
-        labelNode={
-          <View style={styles.labelWrap}>
-            <Text style={styles.alias} numberOfLines={1} ellipsizeMode="tail">
-              {item.label}
-            </Text>
-          </View>
-        }
-        rightIcon="chevron-forward"
-        onPress={() => handlePick(item)}
-        {...({ accessibilityLabel: `Pick ${item.label} on ${String(item.bestNet)}` } as any)}
-      />
-    ),
-    [handlePick]
-  );
-
-  return (
-    <View style={{ flex: 1 }}>
-      {/* HEADER */}
+return (
+  <View style={{ flex: 1 }}>
+    {/* Si el header viene del modal, NO dibujamos el del Step */}
+    {!useExternalHeader && (
       <GlassHeader
         scrolly={scrollY}
         height={HEADER_CONTENT_H}
-        innerTopPad={HEADER_INNER_TOP}
+        innerTopPad={6}
         solidColor="transparent"
-        contentStyle={{ flexDirection: "column", paddingHorizontal: 20 }}
-        leftSlot={null}
-        rightSlot={null}
+        contentStyle={{
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 0,
+        }}
+        leftSlot={<View style={{ width: 36 }} />}
+        rightSlot={<View style={{ width: 36 }} />}
         centerSlot={
-          <>
-            <View style={[styles.topRow, { justifyContent: "space-between" }]}>
-              <Pressable
-                onPress={onBack}
-                hitSlop={10}
-                style={styles.headerIconBtnBare}
-                accessibilityLabel="Back"
-              >
-                <Ionicons name="chevron-back" size={22} color={TEXT} />
-              </Pressable>
+          <View style={{ width: "100%", alignItems: "center" }}>
+            <Text style={styles.title} numberOfLines={1}>{title}</Text>
 
-              <Text style={styles.title} numberOfLines={1}>
-                {title}
-              </Text>
-
-              <View style={{ width: 36, height: 36 }} />
-            </View>
-
-            <View style={[styles.searchInHeader, { marginTop: 14, height: 50, marginBottom: 10 }]}>
-              <Ionicons name="search" size={18} color={SUB} />
-              <TextInput
-                value={q}
-                onChangeText={setQ}
-                placeholder="Search token or network…"
-                placeholderTextColor={SUB}
-                style={styles.input}
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="search"
+            <View style={styles.searchWrap}>
+              <BlurView tint="dark" intensity={50} style={StyleSheet.absoluteFill} />
+              {/* Capa densa para que no se “lea” la lista al hacer scroll */}
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  { backgroundColor: "rgba(8,15,22,0.55)", borderRadius: 14 },
+                ]}
               />
-              {!!q && (
-                <Pressable onPress={() => setQ("")} hitSlop={8} accessibilityLabel="Clear search">
-                  <Ionicons name="close-circle" size={18} color={SUB} />
-                </Pressable>
-              )}
+              <Pressable
+                style={styles.searchRow}
+                onPress={() => inputRef.current?.focus()}
+                accessibilityLabel="Search currency"
+                hitSlop={8}
+              >
+                <Ionicons name="search" size={18} color={SUB} />
+                <TextInput
+                  ref={inputRef}
+                  value={q}
+                  onChangeText={setQ}
+                  placeholder="Search currency…"
+                  placeholderTextColor={SUB}
+                  style={styles.input}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="search"
+                />
+                {!!q && (
+                  <Pressable onPress={() => setQ("")} hitSlop={8}>
+                    <Ionicons name="close-circle" size={18} color={SUB} />
+                  </Pressable>
+                )}
+              </Pressable>
             </View>
-          </>
+          </View>
         }
       />
-
-      {/* LISTA */}
-      <Animated.SectionList
+    )}
+  
+      
+      <FlatList
         style={{ flex: 1 }}
-        sections={sections as any}
-        keyExtractor={keyExtractor}
+        data={groups.flatMap(g => g.items) as any}
+        keyExtractor={(it: MCItem, idx: number) => `${it.id}-${it.chain}-${idx}`}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: insets.bottom + 22,
-          paddingTop: HEADER_TOTAL - 38,
+          paddingTop: useExternalHeader ? 6 : (HEADER_TOTAL - 38),
+          flexGrow: 1,
         }}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-        SectionSeparatorComponent={() => <View style={{ height: 12 }} />}
         keyboardShouldPersistTaps="always"
-        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+        keyboardDismissMode="on-drag"
         bounces={Platform.OS === "ios"}
-        alwaysBounceVertical={false}
         overScrollMode="never"
-        contentInsetAdjustmentBehavior="never"
-        stickySectionHeadersEnabled={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
-        )}
+        initialNumToRender={16}
+        windowSize={7}
+        onScroll={(e) => {
+          const y = e?.nativeEvent?.contentOffset?.y || 0;
+          const atTop = y <= 0.5;
+          atTopRef.current = atTop;
+          if (lastSentTop.current !== atTop) { lastSentTop.current = atTop; onTopChange?.(atTop); }
+        }}
         scrollEventThrottle={16}
-        renderSectionHeader={({ section }) => (
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-        )}
-        renderItem={renderItem}
-        ListFooterComponent={
-          <Text style={styles.hint}>
-            We pick the cheapest network automatically. You can change it on the
-            confirmation screen.
-          </Text>
-        }
+        onScrollBeginDrag={({ nativeEvent }) => {
+          dragStartY.current = nativeEvent.contentOffset.y || 0;
+          atTopRef.current = dragStartY.current <= 0.5;
+          if (lastSentTop.current !== atTopRef.current) { lastSentTop.current = atTopRef.current; onTopChange?.(atTopRef.current); }
+        }}
+        onScrollEndDrag={({ nativeEvent }) => {
+          if (lastSentTop.current !== atTopRef.current) { lastSentTop.current = atTopRef.current; onTopChange?.(atTopRef.current); }
+          const y = nativeEvent.contentOffset.y || 0;
+          const overscroll = y < -56;
+          const startedAtTop = dragStartY.current <= 0.5;
+          if (startedAtTop && overscroll) onBack?.();
+        }}
+        renderItem={({ item }) => renderMCItem(item as MCItem)}
         ListEmptyComponent={
           <View style={{ paddingTop: 8 }}>
             <Text style={[styles.hint, { textAlign: "center" }]}>
-              No matches. Try another token or network name.
+              {loading ? "Searching…" : "No matches found. Try another name or address."}
             </Text>
           </View>
         }
+        ListFooterComponent={<Text style={styles.hint}>Networks auto-selected for lowest fee. Change it on the next screen.</Text>}
+        removeClippedSubviews={false}
       />
     </View>
   );
 }
 
-/* ============== styles ============== */
 const styles = StyleSheet.create({
-  topRow: {
-    height: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
-  headerIconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  headerIconBtnBare: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
-  },
   title: { color: legacy.TEXT, fontSize: 18, fontWeight: "600", textAlign: "center" },
-
-  searchInHeader: {
+   searchWrap: {
+    position: "relative",
     borderRadius: 14,
-    paddingHorizontal: 12,
-    backgroundColor: GLASS_BG,
+    overflow: "hidden",
+    marginTop: 14,
+    marginBottom: 10,
+    height: 50,
+    width: "100%",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: GLASS_BORDER,
+    borderColor: GLASS_BORDER, // mantiene el borde sutil original
+  },
+  searchRow: {
+    flex: 1,
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
   input: { flex: 1, color: "#fff", fontSize: 15 },
-
-  sectionTitle: { color: SUB, fontSize: 12, letterSpacing: 0.3, marginTop: 10, marginBottom: 6 },
-
+  sectionTitle: { color: legacy.SUB, fontSize: 12, letterSpacing: 0.3, marginTop: 10, marginBottom: 6 },
   labelWrap: { flex: 1, minWidth: 0, justifyContent: "center" },
-
-  rowGlass: {
-    backgroundColor: GLASS_BG,
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
+  rowGlass: { backgroundColor: GLASS_BG, borderRadius: 18, paddingVertical: 14, paddingHorizontal: 14, flexDirection: "row", alignItems: "center" },
   alias: { color: "#fff", fontWeight: "500", fontSize: 15, letterSpacing: 0.3 },
-  phone: { color: SUB, fontSize: 12, marginTop: 2 },
-  hint: { color: SUB, fontSize: 12, marginTop: 14, textAlign: "center" },
-
+  phone: { color: legacy.SUB, fontSize: 12, marginTop: 2 },
+  hint: { color: legacy.SUB, fontSize: 12, marginTop: 14, textAlign: "center" },
   miniBadge: {
-    position: "absolute",
-    right: -7,
-    bottom: -10,
-    width: MINI_BADGE,
-    height: MINI_BADGE,
-    borderRadius: 6,
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.18)",
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    elevation: 3,
+    position: "absolute", right: -7, bottom: -5, width: MINI_BADGE, height: MINI_BADGE, borderRadius: 6, overflow: "hidden",
+    alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255,255,255,0.18)", shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 3, elevation: 3,
   },
 });

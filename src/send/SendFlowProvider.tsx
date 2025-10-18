@@ -1,76 +1,101 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
-import type { Account } from "@/send/types";
+// src/send/SendFlowProvider.tsx
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+
 export type Step = "search" | "token" | "amount" | "confirm";
 
+/** opcional: meta bonita para futuras UIs */
+export type TokenMeta = {
+  id: string;            // "usdc" | "usdt" | "sol"
+  chain: string;         // "solana" | "base" | ...
+  symbol: string;        // "USDC" | "USDT" | "SOL"
+  displaySymbol?: string;
+  displayName?: string;
+  name?: string;
+  brand?: string;
+  iconKey?: string;
+  decimals?: number;
+};
+
 export type SendFlowState = {
-  open: boolean;
-  step: Step;
-  /** id de cuenta en minúscula: "daily" | "savings" | "social" | custom */
-  account?: string;
-  // payload del flujo (lo que ya usas en StepSearch)
   toType?: string;
   toRaw?: string;
   toDisplay?: string;
   chain?: string;
   resolved?: string;
   label?: string;
-  tokenId?: string;     // <— token elegido en StepToken
-  amount?: string;      // opcional si lo vas a usar después
+
+  /** 👇 compat con pantallas actuales */
+  tokenId?: string;
+
+  /** 👇 futuro: meta completa (opcional, no obliga nada ahora) */
+  token?: TokenMeta;
+
+  amount?: string;
+  avatarUrl?: string;
+  account?: "daily" | "savings" | "social";
 };
 
-type Ctx = {
+type AllowedSteps = Array<Exclude<Step, "search">>;
+export type SendFlowContext = {
   state: SendFlowState;
-  /** merge parcial */
-  patch: (delta: Partial<SendFlowState>) => void;
-  /** cambia de paso */
+  step: Step;
+  patch: (p: Partial<SendFlowState>) => void;
   goTo: (s: Step) => void;
-  /** abre el modal; alias openSend */
-  open: (opts?: { startAt?: Step; account?: string }) => void;
-  /** cierra el modal */
-  close: () => void;
 };
 
-// ---------- estado base
-const initialState: SendFlowState = { open: false,
-  step: "search",
-  account: "daily",
-  chain: undefined,
-  tokenId: undefined,
-  amount: undefined, };
+type Props = {
+  children: React.ReactNode;
+  initialState?: Partial<SendFlowState>;
+  initialStep?: Exclude<Step, "search">;
+  allowedSteps?: AllowedSteps;
+};
 
-const Ctx = createContext<Ctx | null>(null);
+const SendFlowCtx = createContext<SendFlowContext | null>(null);
+SendFlowCtx.displayName = "SendFlowCtx";
 
-export function SendFlowProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<SendFlowState>(initialState);
+export function SendFlowProvider({
+  children,
+  initialState,
+  initialStep = "token",
+  allowedSteps = ["token", "amount", "confirm"],
+}: Props) {
+  const [state, setState] = useState<SendFlowState>({
+    toRaw: "",
+    toDisplay: "",
+    label: "",
+    chain: undefined,
+    tokenId: undefined,
+    token: undefined,
+    amount: "",
+    account: "daily",
+    ...initialState,
+  });
 
-  const patch = useCallback((delta: Partial<SendFlowState>) => {
-    setState((s) => ({ ...s, ...delta }));
+  const [step, setStep] = useState<Step>(initialStep);
+  const allowedRef = useRef(allowedSteps);
+  allowedRef.current = allowedSteps;
+
+  const patch = useCallback((p: Partial<SendFlowState>) => {
+    setState((s) => ({ ...s, ...p }));
   }, []);
 
-  const goTo = useCallback((s: Step) => setState((st) => ({ ...st, step: s })), []);
-
-  const open = useCallback((opts?: { startAt?: Step; account?: string }) => {
-    setState((s) => ({
-      ...s,
-      open: true,
-      step: opts?.startAt ?? "search",
-      ...(opts?.account ? { account: opts.account } : null),
-    }));
+  const goTo = useCallback((next: Step) => {
+    if (next !== "search" && !allowedRef.current.includes(next)) return;
+    setStep(next);
   }, []);
 
-  const close = useCallback(() => setState((s) => ({ ...s, open: false })), []);
+  const value = useMemo<SendFlowContext>(() => ({ state, step, patch, goTo }), [state, step, patch, goTo]);
 
-  const value = useMemo<Ctx>(() => ({ state, patch, goTo, open, close }), [state, patch, goTo, open, close]);
-
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return <SendFlowCtx.Provider value={value}>{children}</SendFlowCtx.Provider>;
 }
 
-// Hook
-export function useSendFlow() {
-  const ctx = useContext(Ctx);
+export function useSendFlow(): SendFlowContext {
+  const ctx = useContext(SendFlowCtx);
   if (!ctx) throw new Error("useSendFlow must be used inside <SendFlowProvider>");
   return ctx;
 }
 
-// Back-compat por si algo apunta a FlowProvider
-export const FlowProvider = SendFlowProvider;
+export function useSendFlowSelector<T>(selector: (ctx: SendFlowContext) => T): T {
+  const ctx = useSendFlow();
+  return selector(ctx);
+}

@@ -8,6 +8,7 @@ import { legacy as legacyColors } from "@/theme/colors";
 const SUB = legacyColors.SUB ?? "rgba(255,255,255,0.65)";
 
 export type RowProps = {
+  variant?: "default" | "list"; 
   icon?: React.ComponentProps<typeof Ionicons>["name"] | null;
   leftSlot?: React.ReactNode;
   label?: string;
