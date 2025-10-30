@@ -41,6 +41,9 @@ function useBalancesSafe(): BalItem[] {
     return [];
   }
 }
+const IS_MOCK =
+  process.env.EXPO_PUBLIC_MOCK_PAYMENTS === "1" ||
+  !process.env.EXPO_PUBLIC_RELAY_URL;
 
 const { TEXT, SUB } = legacy;
 const MAX_PER_TX = 99_999_999;
@@ -54,6 +57,7 @@ const UI = {
   AMOUNT_BLOCK_H: 120,   // alto visual cifra+subtítulo
   BETWEEN_GAP: 74,       // distancia entre cifra y selector (alineado con Request)
 };
+
 
 /* ============ token icon + mini-badge, sin aro blanco ============ */
 function TokenWithMini({ tokenId, chain, iconUrl }: { tokenId?: string; chain?: ChainKey; iconUrl?: string }) {
@@ -130,7 +134,7 @@ function QuickAmountPad({
 }
 
 /* ============================== contenido ============================== */
-function QuickSendInner({ title }: { title: string }) {
+function QuickSendInner({ title, navReturn }: { title: string; navReturn: { pathname: string; alias: string; avatar?: string } }) {
   const insets = useSafeAreaInsets();
   const { state, patch } = useSendFlow();
   const [kbH, setKbH] = useState(0);
@@ -208,8 +212,12 @@ const tokenSearchRef = useRef<RNTextInput>(null);
   const hasBalance = amount <= balanceForSel;
   const CTA_ACTIVE = "#FFB703";
   const CTA_DISABLED = "#C8D2D9";
-  const canSend = !!tokenId && !!chain && hasAmount && hasBalance && amount <= MAX_PER_TX;
+  const canSendReal = !!tokenId && !!chain && hasAmount && hasBalance && amount <= MAX_PER_TX;
+  const canSend = IS_MOCK
+  ? (!!tokenId && !!chain && hasAmount && amount <= MAX_PER_TX) // ✅ sin chequear balance en mock
+  : canSendReal;
   const btnColor = canSend ? CTA_ACTIVE : CTA_DISABLED;
+
 
   const appendKey = (k: string) => {
     setAmountStr((prev) => {
@@ -235,6 +243,8 @@ const tokenSearchRef = useRef<RNTextInput>(null);
 
   const backspace = () => setAmountStr((prev) => (prev ? prev.slice(0, -1) : ""));
 
+
+  
   // Envío directo
   const sendingRef = useRef(false);
   const goSend = useCallback(async () => {
@@ -261,6 +271,22 @@ const tokenSearchRef = useRef<RNTextInput>(null);
         toDisplay: state.toDisplay ?? undefined,
       });
 
+      // Mirror optimistic write to legacy threads store (for screens still using it)
+      try {
+        const { useThreads } = require("@/store/threads");
+        const peerKey = `@${toHandle.replace(/^@/, "")}`;
+        useThreads.getState().upsert(peerKey, {
+          id: tempId,
+          kind: "tx",
+          direction: "out",
+          amount: String(amtNumber),
+          token: tokenId!,
+          chain: "solana",
+          status: "pending",
+          createdAt: Date.now(),
+        } as any);
+      } catch {}
+
       // 2) Backend (mock si no hay API_URL)
       const res = await sendPayment({
         to: toHandle.replace(/^@/, ""),
@@ -277,23 +303,35 @@ const tokenSearchRef = useRef<RNTextInput>(null);
         ts: res.ts || Date.now(),
       });
 
-      // 4) Navega al thread
-      router.replace({
-        pathname: "/(drawer)/(internal)/payments/thread",
-        params: { id: threadId },
-      });
-    } catch (e: any) { 
+      try {
+        const { notifyPaymentSent } = require("@/lib/notifications");
+        await notifyPaymentSent({ amount: amtNumber, token: tokenId!, to: state.toDisplay || state.toRaw });
+      } catch {}
+
+      // 4) Navega al thread usando props
+      router.back();
+    } catch (e: any) {
       const toHandle = state.toRaw || state.toDisplay || "";
       const threadId = `peer:${toHandle.replace(/^@/, "")}`;
       const items = usePaymentsStore.getState().selectByThread(threadId);
       const lastTmp = [...items].reverse().find((m) => m.id.startsWith("tmp_"));
-      if (lastTmp) usePaymentsStore.getState().updateMsg(lastTmp.id, { status: "failed" }); 
+      if (lastTmp) usePaymentsStore.getState().updateMsg(lastTmp.id, { status: "failed" });
+
+      // Mirror failure to legacy threads store as well
+      try {
+        const { useThreads } = require("@/store/threads");
+        const peerKey = `@${toHandle.replace(/^@/, "")}`;
+        if (lastTmp) {
+          useThreads.getState().patchStatus(peerKey, lastTmp.id, "failed");
+        }
+      } catch {}
 
       Alert.alert("Payment failed", String(e?.message ?? "Unknown error"));
     } finally {
       sendingRef.current = false;
     }
-  }, [account, amountStr, chain, state.toDisplay, state.toRaw, tokenId]);
+  }, [account, amountStr, chain, state.toDisplay, state.toRaw, tokenId, navReturn]);
+
 
   const TOP = (Platform.OS === "ios" ? insets.top : 0) + UI.HEADER_H + UI.TOP_GAP;
 
@@ -321,6 +359,8 @@ const tokenSearchRef = useRef<RNTextInput>(null);
     []
   );
 
+
+  
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -367,11 +407,11 @@ const tokenSearchRef = useRef<RNTextInput>(null);
           {tokenId ? `Available: ${fmt(balanceForSel, 6)} ${uiSymbol}` : "Choose a token to continue"}
         </Text>
 
-        {hasAmount && !hasBalance && (
-          <Text style={{ color: "#FF6B6B", fontSize: 12, marginTop: 6 }}>
-            Insufficient balance
-          </Text>
-        )}
+        {hasAmount && !hasBalance && !IS_MOCK && (
+        <Text style={{ color: "#FF6B6B", fontSize: 12, marginTop: 6 }}>
+          Insufficient balance
+        </Text>
+      )}
       </View>
 
       {/* Tap suave para cerrar teclado */}
@@ -571,6 +611,13 @@ export default function QuickSendScreen() {
   const { to = "", alias, name, avatar } =
     useLocalSearchParams<{ to?: string; alias?: string; name?: string; avatar?: string }>();
   const title = useMemo(() => String(alias || name || to || "@user"), [alias, name, to]);
+  const { returnPathname, returnAlias, avatar: navAvatar } =
+    useLocalSearchParams<{ returnPathname?: string; returnAlias?: string; avatar?: string }>();
+  const navReturn = {
+    pathname: String(returnPathname ?? "/(drawer)/(internal)/payments/thread"),
+    alias: String(returnAlias ?? title),
+    avatar: navAvatar as string | undefined,
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#0D1820" }}>
@@ -579,7 +626,7 @@ export default function QuickSendScreen() {
         allowedSteps={["token", "amount", "confirm"]}
         initialState={{ toRaw: title.replace(/^@/, ""), toDisplay: title, avatarUrl: avatar }}
       >
-        <QuickSendInner title={title} />
+        <QuickSendInner title={title} navReturn={navReturn} />
       </SendFlowProvider>
     </View>
   );

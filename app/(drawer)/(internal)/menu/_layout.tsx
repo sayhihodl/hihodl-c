@@ -15,11 +15,13 @@ export default function MenuStack() {
 
       {/* subrutas del menú */}
       <Stack.Screen name="profile" />
-      <Stack.Screen name="payment-methods" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="security" />
       <Stack.Screen name="help" />
+      <Stack.Screen name="about" />
       <Stack.Screen name="legal" />
+      <Stack.Screen name="legal-terms" />
+      <Stack.Screen name="legal-privacy" />
     </Stack>
   );
 }

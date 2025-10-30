@@ -1,6 +1,6 @@
 // app/menu/help.tsx
 import React, { useRef } from "react";
-import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
+import { View, Text, StyleSheet, Pressable, Animated, Linking } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -74,6 +74,20 @@ export default function HelpScreen() {
             Email: support@hihodl.com{"\n"}
             Telegram: @hihodl_support
           </Text>
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+            <Pressable
+              onPress={() => Linking.openURL("mailto:support@hihodl.com")}
+              style={styles.cta}
+            >
+              <Text style={styles.ctaText}>Email us</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => Linking.openURL("https://t.me/hihodl_support")}
+              style={styles.cta}
+            >
+              <Text style={styles.ctaText}>Open Telegram</Text>
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.card}>
@@ -116,4 +130,13 @@ const styles = StyleSheet.create({
   h2: { color: TEXT, fontSize: 16, fontWeight: "700", marginBottom: 8 },
   p: { color: SUB, fontSize: 14, lineHeight: 20 },
   li: { color: SUB, fontSize: 14, lineHeight: 22 },
+  cta: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: GLASS_BORDER,
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  ctaText: { color: TEXT, fontSize: 13, fontWeight: "700" },
 });

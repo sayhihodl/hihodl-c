@@ -1,14 +1,15 @@
-// components/tx/TransactionDetailsSheet.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, Pressable, StyleSheet, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import colors from "@/theme/colors";
+import colors, { glass } from "@/theme/colors";
+import { showToast } from "@/utils/toast";
 import { type ChainId } from "@/store/portfolio.store";
 import { useTranslation } from "react-i18next";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
+import { renderTokenIcon } from "@/config/iconRegistry";
 
-type Dir = "in" | "out" | "refund";
+type Dir = "in" | "out" | "refund" | "bridge" | "swap";
 type Status = "Succeeded" | "Failed" | "Pending";
 
 export type TxDetails = {
@@ -19,10 +20,13 @@ export type TxDetails = {
   hash?: string;            // "0x18c...abcd"
   status?: Status;
   tokenSymbol?: string;     // "USDT"
+  tokenSymbolTo?: string; // para bridge/swap segundo token
   tokenAmount?: number;     // con signo (+/-)
   fiatAmount?: number;      // con signo (+/-)
   fee?: string;             // "0.0005 ETH"
   network?: ChainId | string;
+  slippagePct?: number;     // 0.5 = 0.5%
+  alerts?: string[];        // mensajes a mostrar
 };
 
 export type TransactionDetailsSheetProps = {
@@ -34,7 +38,6 @@ export type TransactionDetailsSheetProps = {
 };
 
 const CTA_NEUTRAL = "#CFE3EC";
-
 /* ===== helpers ===== */
 const normalizeChainId = (id: string) =>
   id === "base:mainnet" ? "eip155:8453" : id;
@@ -134,13 +137,67 @@ const explorerLabel = explorer
   const statusText =
     tx.status ? t(statusKeyFlat!, t(statusKeyNested!, String(tx.status))) : undefined;
 
+  const dirIcon: keyof typeof Ionicons.glyphMap =
+    tx.dir === "in"
+      ? "arrow-down"
+      : tx.dir === "out"
+      ? "arrow-up"
+      : tx.dir === "bridge"
+      ? "swap-horizontal"
+      : "reload";
+
+  const dirColor =
+    tx.dir === "in"
+      ? "#20d690" // green
+      : tx.dir === "out"
+      ? "#ffb703" // yellow
+      : tx.dir === "bridge"
+      ? "#9C6BFF" // purple
+      : "#CFE3EC"; // default
+
+  const HeroTokenIcon = ({
+    primary,
+    secondary,
+  }: {
+    primary?: string;
+    secondary?: string;
+  }) => {
+    const P = (renderTokenIcon as any)?.(primary, 76);
+    const S = secondary ? (renderTokenIcon as any)?.(secondary, 28) : null;
+
+    return (
+      <View style={styles.heroTokenWrap}>
+        <View style={styles.heroTokenScale}>
+          {P || (
+            <Text style={styles.heroTicker}>{(primary ?? "").slice(0,4).toUpperCase() || "TOK"}</Text>
+          )}
+        </View>
+        {!!S && <View style={styles.heroTokenSmall}>{S}</View>}
+      </View>
+    );
+  };
+
   return (
     <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
-      <Text style={{ color: colors.sheetText, fontWeight: "800", fontSize: 20, marginBottom: 10 }}>
-        {title}
-      </Text>
+      {/* Title block removed */}
 
-      {/* Bloque 1 */}
+      {/* Hero amount ala Revolut/Phantom */}
+      <View style={styles.heroWrap}>
+        <View style={styles.heroIcon}>
+          <HeroTokenIcon
+            primary={tx.tokenSymbol}
+            secondary={(tx.dir === "bridge" || tx.dir === "swap") ? tx.tokenSymbolTo : undefined}
+          />
+          <View style={styles.heroBadge}>
+            <Ionicons name={dirIcon} size={18} color={dirColor} />
+          </View>
+        </View>
+        {!!amountTxt && (
+          <Text style={styles.heroAmount}>{amountTxt}</Text>
+        )}
+      </View>
+
+      {/* Bloque 1: Date + Status */}
       <View style={styles.block}>
         <KV label={t("date")} value={tx.when} />
 
@@ -151,7 +208,10 @@ const explorerLabel = explorer
             valueColor={statusColor}
           />
         )}
+      </View>
 
+      {/* Bloque 2: To + Network + Network Fee */}
+      <View style={[styles.block, styles.blockSpacer]}>
         {tx.peer && <KVCopy label={isIn ? t("from") : t("to")} value={tx.peer} />}
 
         {tx.network && (
@@ -161,21 +221,30 @@ const explorerLabel = explorer
           />
         )}
 
-        {tx.hash && (
-          <KVCopy label={t("transaction")} value={truncMid(tx.hash)} rawCopy={tx.hash} />
-        )}
-      </View>
-
-      {/* Bloque 2 */}
-      <View style={styles.block}>
-        {amountTxt && <KV label={t("amount")} value={amountTxt} />}
-        {typeof tx.fiatAmount === "number" && (
-          <KV label={t("fiat")} value={fmtFiat(tx.fiatAmount, "USD")} />
-        )}
         {!!tx.fee && <KV label={t("networkFee")} value={tx.fee} />}
+
+        {typeof tx.slippagePct === "number" && (
+          <KV label={t("slippage", { defaultValue: "Slippage" })} value={`${tx.slippagePct}%`} />
+        )}
+
+        {!!tx.hash && (
+          <KVCopy
+            label={t("transactionHash", { defaultValue: "Transaction Hash" })}
+            value={truncMid(tx.hash, 6)}
+            rawCopy={tx.hash}
+          />
+        )}
       </View>
 
-      {!!explorerUrl && (
+      {!!tx.alerts?.length && (
+        <View style={[styles.block, styles.blockSpacer]}>
+          {tx.alerts.map((a, i) => (
+            <Text key={i} style={{ color: "#FFCC00", fontWeight: "700" }}>{a}</Text>
+          ))}
+        </View>
+      )}
+
+            {!!explorerUrl && (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={explorerLabel}
@@ -192,12 +261,6 @@ const explorerLabel = explorer
       )}
 
       <View style={{ height: 14 }} />
-
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <Action icon="qr-code-outline" label={t("action_receive")} onPress={onReceive ?? (() => {})} />
-        <Action icon="paper-plane-outline" label={t("action_send")} onPress={onSend ?? (() => {})} />
-        <Action icon="swap-horizontal" label={t("action_swap")} onPress={onSwap ?? (() => {})} />
-      </View>
     </View>
   );
 }
@@ -221,14 +284,16 @@ function KVCopy({
   value: string;
   rawCopy?: string;
 }) {
+  const { t } = useTranslation("tx", { useSuspense: false });
   const handleCopy = async () => {
     if (!rawCopy) return;
     await Clipboard.setStringAsync(rawCopy);
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try { showToast(t("copied", { defaultValue: "Copied" })); } catch {}
   };
 
   return (
-    <Pressable onLongPress={handleCopy} delayLongPress={250} style={styles.kvRow} hitSlop={6}>
+    <Pressable onPress={handleCopy} style={styles.kvRow} hitSlop={10} accessibilityRole="button" accessibilityLabel={label}>
       <Text style={styles.kvLabel}>{label}</Text>
       <View
         style={{
@@ -278,36 +343,141 @@ function Action({
 /* ==== styles ==== */
 const styles = StyleSheet.create({
   block: {
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.10)",
-    marginBottom: 12,
+  backgroundColor: glass.cardOnSheet,
+  borderRadius: 16,
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  borderWidth: StyleSheet.hairlineWidth,
+  borderColor: glass.cardBorder,
+  gap: 8,
+},
+  blockSpacer: {
+    marginTop: 12,
   },
-  kvRow: {
-    paddingVertical: 6,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  kvLabel: { color: colors.sheetText, opacity: 0.85 },
-  kvVal: { color: colors.sheetText },
+
   explorerBtn: {
-    backgroundColor: CTA_NEUTRAL,
+    backgroundColor: "rgba(255,191,0,0.55)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,191,0,0.55)",
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 12,
+    alignSelf: "stretch",
     alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
   },
-  explorerBtnTxt: { color: "#0A1A1A", fontWeight: "800" },
-  action: { flex: 1, alignItems: "center" },
-  actionIcon: {
-    width: 50, height: 50, borderRadius: 10,
-    alignItems: "center", justifyContent: "center",
-    backgroundColor: colors.primary,
-    shadowColor: "#000", shadowOpacity: 0.2,
-    shadowRadius: 8, shadowOffset: { width: 0, height: 6 }, elevation: 4,
+  explorerBtnTxt: {
+    color: "#0A1A24",
+    fontSize: 15,
+    fontWeight: "800",
   },
-  actionTxt: { color: "#fff", fontSize: 12, marginTop: 6, fontWeight: "600" },
+  heroWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+    marginBottom: 28,
+    gap: 25,
+  },
+  heroIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.14)",
+  },
+  heroTokenWrap: {
+    width: 72,
+    height: 72,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroTokenScale: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    transform: [{ scale: 1.92 }], // make the token almost as big as the circle
+  },
+  heroTokenSmall: {
+    position: "absolute",
+    right: -6,
+    bottom: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(10,26,36,0.92)",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.18)",
+  },
+  heroBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(10,26,36,0.92)",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.18)",
+  },
+  heroTicker: {
+    color: "#CFE3EC",
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+  },
+  heroAmount: {
+    color: "#FFFFFF",
+    fontSize: 34,
+    fontWeight: "900",
+    letterSpacing: -0.3,
+  },
+  action: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 6,
+    gap: 8,
+  },
+  actionTxt: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "800",
+    marginTop: 16,
+    opacity: 0.9,
+  },
+kvRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  paddingVertical: 12,                // antes 6, mismo ritmo que listas
+},
+kvLabel: {
+  color: "rgba(255,255,255,0.75)",
+  fontWeight: "800",
+  fontSize: 14,
+},
+kvVal: {
+  color: "#CFE3EC",
+  fontWeight: "700",
+  fontSize: 14,
+},
+actionIcon: {
+  width: 68, height: 68, borderRadius: 16,
+  alignItems: "center", justifyContent: "center",
+  backgroundColor: "#FFB703",
+  shadowColor: "#000",
+  shadowOpacity: 0.25,                // un pelín más para glass
+  shadowRadius: 10,                   // antes 8
+  shadowOffset: { width: 0, height: 7 },
+  elevation: 8,
+},
 });

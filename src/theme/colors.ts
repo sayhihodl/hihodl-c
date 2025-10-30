@@ -104,3 +104,6 @@ export const glass = {
   cardOnSheet:"rgba(255,255,255,0.08)",// fondo de los rows sobre el modal
   cardBorder: "rgba(255,255,255,0.12)",// borde para separar del blur
 } as const;
+
+// Token solicitado para unificar modales/sheets (Phantom-like)
+export const sheetTintRGBA = "rgba(7,16,22,0.82)" as const;

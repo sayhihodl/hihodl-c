@@ -6,6 +6,7 @@ import { ActivityIndicator, View, StyleSheet } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { initI18n /* , setLang */ } from "@/i18n/i18n";
+import '@/shims/node'; // esto va al principio
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);

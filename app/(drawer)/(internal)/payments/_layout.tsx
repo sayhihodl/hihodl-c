@@ -1,14 +1,42 @@
 // app/(drawer)/(internal)/payments/_layout.tsx
-import React from "react";
-import { Stack } from "expo-router";
+import React, { useEffect } from "react";
+import { Stack, router } from "expo-router";
+import { isLockEnabled } from "@/lib/lock";
 
-export default function PaymentsInternalStack() {
+function PaymentsGuard({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    (async () => {
+      try {
+        const locked = await isLockEnabled();
+        if (locked) router.replace("/auth/faceidpin");
+      } catch {}
+    })();
+  }, []);
+  return <>{children}</>;
+}
+
+export default function PaymentsLayout() {
   return (
+    <PaymentsGuard>
     <Stack screenOptions={{ headerShown: false }}>
-      {/* Asegúrate de tener el archivo thread.tsx en esta carpeta */}
       <Stack.Screen name="thread" />
-      {/* Si más adelante creas detalles, añade la screen correspondiente */}
-      {/* <Stack.Screen name="tx-details" /> */}
+      {/* Modal transparente */}
+      <Stack.Screen
+        name="tx-details"
+        options={{
+          presentation: "transparentModal",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="tx-confirm"
+        options={{
+          presentation: "card",
+          headerShown: false,
+          animation: 'fade',
+        }}
+      />
     </Stack>
+    </PaymentsGuard>
   );
 }

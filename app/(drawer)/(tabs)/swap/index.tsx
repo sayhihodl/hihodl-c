@@ -25,6 +25,7 @@ import {
 } from "@/store/portfolio.store";
 import { useSwapStore } from "@/store/swap.store";
 import { useTokenCatalog } from "@/config/tokensCatalog";
+import { useSwapQuote } from "@/swap/useSwapQuote";
 
 /* ============================ Theme / layout ============================ */
 const { TEXT } = legacy;
@@ -163,6 +164,7 @@ export default function SwapScreen() {
   const [tf, setTf]         = React.useState<TimeframeId>("24h");
 
   const [amount, setAmount] = React.useState("");
+  const [txState, setTxState] = React.useState<"idle" | "approving" | "submitting" | "mined">("idle");
 
   const doFlip = () => { swapSides(); void Haptics.selectionAsync(); };
 
@@ -170,6 +172,46 @@ export default function SwapScreen() {
     router.push({ pathname: "/(drawer)/(tabs)/swap/select-token", params: { side, account: ACCOUNT_IDS[ACCOUNTS[index]] } } as Href);
 
   const openSettings = () => { setSettingsOpen(true); void Haptics.selectionAsync(); }; // ✅ sheet, no navegación
+
+  // Quote hook (debounced + retry). While backend is not wired, it is mocked inside the hook
+  const effectiveSlippage = settings.slippage.mode === "fixed" ? settings.slippage.fixedPct : 0.5;
+  const quote = useSwapQuote({
+    payTokenId: payToken?.id,
+    receiveTokenId: receiveToken?.id,
+    amountStr: amount,
+    slippagePct: effectiveSlippage,
+  });
+
+  // ===== Balances for Max button (mocked from portfolio store) =====
+  const positions = usePortfolioStore((s: any) => (s as any).positions as Array<{ accountId: string; currencyId: string; balance: number }>);
+  const activeAccountId = React.useMemo(() => ACCOUNT_IDS[ACCOUNTS[index]], [index]);
+  const payBalance = React.useMemo(() => {
+    if (!payToken) return 0;
+    return positions
+      .filter((p) => p.accountId === activeAccountId && p.currencyId === payToken.id)
+      .reduce((acc, p) => acc + (p.balance || 0), 0);
+  }, [positions, payToken, activeAccountId]);
+
+  function getReserveForGas(symbol?: string): number {
+    switch (symbol) {
+      case "ETH":
+        return 0.005; // ~ small gas cushion on ETH/Base
+      case "SOL":
+        return 0.02; // ~ small rent-exempt + tx cushion
+      case "POL":
+        return 2; // extremely cheap, reserve a bit
+      default:
+        return 0; // ERC20/stables: gas paid in native, no reserve here
+    }
+  }
+
+  const onPressMax = () => {
+    const reserve = getReserveForGas(payToken?.symbol);
+    const usable = Math.max(0, (payBalance || 0) - (payToken?.isNative ? reserve : 0));
+    if (usable <= 0) return setAmount("");
+    const str = usable >= 1 ? usable.toFixed(4) : usable.toPrecision(6);
+    setAmount(String(Number(str)));
+  };
 
   // Lista mock filtrada
   const filtered = React.useMemo(() => {
@@ -274,6 +316,34 @@ export default function SwapScreen() {
     </Pressable>
   );
 
+  // ===== Mock tx flow to block inputs and show mini timeline =====
+  const [timeline, setTimeline] = React.useState<Array<{ id: string; label: string; done: boolean }>>([]);
+  const startMockTx = () => {
+    setTxState("approving");
+    setTimeline([
+      { id: "q", label: t("swap:timeline.quoting", "Quoting"), done: true },
+      { id: "a", label: t("swap:timeline.approval", "Approval"), done: false },
+      { id: "s", label: t("swap:timeline.submission", "Submission"), done: false },
+      { id: "m", label: t("swap:timeline.mined", "Mined"), done: false },
+    ]);
+    setTimeout(() => {
+      setTimeline((tl) => tl.map((x) => (x.id === "a" ? { ...x, done: true } : x)));
+      setTxState("submitting");
+      setTimeout(() => {
+        setTimeline((tl) => tl.map((x) => (x.id === "s" ? { ...x, done: true } : x)));
+        setTimeout(() => {
+          setTimeline((tl) => tl.map((x) => (x.id === "m" ? { ...x, done: true } : x)));
+          setTxState("mined");
+          // simulate balances sync
+          setTimeout(() => {
+            setTxState("idle");
+            setTimeline([]);
+          }, 1200);
+        }, 900);
+      }, 900);
+    }, 900);
+  };
+
   const Page = ({ acct }: { acct: Account }) => (
     <Animated.ScrollView
       contentContainerStyle={{ paddingTop: HEADER_H + 12, paddingBottom: insets.bottom + 48 }}
@@ -292,6 +362,9 @@ export default function SwapScreen() {
             value={amount}
             onChangeText={setAmount}
           />
+          <Pressable onPress={onPressMax} style={[styles.pill, { backgroundColor: "rgba(255,255,255,0.12)" }]} accessibilityLabel={t("swap:a11y.max", "Use maximum available")}>
+            <Text style={[styles.pillTxt, { fontWeight: "900" }]}>{t("swap:max", "Max")}</Text>
+          </Pressable>
           <Pressable onPress={() => openSelectToken("pay")} style={styles.pill} accessibilityLabel={t("swap:a11y.selectPayToken", "Select pay token")}>
             <Text style={styles.pillTxt}>{payToken?.symbol ?? "—"}</Text>
           </Pressable>
@@ -303,24 +376,93 @@ export default function SwapScreen() {
 
         <Text style={[styles.sectionTitle, { marginTop: 10 }]}>{t("swap:youReceive", "You Receive")}</Text>
         <View style={styles.inputRow}>
-          <Text style={[styles.input, { color: "#9eb4bd" }]}>0</Text>
+          {quote.loading ? (
+            <View style={[styles.input, { justifyContent: "center", backgroundColor: "rgba(255,255,255,0.06)" }]}>
+              <Text style={{ color: "#9eb4bd", fontWeight: "800", fontSize: 16 }}>{t("swap:loadingQuote", "Getting best route…")}</Text>
+            </View>
+          ) : (
+            <Text style={[styles.input, { color: "#9eb4bd" }]}>
+              {quote.data ? `${Number(quote.data.outAmount.toFixed(6))}` : "0"}
+            </Text>
+          )}
           <Pressable onPress={() => openSelectToken("receive")} style={styles.pill} accessibilityLabel={t("swap:a11y.selectReceiveToken", "Select receive token")}>
             <Text style={styles.pillTxt}>{receiveToken?.symbol ?? "—"}</Text>
           </Pressable>
         </View>
 
+        {/* Quote errors and router info */}
+        {!!quote.error && (
+          <View style={{ marginTop: 6, padding: 10, borderRadius: 10, backgroundColor: "rgba(255,80,80,0.12)", borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255,80,80,0.25)" }}>
+            <Text style={{ color: "#ff9c9c", fontSize: 12, fontWeight: "800" }}>
+              {quote.errorCode === "no_liquidity"
+                ? t("swap:error.noLiquidity", "No route found for this pair.")
+                : quote.errorCode === "network"
+                ? t("swap:error.network", "Network error. Please retry.")
+                : t("swap:error.degraded", "Routing temporarily degraded. Try again.")}
+            </Text>
+          </View>
+        )}
+        {!!quote.data && (
+          <View style={{ marginTop: 6 }}>
+            <Text style={{ color: "#86d1ff", fontSize: 11, fontWeight: "800" }}>
+              {quote.data.router === "fallback"
+                ? t("swap:router.fallback", "Using fallback route")
+                : t("swap:router.primary", "Best route")}
+            </Text>
+          </View>
+        )}
+
+        {/* Cost breakdown */}
+        <View style={{ marginTop: 6, gap: 6 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <Text style={{ color: "#9eb4bd", fontSize: 12, fontWeight: "700" }}>{t("swap:price", "Price")}</Text>
+            <Text style={{ color: "#cfd9de", fontSize: 12, fontWeight: "800" }}>
+              {quote.loading ? "—" : quote.data ? `${quote.data.price.toFixed(4)} ${receiveToken?.symbol}/${payToken?.symbol}` : "—"}
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <Text style={{ color: "#9eb4bd", fontSize: 12, fontWeight: "700" }}>{t("swap:impact", "Price impact")}</Text>
+            <Text style={{ color: "#cfd9de", fontSize: 12, fontWeight: "800" }}>
+              {quote.loading ? "—" : quote.data ? `${quote.data.impactPct.toFixed(2)}%` : "—"}
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <Text style={{ color: "#9eb4bd", fontSize: 12, fontWeight: "700" }}>{t("swap:fees", "Fees")}</Text>
+            <Text style={{ color: "#cfd9de", fontSize: 12, fontWeight: "800" }}>
+              {quote.loading ? "—" : quote.data ? `$${(quote.data.routerFeeUsd + quote.data.gasUsd).toFixed(2)}` : "—"}
+            </Text>
+          </View>
+        </View>
+
         <Pressable
           style={styles.primaryBtn}
-          onPress={() =>
-            Alert.alert(
-              t("swap:mock.title", "Swap (mock)"),
-              t("swap:mock.body", "Account: {{acct}}\nPay: {{amount}} {{pay}}\nReceive: {{receive}}\nSlippage: {{slip}}\nPriority Fee: {{prio}}\nTip: {{tip}}", {
-                acct, amount: amount || 0, pay: payToken?.symbol ?? "", receive: receiveToken?.symbol ?? "", slip: slipLabel, prio: prioLabel, tip: tipLabel,
-              })
-            )
-          }
+          disabled={txState !== "idle" || !amount || !payToken || !receiveToken}
+          onPress={() => {
+            const fixedSlip = settings.slippage.mode === "fixed" ? settings.slippage.fixedPct : 0.5;
+            if (fixedSlip > 5) {
+              Alert.alert(
+                t("swap:confirm.highSlippage.title", "High slippage"),
+                t("swap:confirm.highSlippage.body", "You set slippage to {{pct}}%. This may result in a poor price.", { pct: fixedSlip }),
+                [
+                  { text: t("common:cancel", "Cancel"), style: "cancel" },
+                  {
+                    text: t("common:continue", "Continue"),
+                    style: "destructive",
+                    onPress: () => startMockTx(),
+                  },
+                ]
+              );
+              return;
+            }
+            startMockTx();
+          }}
         >
-          <Text style={styles.primaryTxt}>{t("swap:cta.swap", "Swap")}</Text>
+          <Text style={styles.primaryTxt}>
+            {txState === "idle" && t("swap:cta.swap", "Swap")}
+            {txState === "approving" && t("swap:cta.approving", "Approving…")}
+            {txState === "submitting" && t("swap:cta.submitting", "Submitting…")}
+            {txState === "mined" && t("swap:cta.completed", "Completed")}
+          </Text>
         </Pressable>
 
         {/* ✅ resumen rápido que abre el sheet */}

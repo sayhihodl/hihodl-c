@@ -1,6 +1,7 @@
 // app/index.tsx
 import { useEffect } from "react";
 import { router } from "expo-router";
+import '@/shims/node';
 
 export default function Index() {
   useEffect(() => {

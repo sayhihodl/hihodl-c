@@ -78,19 +78,25 @@ export default function GlassHeader({
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { height: TOTAL_H }]}>
       {/* Capa blur */}
-      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { opacity: blurOpacity }]}>
-        <BlurView intensity={60} tint={blurTint} style={[StyleSheet.absoluteFillObject, { height: TOTAL_H }]} />
-        <View
-          style={{
-            position: "absolute",
-            top: 0, left: 0, right: 0,
-            height: TOTAL_H,
-            backgroundColor: overlayColor,
-            borderBottomWidth: StyleSheet.hairlineWidth,
-            borderColor: "rgba(255,255,255,0.08)",
-          }}
-        />
-      </Animated.View>
+<Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { opacity: blurOpacity }]}>
+  <BlurView
+    intensity={60}
+    tint={blurTint}
+    experimentalBlurMethod="dimezisBlurView"
+    collapsable={false as any}
+    style={[StyleSheet.absoluteFillObject, { height: TOTAL_H, backgroundColor: "transparent" }]}
+  />
+  <View
+    style={{
+      position: "absolute",
+      top: 0, left: 0, right: 0,
+      height: TOTAL_H,
+      backgroundColor: overlayColor,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(255,255,255,0.08)",
+    }}
+  />
+</Animated.View>
 
       {/* Capa sólida (cuando haces scroll) */}
       <Animated.View
@@ -123,10 +129,17 @@ export default function GlassHeader({
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 20 },
+  wrap: { 
+    position: "absolute", 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    zIndex: 20,
+    elevation: 20 // ✅ necesario para Android
+  },
   rowBase: { paddingHorizontal: 16, flexDirection: "row", alignItems: "center" },
   side: { flexDirection: "row", alignItems: "center", gap: 10 },
-  center: { alignItems: "center", justifyContent: "center" }, // el tamaño lo controla centerSizing
+  center: { alignItems: "center", justifyContent: "center" },
   hairline: {
     position: "absolute",
     left: 0, right: 0, bottom: 0,

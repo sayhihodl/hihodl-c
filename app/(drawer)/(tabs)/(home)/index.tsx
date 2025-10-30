@@ -1,5 +1,6 @@
 // app/(tabs)/(home)/index.tsx
 import BottomSheet from "@/components/BottomSheet/BottomKeyboardModal";
+import SendFlowModal from "@/send/SendFlowModal";
 import TransactionDetailsSheet, { type TxDetails } from "@/components/tx/TransactionDetailsSheet";
 import { DEFAULT_TOKEN_ICON, TOKEN_ICONS } from "@/config/iconRegistry";
 import {
@@ -837,12 +838,11 @@ const goReceive = useCallback(
   [push, account]
 );
 
+const [sendModalOpen, setSendModalOpen] = useState(false);
+
 const goSend = useCallback(() => {
-  router.navigate({
-    pathname: "/(drawer)/(internal)/send",
-    params: { account: ACCOUNT_IDS[account], startAt: "search", mode: "send" },
-  });
-}, [account]);
+  setSendModalOpen(true);
+}, []);
 
 const goSwap = useCallback(
   () => router.navigate(`/(drawer)/(tabs)/swap?account=${ACCOUNT_IDS[account]}`),
@@ -1629,6 +1629,13 @@ return (
         />
       )}
     </BottomSheet>
+
+    {/* ===== Quick Send – Modal ===== */}
+    <SendFlowModal
+      visible={sendModalOpen}
+      onRequestClose={() => setSendModalOpen(false)}
+      step="search"
+    />
 
     {/* ===== Add Token – BottomSheet ===== */}
       <BottomSheet

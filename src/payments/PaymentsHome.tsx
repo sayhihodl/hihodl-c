@@ -9,6 +9,7 @@ import ScreenBg from "@/ui/ScreenBg";
 import GlassHeader from "@/ui/GlassHeader";
 import { GlassCard } from "@/ui/Glass";
 import AccountFilterSheet from "@/payments/AccountFilterSheet";
+import { SkeletonLine } from "@/ui/Skeleton";
 
 const BG = "#0D1820";
 const AVATAR_SIZE = 34;
@@ -148,29 +149,14 @@ export default function PaymentsHome() {
   );
   const isAllAccounts = selectedKeys.length === 3;
 
-  const PHRASES = useMemo(
-    () => [
-      t("payments:searchPh", "Search"),
-      t("payments:ph.user", "Search @username"),
-      t("payments:ph.contact", "Search contact"),
-      t("payments:ph.addr", "Paste wallet address"),
-    ],
-    [t]
-  );
+  const PHRASES = useMemo(() => [
+    'Buscar usuario, grupo o dirección',
+  ], []);
+  const searchPh = PHRASES[0];
   useEffect(() => {
     const id = setInterval(() => setPhIdx((i) => (i + 1) % PHRASES.length), 2000);
     return () => clearInterval(id);
   }, [PHRASES.length]);
-
-  const searchPh = useMemo(() => {
-    const base = PHRASES[phIdx];
-    if (isAllAccounts) return base;
-    if (selectedKeys.length === 1) {
-      const scope = selectedKeys[0] === "daily" ? "Daily" : selectedKeys[0] === "savings" ? "Savings" : "Social";
-      return `${base} in ${scope}`;
-    }
-    return base;
-  }, [PHRASES, phIdx, isAllAccounts, selectedKeys]);
 
   const accountLabel = useMemo(() => {
     if (selectedKeys.length === 1) {
@@ -278,7 +264,7 @@ export default function PaymentsHome() {
             </Pressable>
             <Pressable
               hitSlop={10}
-              onPress={() => router.push("/(internal)/payments/new")}
+              onPress={() => router.push("/(drawer)/(internal)/payments/composer")}
               style={styles.addChipBtn}
             >
               <Ionicons name="add" size={18} color="#FFB703" />
@@ -292,6 +278,25 @@ export default function PaymentsHome() {
         data={filtered}
         keyExtractor={(i: Thread) => i.id}
         ListHeaderComponent={ChipsHeader}
+        ListEmptyComponent={
+          <View style={{ paddingHorizontal: 16, paddingTop: 24 }}>
+            <View style={[styles.threadGlass, { marginBottom: 12 }]}> 
+              <SkeletonLine width={180} height={16} />
+              <View style={{ height: 8 }} />
+              <SkeletonLine width={120} height={12} />
+            </View>
+            <View style={[styles.threadGlass, { marginBottom: 12 }]}> 
+              <SkeletonLine width={200} height={16} />
+              <View style={{ height: 8 }} />
+              <SkeletonLine width={100} height={12} />
+            </View>
+            <View style={[styles.threadGlass, { marginBottom: 12 }]}> 
+              <SkeletonLine width={160} height={16} />
+              <View style={{ height: 8 }} />
+              <SkeletonLine width={110} height={12} />
+            </View>
+          </View>
+        }
         renderItem={({ item }: { item: Thread }) => {
           const subtitle = formatLastActivity(item.lastMsg);
           const rightTime = formatThreadTime(item.lastTs, item.lastTime); 

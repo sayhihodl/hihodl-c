@@ -8,6 +8,9 @@ import { router } from "expo-router";
 import colors, { legacy as legacyColors } from "@/theme/colors";
 import { useProfileStore } from "@/store/profile";
 import T from "@/ui/T";
+import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
+import { preloadNamespaces } from "@/i18n/i18n";
 
 /* ===== theme ===== */
 const BG = colors.navBg ?? legacyColors.BG ?? "#0D1820";
@@ -46,6 +49,8 @@ export default function MenuScreen() {
   const insets = useSafeAreaInsets();
   const username = useProfileStore((s) => s.username) ?? "@username";
   const avatar = useProfileStore((s) => s.avatar) ?? "🚀";
+  const { t, i18n } = useTranslation(["menu"]);
+  useEffect(() => { preloadNamespaces(["menu"]); }, [i18n.language]);
 
   // 🔁 Helper: salir del Menú sin dejarlo en la pila
   const go = (path: string) => router.replace(path);
@@ -133,43 +138,53 @@ export default function MenuScreen() {
             />
           </View>
 
-          {/* Bloques principales */}
+          {/* Account */}
+          <T kind="caption" style={{ color: SUB, marginTop: 6, marginBottom: 8, fontWeight: "600" }}>{t("menu:sections.account")}</T>
           <GlassCard>
             <MenuRow
-              icon="wallet-outline"
-              label="Payment methods"
-              sub="Cards"
-              onPress={() => go("/(drawer)/(internal)/menu/payment-methods")}
-            />
-            <Divider />
-            <MenuRow
               icon="settings-outline"
-              label="Settings"
-              sub="Notifications, currency & more"
+              label={t("menu:rows.settings.label")}
+              sub={t("menu:rows.settings.sub")}
               onPress={() => go("/(drawer)/(internal)/menu/settings")}
             />
             <Divider />
             <MenuRow
               icon="shield-checkmark-outline"
-              label="Security"
-              sub="Passcode, biometrics, sessions"
+              label={t("menu:rows.security.label")}
+              sub={t("menu:rows.security.sub")}
               onPress={() => go("/(drawer)/(internal)/menu/security")}
             />
           </GlassCard>
 
-          <GlassCard style={{ marginTop: 16 }}>
+          {/* Support & About */}
+          <T kind="caption" style={{ color: SUB, marginTop: 16, marginBottom: 8, fontWeight: "600" }}>{t("menu:sections.supportLegal")}</T>
+          <GlassCard>
             <MenuRow
               icon="help-circle-outline"
-              label="Help & Support"
-              sub="FAQs and contact"
+              label={t("menu:rows.help.label")}
+              sub={t("menu:rows.help.sub")}
               onPress={() => go("/(drawer)/(internal)/menu/help")} 
             />
             <Divider />
             <MenuRow
               icon="document-text-outline"
-              label="About HIHODL"
-              sub="Terms & privacy"
-              onPress={() => go("/(drawer)/(internal)/menu/legal")}
+              label={t("menu:rows.terms.label")}
+              sub={t("menu:rows.terms.sub")}
+              onPress={() => go("/(drawer)/(internal)/menu/legal-terms")}
+            />
+            <Divider />
+            <MenuRow
+              icon="shield-outline"
+              label={t("menu:rows.privacy.label")}
+              sub={t("menu:rows.privacy.sub")}
+              onPress={() => go("/(drawer)/(internal)/menu/legal-privacy")}
+            />
+            <Divider />
+            <MenuRow
+              icon="information-circle-outline"
+              label={t("menu:rows.about.label")}
+              sub={t("menu:rows.about.sub")}
+              onPress={() => go("/(drawer)/(internal)/menu/about")}
             />
           </GlassCard>
 

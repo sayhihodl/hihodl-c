@@ -12,6 +12,7 @@ import EthBadge from "@assets/chains/ETH-chain.svg";
 import BaseBadge from "@assets/chains/Base-chain.svg";
 import PolyBadge from "@assets/chains/Polygon-chain.svg";
 import { Ionicons } from "@expo/vector-icons";
+import { requireSensitiveAuth } from "@/lib/lock";
 
 export type SendSheetInitial = {
   to: string;
@@ -129,7 +130,12 @@ export default function SendSheet({
   const proceedAmount = () => (amount && tokenId && network) ? setStep("confirm") : null;
 
   // ====== Confirm (fake submit) ======
-  const onConfirm = () => {
+  const onConfirm = async () => {
+    const ok = await requireSensitiveAuth("Authorize transaction");
+    if (!ok) {
+      Alert.alert("Authorization required", "Face ID / biometrics was cancelled or failed.");
+      return;
+    }
     Alert.alert("Sent ✅", `To: ${titleTop}\nToken: ${tokenId}\nNet: ${network}\nAmount: ${amount}`);
     onClose();
   };

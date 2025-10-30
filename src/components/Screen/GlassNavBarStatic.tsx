@@ -32,7 +32,12 @@ const GlassNavBarStatic: React.FC<GlassNavBarProps> = ({
   const opacity = forceGlass ? 1 : 0;
 
   return (
-    <View pointerEvents="none" style={[styles.wrap, { height: FIXED_H, opacity }]}>
+    <View
+      pointerEvents="none"
+      renderToHardwareTextureAndroid={true}
+      needsOffscreenAlphaCompositing={true}
+      style={[styles.wrap, { height: FIXED_H, opacity }]}
+    >
       {Platform.OS === "ios" ? (
         <>
           <BlurView tint="dark" intensity={intensityIOS} style={StyleSheet.absoluteFill} />
@@ -48,15 +53,26 @@ const GlassNavBarStatic: React.FC<GlassNavBarProps> = ({
           />
         </>
       ) : (
-        // En Android simulamos el vidrio con un fondo translúcido
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              backgroundColor: "rgba(7,16,22,0.86)",
-            },
-          ]}
-        />
+        // Android: usar BlurView real si está disponible
+        <>
+          <BlurView
+            tint="dark"
+            intensity={Math.min(100, Math.max(75, intensityIOS))}
+            experimentalBlurMethod="dimezisBlurView"
+            collapsable={false as any}
+            style={[StyleSheet.absoluteFill, { backgroundColor: "transparent" }]}
+          />
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: `rgba(6,14,20,${Math.max(tintOpacity, 0.48)})`,
+                borderBottomWidth: StyleSheet.hairlineWidth,
+                borderColor: "rgba(255,255,255,0.08)",
+              },
+            ]}
+          />
+        </>
       )}
 
       {/* Zona segura para que el alto incluya el notch (no contiene UI interactiva) */}
@@ -72,6 +88,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1000,
+    elevation: 1000,
   },
 });
 

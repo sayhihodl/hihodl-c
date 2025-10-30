@@ -55,6 +55,11 @@ const UI = {
   BETWEEN_GAP: 74,
 };
 
+// QuickSendInner (arriba del todo, junto a otros const)
+const IS_MOCK =
+  process.env.EXPO_PUBLIC_MOCK_PAYMENTS === "1" ||
+  !process.env.EXPO_PUBLIC_RELAY_URL;
+
 /* ============ token icon + mini-badge, sin aro blanco ============ */
 function TokenWithMini({ tokenId, chain, iconUrl }: { tokenId?: string; chain?: ChainKey; iconUrl?: string }) {
   if (!tokenId) return <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.06)" }} />;
@@ -83,11 +88,6 @@ function TokenWithMini({ tokenId, chain, iconUrl }: { tokenId?: string; chain?: 
     </View>
   );
 }
-const lc = (s?: string) => (typeof s === "string" ? s.toLowerCase() : "");
- function chainIdFromStr(chain?: string) {
-   const key = lc(chain) || "eth"; // fallback seguro
-   return mapChainKeyToChainId(key as any);
- }
 
 
 /* ============ Keypad con presets ============ */
@@ -138,6 +138,8 @@ function QuickAmountPad({
 
 /* ============================== contenido ============================== */
 function QuickRequestInner({ title }: { title: string }) {
+  const { returnPathname, returnAlias, to, avatar } =
+  useLocalSearchParams<{ returnPathname?: string; returnAlias?: string; to?: string; avatar?: string }>();
   const insets = useSafeAreaInsets();
   const { state, patch } = useSendFlow();
   const [kbH, setKbH] = useState(0);
@@ -146,7 +148,6 @@ function QuickRequestInner({ title }: { title: string }) {
   const balances = useBalancesSafe();
   const prefToken = (useUserPrefs((s) => s.defaultTokenId) || "").toLowerCase() || undefined;
   const prefAcct  = (useUserPrefs((s) => s.defaultAccount) || "Daily") as "Daily" | "Savings" | "Social";
-  const lc = (s?: string) => (typeof s === "string" ? s.toLowerCase() : "");
   // Buscador del sheet
   const [tokenSearch, setTokenSearch] = useState("");
   const tokenSearchRef = useRef<RNTextInput>(null);
@@ -203,11 +204,11 @@ function QuickRequestInner({ title }: { title: string }) {
   );
 
   // flags CTA (no check de balance en request)
-  const hasAmount = amount > 0;
-  const CTA_ACTIVE = "#FFB703";
-  const CTA_DISABLED = "#C8D2D9";
-  const canRequest = !!tokenId && !!chain && hasAmount && amount <= MAX_PER_TX;
-  const btnColor = canRequest ? CTA_ACTIVE : CTA_DISABLED;
+const hasAmount = amount > 0;
+const CTA_ACTIVE = "#FFB703";
+const CTA_DISABLED = "#C8D2D9";
+const canRequest = !!tokenId && !!chain && hasAmount && amount <= MAX_PER_TX;
+const btnColor = canRequest ? CTA_ACTIVE : CTA_DISABLED;
 
   const appendKey = (k: string) => {
     setAmountStr((prev) => {
@@ -275,10 +276,11 @@ function QuickRequestInner({ title }: { title: string }) {
       });
 
       // 4) Navega al thread
+      const { returnPathname, returnAlias, to, avatar } = useLocalSearchParams();
       router.replace({
-        pathname: "/(drawer)/(internal)/payments/thread",
-        params: { id: threadId },
-      });
+      pathname: String(returnPathname ?? "/(drawer)/(internal)/payments/thread"),
+      params: { alias: String(returnAlias ?? to ?? ""), avatar },
+    });
     } catch (e: any) {
       const toHandle = state.toRaw || state.toDisplay || "";
       const threadId = `peer:${toHandle.replace(/^@/, "")}`;

@@ -1,5 +1,5 @@
 // app/(tabs)/swap/select-token.tsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, Image, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,6 +9,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 
 /* Catálogo + iconos */
 import { useTokenCatalog, type TokenMeta as CatalogToken } from "@/config/tokensCatalog";
+import { useRecentTokens } from "@/hooks/useRecentTokens";
 import { TOKEN_ICONS, DEFAULT_TOKEN_ICON, CHAIN_BADGE_BY_ID } from "@/config/iconRegistry";
 
 const { BG, TEXT, SUB, SEPARATOR } = legacy;
@@ -56,26 +57,39 @@ export default function SelectToken() {
 
   const allTokens = useTokenCatalog();
   const [query, setQuery] = useState("");
+  const { recent, add: addRecent } = useRecentTokens();
+
+  const recentTokens: TokenMeta[] = useMemo(
+    () => recent.map((id) => allTokens.find((t) => t?.id === id)).filter(Boolean) as TokenMeta[],
+    [recent, allTokens]
+  );
+
+  const score = useCallback((t: TokenMeta, q: string) => {
+    const hay = `${t.symbol} ${t.name} ${t.id}`.toLowerCase();
+    if (hay.startsWith(q)) return 100 - (t.priority ?? 0);
+    if (hay.includes(q)) return 200 - (t.priority ?? 0);
+    return 9999;
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return allTokens;
-    return allTokens.filter(
-      (t) =>
-        t.symbol.toLowerCase().includes(q) ||
-        t.name.toLowerCase().includes(q) ||
-        t.id.toLowerCase().includes(q)
-    );
-  }, [query, allTokens]);
+    return [...allTokens]
+      .map((t) => ({ t, s: score(t, q) }))
+      .filter((x) => x.s < 9999)
+      .sort((a, b) => a.s - b.s)
+      .map((x) => x.t);
+  }, [query, allTokens, score]);
 
   const closeModal = () => {
     // Como estamos en el stack de swap, back() cierra el modal sin remount
     router.back();
   };
 
-  const onSelect = (t: TokenMeta) => {
-    setToken(side as "pay" | "receive", t.id); // actualiza store
-    closeModal();                               // cierra modal (sin animación lateral)
+  const onSelect = async (t: TokenMeta) => {
+    setToken(side as "pay" | "receive", t.id);
+    await addRecent(t.id);
+    closeModal();
   };
 
   const title = side === "receive" ? "You Receive" : "You Pay";
@@ -109,6 +123,25 @@ export default function SelectToken() {
           </Pressable>
         )}
       </View>
+
+      {/* Recent */}
+      {!!recentTokens.length && !query && (
+        <View style={{ paddingHorizontal: 16, marginBottom: 6 }}>
+          <Text style={[styles.rowSub, { marginBottom: 8 }]}>Recent</Text>
+          <FlatList<TokenMeta>
+            data={recentTokens}
+            horizontal
+            keyExtractor={(t) => `rec_${t.id}`}
+            contentContainerStyle={{ paddingBottom: 8 }}
+            ItemSeparatorComponent={() => <View style={{ width: 8 }} />}
+            renderItem={({ item: t }) => (
+              <Pressable onPress={() => onSelect(t)} style={[styles.selectBtn, { paddingHorizontal: 10 }]} hitSlop={10} accessibilityLabel={`Select ${t.symbol}`}>
+                <Text style={styles.selectTxt}>{t.symbol}</Text>
+              </Pressable>
+            )}
+          />
+        </View>
+      )}
 
       {/* List */}
       <FlatList<TokenMeta>

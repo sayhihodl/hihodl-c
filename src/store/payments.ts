@@ -24,6 +24,7 @@ type PaymentsState = {
   addMsg: (m: PayMsg) => void;
   updateMsg: (id: string, patch: Partial<PayMsg>) => void;
   selectByThread: (threadId: string) => PayMsg[];
+  deleteMsg: (id: string) => void; // NUEVO
 };
 
 export const usePaymentsStore = create<PaymentsState>((set, get) => ({
@@ -35,8 +36,25 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
       const prev = s.byThread[m.threadId] ?? [];
       // evita duplicados por si reintentas
       const ids = prev.includes(m.id) ? prev : [...prev, m.id];
+      // Notificación local: si parece entrante, dispara recibido
+      try {
+        const looksIncoming = m.kind === "in" || (m as any).direction === "in" || Boolean(m.meta?.isIncoming);
+        if (looksIncoming) {
+          // carga dinámica para entornos sin notifications
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const { notifyPaymentReceived } = require("@/lib/notifications");
+          notifyPaymentReceived?.({ amount: m.amount, token: m.tokenId, from: m.toDisplay });
+        }
+      } catch {}
       return { msgs, byThread: { ...s.byThread, [m.threadId]: ids } };
     }),
+
+    // en usePaymentsStore()
+    remindRequest: (id: string) => {
+      const s = get();
+      // ejemplo: solo marca un timestamp o lanza un toast
+      s.updateMsg?.(id, { ts: Date.now() });
+    },
   updateMsg: (id, patch) =>
     set((s) => {
       const current = s.msgs[id];
@@ -54,4 +72,16 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
     const ids = s.byThread[threadId] ?? [];
     return ids.map((id) => s.msgs[id]).filter(Boolean);
   },
+  deleteMsg: (id: string) => {
+    set((s) => {
+      const oldMsg = s.msgs[id];
+      if (!oldMsg) return {};
+      const { threadId } = oldMsg;
+      const msgs = { ...s.msgs };
+      delete msgs[id];
+      const arr = s.byThread[threadId]?.filter((msgId) => msgId !== id) ?? [];
+      return { msgs, byThread: { ...s.byThread, [threadId]: arr } };
+    });
+  },
 }));
+

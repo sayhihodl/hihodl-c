@@ -36,51 +36,22 @@ export default function SwapSettingsSheet({ visible, onClose }: Props) {
 
   const slipItems = useMemo(
     () => [
-      { id: "auto", label: t("swap:slippage.auto", "Auto") },
-      { id: "0.5", label: "0.5%" },
-      { id: "1", label: "1%" },
-      { id: "2", label: "2%" },
-      { id: "3", label: "3%" },
+      { id: "auto", label: t("swap:simple.auto", "Auto") },
+      { id: "0.5", label: t("swap:simple.low", "Low (0.5%)") },
+      { id: "1", label: t("swap:simple.standard", "Standard (1%)") },
+      { id: "2", label: t("swap:simple.high", "High (2%)") },
     ],
     [t]
   );
 
-  const prioItems = useMemo(
-    () => [
-      { id: "auto", label: t("swap:priority.auto", "Auto") },
-      { id: "0", label: "0 SOL" },
-      { id: "0.01", label: "0.01 SOL" },
-      { id: "0.02", label: "0.02 SOL" },
-      { id: "0.05", label: "0.05 SOL" },
-    ],
-    [t]
-  );
-
-  const tipItems = useMemo(
-    () => [
-      { id: "auto", label: t("swap:tip.auto", "Auto (0.05%)") },
-      { id: "0.05", label: "0.05%" },
-      { id: "0.1", label: "0.1%" },
-      { id: "0.2", label: "0.2%" },
-      { id: "0.5", label: "0.5%" },
-    ],
-    [t]
-  );
+  // Simplified settings: hide priority and tip for non-technical users
 
   const slipIndex =
     draft.slippage.mode === "auto"
       ? 0
       : Math.max(1, slipItems.findIndex((i) => Number(i.id) === draft.slippage.fixedPct));
 
-  const prioIndex =
-    draft.priority.mode === "auto"
-      ? 0
-      : Math.max(1, prioItems.findIndex((i) => Number(i.id) === draft.priority.customSol));
-
-  const tipIndex =
-    draft.tip.mode === "auto"
-      ? 0
-      : Math.max(1, tipItems.findIndex((i) => Number(i.id) === draft.tip.pct));
+  // Removed advanced sections (priority fee, tip)
 
   return (
     <BottomKeyboardModal
@@ -107,9 +78,9 @@ export default function SwapSettingsSheet({ visible, onClose }: Props) {
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Slippage */}
+        {/* Price protection (Slippage) */}
         <View style={styles.card}>
-          <Row leftSlot={<Text style={styles.groupLabel}>{t("swap:slippage.title", "Slippage")}</Text>} rightIcon={null} />
+          <Row leftSlot={<Text style={styles.groupLabel}>{t("swap:simple.priceProtection", "Price protection")}</Text>} rightIcon={null} />
           <SegmentedPills
             items={slipItems as any}
             activeIndex={slipIndex < 0 ? 0 : slipIndex}
@@ -136,95 +107,10 @@ export default function SwapSettingsSheet({ visible, onClose }: Props) {
             animateMs={140}
           />
           <Text style={styles.help}>
-            {t("swap:slippage.help", "Recommended: 0.5–1% for majors, 2–3% for volatile pairs.")}
+            {t("swap:simple.help", "Auto keeps you safe from bad prices. You can make it stricter or more flexible if a token is very volatile.")}
           </Text>
         </View>
-
-        {/* Priority Fee */}
-        <View style={styles.card}>
-          <Row
-            leftSlot={<Text style={styles.groupLabel}>{t("swap:priority.title", "Priority Fee")}</Text>}
-            value={
-              <Text style={styles.valueNote}>
-                {draft.priority.mode === "auto"
-                  ? t("swap:priority.auto", "Auto")
-                  : `${draft.priority.customSol} SOL`}
-              </Text>
-            }
-            rightIcon={null}
-          />
-          <SegmentedPills
-            items={prioItems as any}
-            activeIndex={prioIndex < 0 ? 0 : prioIndex}
-            onPress={(_, item) => {
-              setDraft((d) =>
-                item.id === "auto"
-                  ? { ...d, priority: { mode: "auto" } as any }
-                  : { ...d, priority: { mode: "custom", customSol: Number(item.id) } as any }
-              );
-            }}
-            height={36}
-            pillMinWidth={74}
-            pillHPad={12}
-            wrapHPad={6}
-            wrapBackground="rgba(255,255,255,0.06)"
-            textStyle={{ color: "#C2D4DB", fontSize: 13, fontWeight: "800" }}
-            activeTextStyle={{ color: "#fff" }}
-            indicatorStyle={{
-              backgroundColor: "rgba(0,0,0,0.45)",
-              top: 4,
-              bottom: 4,
-              borderRadius: 12,
-            }}
-            animateMs={140}
-          />
-          <Text style={styles.help}>
-            {t("swap:priority.help", "Higher priority speeds up confirmation during congestion.")}
-          </Text>
-        </View>
-
-        {/* Tip */}
-        <View style={styles.card}>
-          <Row
-            leftSlot={<Text style={styles.groupLabel}>{t("swap:tip.title", "Tip")}</Text>}
-            value={
-              <Text style={styles.valueNote}>
-                {draft.tip.mode === "auto"
-                  ? t("swap:tip.auto", "Auto (0.05%)")
-                  : `${draft.tip.pct}%`}
-              </Text>
-            }
-            rightIcon={null}
-          />
-          <SegmentedPills
-            items={tipItems as any}
-            activeIndex={tipIndex < 0 ? 0 : tipIndex}
-            onPress={(_, item) => {
-              setDraft((d) =>
-                item.id === "auto"
-                  ? { ...d, tip: { mode: "auto" } as any }
-                  : { ...d, tip: { mode: "custom", pct: Number(item.id) } as any }
-              );
-            }}
-            height={36}
-            pillMinWidth={84}
-            pillHPad={12}
-            wrapHPad={6}
-            wrapBackground="rgba(255,255,255,0.06)"
-            textStyle={{ color: "#C2D4DB", fontSize: 13, fontWeight: "800" }}
-            activeTextStyle={{ color: "#fff" }}
-            indicatorStyle={{
-              backgroundColor: "rgba(0,0,0,0.45)",
-              top: 4,
-              bottom: 4,
-              borderRadius: 12,
-            }}
-            animateMs={140}
-          />
-          <Text style={styles.help}>
-            {t("swap:tip.help", "Tiny tip supports relayer/liquidity routing.")}
-          </Text>
-        </View>
+        {/* Advanced options hidden for simplicity */}
       </Animated.ScrollView>
     </BottomKeyboardModal>
   );

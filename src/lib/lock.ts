@@ -39,7 +39,7 @@ export async function verifyPin(pin: string): Promise<boolean> {
 }
 
 /** Intento de autenticación biométrica (Face ID/huella) */
-export async function tryBiometricAuth(): Promise<boolean> {
+export async function tryBiometricAuth(promptMessage: string = 'Unlock HIHODL'): Promise<boolean> {
   try {
     const hasHW = await LocalAuthentication.hasHardwareAsync();
     if (!hasHW) return false;
@@ -48,12 +48,27 @@ export async function tryBiometricAuth(): Promise<boolean> {
     if (!enrolled) return false;
 
     const res = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Unlock HIHODL',
+      promptMessage,
       cancelLabel: 'Cancel',
       disableDeviceFallback: false,
       requireConfirmation: false,
     });
     return res.success === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Always-on sensitive action guard: Face/Touch ID first, fallback is caller-defined */
+export async function requireSensitiveAuth(promptMessage: string = 'Authorize transaction'): Promise<boolean> {
+  // For now we rely on biometrics; PIN fallback should be handled by caller screen if needed
+  const ok = await tryBiromaticAuthSafe(promptMessage);
+  return ok;
+}
+
+async function tryBiromaticAuthSafe(promptMessage: string): Promise<boolean> {
+  try {
+    return await tryBiometricAuth(promptMessage);
   } catch {
     return false;
   }

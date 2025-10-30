@@ -1,0 +1,43 @@
+{
+  "sections": {
+    "account": "Cuenta",
+    "supportLegal": "Soporte y Legal"
+  },
+  "rows": {
+    "settings": {
+      "label": "Configuración",
+      "sub": "Notificaciones, idioma y moneda"
+    },
+    "security": {
+      "label": "Seguridad",
+      "sub": "Código, biometría"
+    },
+    "help": {
+      "label": "Ayuda y soporte",
+      "sub": "Preguntas frecuentes y contacto"
+    },
+    "terms": {
+      "label": "Términos del servicio",
+      "sub": "Legal"
+    },
+    "privacy": {
+      "label": "Política de privacidad",
+      "sub": "Legal"
+    },
+    "about": {
+      "label": "Acerca de HIHODL",
+      "sub": "Información de la app"
+    }
+  },
+  "legal": {
+    "termsTitle": "Términos del servicio",
+    "privacyTitle": "Política de privacidad",
+    "openTerms": "Abrir términos",
+    "openPrivacy": "Abrir política de privacidad",
+    "termsBlurb": "Leé nuestros Términos del servicio en línea.",
+    "privacyBlurb": "Leé nuestra Política de privacidad en línea."
+  }
+}
+
+
+

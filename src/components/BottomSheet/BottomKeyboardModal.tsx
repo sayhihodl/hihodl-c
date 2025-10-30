@@ -20,6 +20,7 @@ type Props = {
   dragCloseThreshold?: number;
   tapToDismissKeyboard?: boolean;
   minHeightPct?: number;
+  showHandle?: boolean;
   maxHeightPct?: number;
   autoFocusRef?: React.RefObject<any>;
   dismissOnScrimPress?: boolean;

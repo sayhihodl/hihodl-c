@@ -28,8 +28,8 @@
       "expo-secure-store",
       "expo-local-authentication",
       "expo-router",
-      "expo-barcode-scanner",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-barcode-scanner"
     ],
     "extra": {
       "EXPO_PUBLIC_FIREBASE_API_KEY": "...",
