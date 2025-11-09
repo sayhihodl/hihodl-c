@@ -1,10 +1,55 @@
 // app/home.tsx
-import React from "react";
-import { View, Text } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, ActivityIndicator } from "react-native";
+import { router } from "expo-router";
 import GlassNavBar from "@/components/Screen/GlassNavBar";
+import { useAuth } from "@/store/auth";
 import '@/shims/node';
 
 export default function HomeScreen() {
+  const { isAuthenticated, ready } = useAuth();
+
+  useEffect(() => {
+    if (!ready) return;
+    
+    // Si no está autenticado, redirigir a login
+    if (!isAuthenticated) {
+      router.replace('/auth/login');
+    }
+  }, [isAuthenticated, ready]);
+
+  // Mostrar loading mientras se verifica la autenticación
+  if (!ready) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#0a0f14",
+        }}
+      >
+        <ActivityIndicator size="large" color="#FFB703" />
+      </View>
+    );
+  }
+
+  // Si no está autenticado, mostrar mensaje mientras se redirige
+  if (!isAuthenticated) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#0a0f14",
+        }}
+      >
+        <Text style={{ color: "#fff", fontSize: 16 }}>Redirigiendo a login...</Text>
+      </View>
+    );
+  }
+
   return (
     <>
       <GlassNavBar
@@ -12,8 +57,7 @@ export default function HomeScreen() {
         headerHeight={44}
         headerPad={8}
         tintOpacity={0.35}
-        materialStyle={0}      // 0 ultraThin, 1 thin, 2 material, 3 chrome(iOS15+), 4 system
-        useSystemTint={true}   // adapta el tinte a Light/Dark
+        intensityIOS={60}
       />
       <View
         style={{

@@ -13,10 +13,6 @@ export default function SwapLayout() {
         name="select-token"
         options={modalOptions}
       />
-      <Stack.Screen
-        name="settings"
-        options={modalOptions}
-      />
 
       {/* Si más adelante creas app/(drawer)/(tabs)/swap/[id].tsx:
           <Stack.Screen name="[id]" />

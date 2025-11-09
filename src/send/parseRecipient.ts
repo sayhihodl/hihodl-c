@@ -11,6 +11,7 @@ const re = {
   ens: /^[\w-]+\.eth$/i,
   tron: /^T[1-9A-HJ-NP-Za-km-z]{33,34}$/, // base58 empezando por T
   solBase58: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/, // rango razonable
+  cardNumber: /^[\d\s-]{13,19}$/, // card number: 13-19 digits, puede tener espacios o guiones
 };
 
 // Luhn-like IBAN checksum
@@ -84,11 +85,36 @@ export function parseRecipient(input: string): ParsedRecipient | null {
   // TRON
   if (re.tron.test(raw)) return { kind: "tron", toRaw: raw, toChain: "tron" };
 
-  // EVM
-  if (re.evm.test(raw)) return { kind: "evm", toRaw: raw, toChain: "ethereum" };
+  // EVM (puede ser ethereum, base, polygon, etc. - el sistema permitirá elegir)
+  if (re.evm.test(raw)) return { kind: "evm", toRaw: raw, toChain: "ethereum" }; // default, pero se expande a ["base", "polygon", "ethereum"] en UI
 
   // SOL
   if (re.solBase58.test(raw)) return { kind: "sol", toRaw: raw, toChain: "solana" };
 
+  // Card number (detecta si tiene 13-19 dígitos, sin letras, y no es un número de teléfono)
+  // Solo detectar si no empieza con + (los números de teléfono típicamente empiezan con +)
+  const digitsOnly = raw.replace(/[\s-]/g, "");
+  if (!raw.startsWith("+") && /^\d{13,19}$/.test(digitsOnly) && re.cardNumber.test(raw)) {
+    return { kind: "phone", toRaw: digitsOnly }; // Usamos kind: "phone" como placeholder, puede cambiarse a "card" en el futuro
+  }
+
   return null;
+}
+
+/** Helper para detectar si el input es una dirección válida que debería navegar al send flow */
+export function isSendableAddress(input: string): boolean {
+  const parsed = parseRecipient(input);
+  if (!parsed) return false;
+  
+  // Detecta: wallets (evm, sol, tron), hihodl users, iban, o card numbers
+  const isCardNumber = parsed.kind === "phone" && /^\d{13,19}$/.test(input.trim().replace(/[\s-]/g, ""));
+  
+  return (
+    parsed.kind === "evm" ||
+    parsed.kind === "sol" ||
+    parsed.kind === "tron" ||
+    parsed.kind === "hihodl" ||
+    parsed.kind === "iban" ||
+    isCardNumber
+  );
 }

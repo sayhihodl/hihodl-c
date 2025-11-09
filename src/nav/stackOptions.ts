@@ -28,7 +28,7 @@ const modalPresentation: Pres = "modal";
 const transparentModalPresentation: Pres = "transparentModal";
 
 /** 
- * Transición estándar tipo “push” (detalles, flows normales)
+ * Transición estándar tipo "push" (detalles, flows normales)
  */
 export const pushOptions: NativeStackNavigationOptions = {
   headerShown: false,
@@ -37,6 +37,7 @@ export const pushOptions: NativeStackNavigationOptions = {
   fullScreenGestureEnabled: true,
   gestureDirection: "horizontal",
   animation: pushAnimation,
+  headerBackButtonMenuEnabled: false, // Fix para evitar conflictos con beforeRemove
 };
 
 /**

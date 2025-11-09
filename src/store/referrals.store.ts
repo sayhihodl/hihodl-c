@@ -11,7 +11,7 @@ type ReferralState = {
 
 export const useReferralStore = create<ReferralState>(() => ({
   inviteCode: "alex-7FH3Q",
-  baseUrl: "https://hihodl.app",
+  baseUrl: "https://hihodl.xyz",
   referredCount: 0,
   rewardsUsd: 0,
 }));

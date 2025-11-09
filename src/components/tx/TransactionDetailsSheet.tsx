@@ -178,7 +178,7 @@ const explorerLabel = explorer
   };
 
   return (
-    <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+    <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }}>
       {/* Title block removed */}
 
       {/* Hero amount ala Revolut/Phantom */}

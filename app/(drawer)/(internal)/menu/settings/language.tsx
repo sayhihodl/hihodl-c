@@ -7,6 +7,7 @@ import { router, Stack } from "expo-router";
 
 import ScreenBg from "@/ui/ScreenBg";
 import GlassHeader from "@/ui/GlassHeader";
+import SearchField from "@/ui/SearchField";
 import colors, { legacy as legacyColors } from "@/theme/colors";
 import { CTAButton } from "@/ui/CTAButton";
 
@@ -142,22 +143,18 @@ export default function LanguageScreen() {
               <View style={{ width: 36 }} />
             </View>
 
-            <View style={[styles.searchInHeader, { marginTop: ROW_SEARCH_GAP, height: SEARCH_H }]}>
-              <Ionicons name="search" size={18} color={SUB} />
-              <TextInput
+            <View style={{ marginTop: ROW_SEARCH_GAP }}>
+              <SearchField
                 value={query}
                 onChangeText={setQuery}
                 placeholder={t("settings:searchLanguage", "Search language")}
-                placeholderTextColor={SUB}
-                style={styles.input}
-                autoCapitalize="none"
-                autoCorrect={false}
+                height={SEARCH_H}
+                onClear={() => setQuery("")}
+                inputProps={{
+                  autoCapitalize: "none",
+                  autoCorrect: false,
+                }}
               />
-              {query ? (
-                <Pressable onPress={() => setQuery("")} hitSlop={8}>
-                  <Ionicons name="close-circle" size={18} color={SUB} />
-                </Pressable>
-              ) : null}
             </View>
 
             <View style={{ height: AFTER_SEARCH_GAP }} />
@@ -244,17 +241,6 @@ const styles = StyleSheet.create({
   },
   title: { color: TEXT, fontSize: 18, fontWeight: "800", textAlign: "center" },
 
-  searchInHeader: {
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    backgroundColor: GLASS_BG,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: GLASS_BORDER,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  input: { flex: 1, color: TEXT, fontSize: 15 },
 
   row: {
     backgroundColor: GLASS_BG,

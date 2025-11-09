@@ -1,4 +1,6 @@
 // src/services/jupiter.ts
+import { logger } from "@/utils/logger";
+
 const JUP_BASE = "https://lite-api.jup.ag/tokens/v2"; // no requiere API key
 
 export type JupToken = {
@@ -22,12 +24,25 @@ async function jupFetch<T>(path: string, { signal }: { signal?: AbortSignal } = 
   return data as T;
 }
 
+// Tipo para respuesta raw de Jupiter API
+type JupiterTokenRaw = {
+  id?: string;
+  address?: string;
+  mint?: string;
+  symbol?: string;
+  name?: string;
+  decimals?: number;
+  icon?: string;
+  isVerified?: boolean;
+  organicScore?: number;
+};
+
 /** Busca tokens por símbolo, nombre o mint. Normaliza el resultado. */
 export async function jupSearch(query: string, signal?: AbortSignal): Promise<JupToken[]> {
   if (!query?.trim()) return [];
   const q = encodeURIComponent(query.trim());
   try {
-    const raw = await jupFetch<any[]>(`/search?query=${q}`, { signal });
+    const raw = await jupFetch<JupiterTokenRaw[]>(`/search?query=${q}`, { signal });
     if (!Array.isArray(raw)) return [];
 
     return raw.map((t) => ({
@@ -40,7 +55,7 @@ export async function jupSearch(query: string, signal?: AbortSignal): Promise<Ju
       organicScore: typeof t.organicScore === "number" ? t.organicScore : undefined,
     }));
   } catch (err) {
-    console.error("jupSearch error:", err);
+    logger.error("jupSearch error:", err);
     return [];
   }
 }
@@ -65,7 +80,7 @@ export async function jupByMint(mint: string, signal?: AbortSignal): Promise<Jup
   if (!mint) return [];
   const q = encodeURIComponent(mint);
   try {
-    const res = await jupFetch<any[]>(`/search?query=${q}`, { signal });
+    const res = await jupFetch<JupiterTokenRaw[]>(`/search?query=${q}`, { signal });
     return Array.isArray(res)
       ? res.map((t) => ({
           id: String(t.id || ""),
@@ -78,7 +93,7 @@ export async function jupByMint(mint: string, signal?: AbortSignal): Promise<Jup
         }))
       : [];
   } catch (e) {
-    console.error("jupByMint error:", e);
+    logger.error("jupByMint error:", e);
     return [];
   }
 }

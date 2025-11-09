@@ -1,27 +1,26 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  ImageBackground,
   View,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Text,
   Platform,
-  Keyboard,                // 👈 nuevo
-  KeyboardAvoidingView,    // 👈 nuevo
-  Animated,                // 👈 nuevo
+  Keyboard,
+  KeyboardAvoidingView,
+  Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
+import { CTAButton } from '@/ui/CTAButton';
+import { OnboardingProgressBar } from '@/components/OnboardingProgressBar';
+import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
+import AppBackground from '@/ui/AppBackground';
+import T from '@/ui/T';
+import colors from '@/theme/colors';
 
-type Status = 'idle' | 'checking' | 'available' | 'taken';
+type Status = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
-// Usa las 3 imágenes de panel (sin textos superpuestos)
-const BGs = {
-  idle:       require('../../assets/wallet-setup/wallet-setup-username-B.png'),
-  checking:   require('../../assets/wallet-setup/wallet-setup-username-B.png'),
-  available:  require('../../assets/wallet-setup/wallet-setup-username-B.png'),
-  taken:      require('../../assets/wallet-setup/wallet-setup-username-B.png'),
-} as const;
+// Ya no usamos imágenes de fondo, usamos AppBackground
 
 const RESERVED = [
   'admin','administrator','root','support','help','test','tester',
@@ -38,6 +37,7 @@ const RESERVED = [
 ] as const;
 
 export default function Username() {
+  const { saveProgress } = useOnboardingProgress();
   const [u, setU] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,11 +73,30 @@ export default function Username() {
   }, [kbHeight]);
 
   const checkAvailability = useCallback(async (candidate: string) => {
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 450));
-    const taken =
-      RESERVED.includes(candidate.toLowerCase() as (typeof RESERVED)[number]) ||
-      ['admin','test','hihodl'].includes(candidate.toLowerCase());
-    setStatus(taken ? 'taken' : 'available');
+    try {
+      // Simular timeout de red (en producción sería un fetch real)
+      await Promise.race([
+        new Promise<void>((resolve) => setTimeout(() => resolve(), 450)),
+        new Promise<void>((_, reject) => 
+          setTimeout(() => reject(new Error('Network timeout')), 5000)
+        ),
+      ]);
+      
+      const taken =
+        RESERVED.includes(candidate.toLowerCase() as (typeof RESERVED)[number]) ||
+        ['admin','test','hihodl'].includes(candidate.toLowerCase());
+      setStatus(taken ? 'taken' : 'available');
+    } catch (error) {
+      // Manejo de errores de red
+      setStatus('error');
+      // Auto-reintentar después de 2 segundos
+      setTimeout(() => {
+        if (candidate.trim().length >= 3 && /^[a-z0-9_.-]{3,}$/i.test(candidate)) {
+          setStatus('checking');
+          checkAvailability(candidate);
+        }
+      }, 2000);
+    }
   }, []);
 
   useEffect(() => {
@@ -92,29 +111,38 @@ export default function Username() {
   const onChange = (t: string) => {
     const v = t.trim();
     setU(v);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = null;
+    
+    // Cancelar verificación anterior si existe
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    // Si el texto no es válido, resetear estado
     const ok = /^[a-z0-9_.-]{3,}$/i.test(v);
-    if (!ok) { setStatus('idle'); return; }
-    setStatus('checking');
-    timerRef.current = setTimeout(() => checkAvailability(v), 500);
+    if (!ok) { 
+      setStatus('idle'); 
+      return; 
+    }
+    
+    // No poner 'checking' inmediatamente - solo después del debounce
+    // Esto permite que el usuario siga escribiendo sin interrupciones
+    timerRef.current = setTimeout(() => {
+      setStatus('checking');
+      checkAvailability(v);
+    }, 800); // Aumentado de 500ms a 800ms para dar más tiempo de escritura
   };
 
-  const bg = BGs[status];
-
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined} // 👈 evita solapes extra en iOS
-    >
-      {/* Fondo que no intercepta toques */}
-      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-        <ImageBackground source={bg} style={styles.bg} resizeMode="cover" />
-      </View>
-
-      {/* Contenido */}
-      <View style={styles.content}>
-        <Text style={styles.title}>Set your username</Text>
+    <AppBackground>
+      <KeyboardAvoidingView
+        style={styles.root}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        {/* Contenido */}
+        <View style={styles.content}>
+          <OnboardingProgressBar currentStep="username" />
+          <T kind="h1" style={styles.title} accessibilityRole="header">Set your username</T>
         <TextInput
           value={u}
           onChangeText={onChange}
@@ -124,23 +152,59 @@ export default function Username() {
           autoCorrect={false}
           style={styles.input}
           returnKeyType="done"
+          editable={true} // Siempre permitir edición
+          accessibilityLabel="Username"
+          accessibilityHint="Enter your desired username. It will be checked for availability."
+          accessibilityState={{ invalid: status === 'taken' }}
         />
 
         {/* Mensaje de estado */}
         {status !== 'idle' && (
-          <View style={styles.statusRow}>
+          <View 
+            style={styles.statusRow}
+            accessibilityRole="status"
+            accessibilityLiveRegion="polite"
+          >
             {status === 'checking' && (
-              <Text style={[styles.statusText, { color: '#9CA3AF' }]}>Checking…</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator size="small" color="#9CA3AF" />
+                <T 
+                  kind="body"
+                  style={[styles.statusText, { color: '#9CA3AF' }]}
+                  accessibilityLabel="Checking username availability"
+                >
+                  Checking…
+                </T>
+              </View>
             )}
             {status === 'available' && (
-              <Text style={[styles.statusText, { color: '#22C55E' }]}>
+              <T 
+                kind="body"
+                style={[styles.statusText, { color: '#22C55E' }]}
+                accessibilityLabel="Username is available"
+              >
                 Username is available ✓
-              </Text>
+              </T>
             )}
             {status === 'taken' && (
-              <Text style={[styles.statusText, { color: '#FB8500' }]}>
+              <T 
+                kind="body"
+                style={[styles.statusText, { color: '#FB8500' }]}
+                accessibilityLabel="Username is not available"
+              >
                 Username is not available ⚠︎
-              </Text>
+              </T>
+            )}
+            {status === 'error' && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <T 
+                  kind="body"
+                  style={[styles.statusText, { color: '#EF4444' }]}
+                  accessibilityLabel="Connection error, retrying"
+                >
+                  Connection error. Retrying...
+                </T>
+              </View>
             )}
           </View>
         )}
@@ -152,27 +216,34 @@ export default function Username() {
             { paddingBottom: Animated.add(kbHeight, new Animated.Value(24)) }, // 👈 magia
           ]}
         >
-          <TouchableOpacity
-            onPress={() => status === 'available' && router.push('/onboarding/notifications')}
+          <CTAButton
+            title="Continue"
+            onPress={async () => {
+              await saveProgress('username');
+              router.push('/onboarding/notifications');
+            }}
             disabled={status !== 'available'}
-            style={[styles.cta, status !== 'available' && styles.ctaDisabled]}
-          >
-            <Text style={styles.ctaTxt}>Continue</Text>
-          </TouchableOpacity>
+            variant="primary"
+            fullWidth={true}
+            accessibilityLabel="Continue to next step"
+            accessibilityHint={status === 'available' 
+              ? 'Username is available, proceed to notifications setup'
+              : 'Username must be available to continue'}
+          />
         </Animated.View>
       </View>
     </KeyboardAvoidingView>
+    </AppBackground>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  bg:   { width: '100%', height: '100%' },
 
   close: {
     position: 'absolute',
     top: 18,
-    right: 14,
+    left: 18,
     width: 32,
     height: 32,
     alignItems: 'center',
@@ -194,38 +265,31 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   title: {
-    color: '#FFFFFF',
+    color: colors.text,
     fontWeight: '900',
     letterSpacing: -0.5,
-    marginBottom: 16,
-    fontSize: Platform.select({ ios: 22, android: 22, default: 40 }) as number,
+    marginBottom: 24,
+    fontSize: Platform.select({ ios: 28, android: 28, default: 40 }) as number,
   },
   input: {
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#CFE3EC',
-    paddingHorizontal: 14,
-    color: '#FFFFFF',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    height: 56,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.dividerOnDark,
+    paddingHorizontal: 16,
+    color: colors.text,
+    backgroundColor: 'rgba(3, 12, 16, 0.35)', // Glass background
     marginTop: 60,
+    fontSize: 16,
+    borderStyle: 'solid',
   },
 
-  statusRow: { marginTop: 20 },
-  statusText: { fontSize: 16, fontWeight: '800' },
+  statusRow: { marginTop: 16 },
+  statusText: { fontSize: 15, fontWeight: '700' },
 
   // Footer/CTA que se pega abajo y sube con el teclado
   ctaWrap: {
     marginTop: 'auto',         // empuja al fondo
-    paddingHorizontal: 24,
+    paddingHorizontal: 0,
   },
-  cta: {
-    height: 48,
-    borderRadius: 80,
-    backgroundColor: '#FFB703',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaDisabled: { opacity: 0.55 },
-  ctaTxt: { color: '#0A1A24', fontSize: 18, fontWeight: '800' },
 });

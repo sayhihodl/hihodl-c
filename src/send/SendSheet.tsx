@@ -1,6 +1,7 @@
 // src/send/SendSheet.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, Pressable, StyleSheet, TextInput, Platform, Alert } from "react-native";
+import type { SvgProps } from "react-native-svg";
 import BottomKeyboardModal from "@/components/BottomSheet/BottomKeyboardModal";
 import { legacy } from "@/theme/colors";
 import { parseRecipient } from "@/send/parseRecipient";
@@ -25,7 +26,7 @@ export type SendSheetInitial = {
 const { TEXT, SUB } = legacy;
 
 /* ===== mini badges ===== */
-const MINI: Partial<Record<ChainKey, React.ComponentType<any>>> = {
+const MINI: Partial<Record<ChainKey, React.ComponentType<SvgProps>>> = {
   solana: SolBadge,
   ethereum: EthBadge,
   base: BaseBadge,
@@ -46,7 +47,7 @@ export function shortAddr(a?: string) {
 
 /** ⬆️ export para reuso (StepAmount/StepConfirm, etc.) */
 export function TokenWithMini({ tokenId, net }: { tokenId: string; net: ChainKey }) {
-  const def: any = (TOKEN_ICONS as any)[tokenId] ?? DEFAULT_TOKEN_ICON;
+  const def = TOKEN_ICONS[tokenId] ?? DEFAULT_TOKEN_ICON;
   const Mini = MINI[net];
   return (
     <View style={{ width: AVATAR, height: AVATAR, position: "relative" }}>

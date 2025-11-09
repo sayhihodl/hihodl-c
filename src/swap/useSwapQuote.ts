@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { logger } from "@/utils/logger";
+import { TIMEOUTS, LIMITS, PROBABILITIES, FEES } from "@/constants/config";
 
 export type SwapQuoteInput = {
   payTokenId?: string;
@@ -61,45 +63,51 @@ export function useSwapQuote({ payTokenId, receiveTokenId, amountStr, slippagePc
     async function fetchWithRetry() {
       setState((s) => ({ ...s, loading: true, error: undefined }));
 
-      const maxRetries = 3;
+      const maxRetries = LIMITS.MAX_RETRIES;
       let attempt = 0;
-      let lastErr: any;
+      let lastErr: Error | unknown;
 
       while (attempt < maxRetries) {
         try {
-          // mock latency 250-450ms
-          await sleep(250 + Math.random() * 200);
+          // mock latency usando constantes
+          const delay = TIMEOUTS.MOCK_MIN_DELAY + 
+            Math.random() * (TIMEOUTS.MOCK_MAX_DELAY - TIMEOUTS.MOCK_MIN_DELAY);
+          await sleep(delay);
           // mock occasional transient error
-          if (Math.random() < 0.08) throw new Error("transient");
+          if (Math.random() < PROBABILITIES.MOCK_TRANSIENT_ERROR) throw new Error("transient");
 
           // mock pricing: 1 pay = p receive
-          const price = 1 + (Math.random() - 0.5) * 0.02; // ~ +/-1%
+          const price = 1 + (Math.random() - 0.5) * PROBABILITIES.PRICE_VARIATION_FACTOR;
           const outAmount = parsedAmount * price * (1 - slippagePct / 100);
-          const impactPct = Math.max(0, (Math.random() - 0.85) * 1.2); // small
-          const routerFeeUsd = 0.02 + Math.random() * 0.08;
-          const gasUsd = 0.05 + Math.random() * 0.15;
+          const impactPct = Math.max(0, (Math.random() - PROBABILITIES.MIN_PRICE_IMPACT) * 1.2);
+          const routerFeeUsd = FEES.ROUTER_FEE_MIN + Math.random() * (FEES.ROUTER_FEE_MAX - FEES.ROUTER_FEE_MIN);
+          const gasUsd = FEES.GAS_MIN + Math.random() * (FEES.GAS_MAX - FEES.GAS_MIN);
 
           if (!cancelled && seq === inFlightRef.current) {
             setState({ loading: false, data: { outAmount, price, impactPct, routerFeeUsd, gasUsd, router: "primary" } });
           }
           return;
-        } catch (e: any) {
+        } catch (e: unknown) {
           lastErr = e;
           attempt += 1;
-          const backoff = 200 * Math.pow(2, attempt - 1); // 200, 400, 800ms
+          const backoff = TIMEOUTS.BACKOFF_INITIAL * Math.pow(2, attempt - 1);
           await sleep(backoff);
+          
+          if (attempt === maxRetries) {
+            logger.warn("useSwapQuote: max retries reached", e);
+          }
         }
       }
 
       // fallback router attempt once
       try {
-        await sleep(180 + Math.random() * 160);
+        await sleep(TIMEOUTS.MOCK_MIN_DELAY + Math.random() * 160);
         // simulate degraded but working path with slightly worse price
-        const price = 1 + (Math.random() - 0.5) * 0.03;
+        const price = 1 + (Math.random() - 0.5) * (PROBABILITIES.PRICE_VARIATION_FACTOR * 1.5);
         const outAmount = parsedAmount * price * (1 - slippagePct / 100) * 0.998; // a bit worse
         const impactPct = Math.max(0.2, (Math.random() - 0.7) * 1.6);
-        const routerFeeUsd = 0.04 + Math.random() * 0.1;
-        const gasUsd = 0.06 + Math.random() * 0.18;
+        const routerFeeUsd = FEES.ROUTER_FEE_MIN * 2 + Math.random() * (FEES.ROUTER_FEE_MAX - FEES.ROUTER_FEE_MIN);
+        const gasUsd = FEES.GAS_MIN * 1.2 + Math.random() * (FEES.GAS_MAX - FEES.GAS_MIN);
         if (!cancelled && seq === inFlightRef.current) {
           setState({ loading: false, data: { outAmount, price, impactPct, routerFeeUsd, gasUsd, router: "fallback" } });
           return;
@@ -107,8 +115,12 @@ export function useSwapQuote({ payTokenId, receiveTokenId, amountStr, slippagePc
       } catch {}
 
       if (!cancelled && seq === inFlightRef.current) {
-        const code: State["errorCode"] = lastErr?.message === "no_liquidity" ? "no_liquidity" : lastErr?.message === "transient" ? "degraded" : "network";
-        setState({ loading: false, error: lastErr?.message || "quote_failed", errorCode: code });
+        const errMessage = lastErr instanceof Error ? lastErr.message : String(lastErr || "unknown");
+        const code: State["errorCode"] = 
+          errMessage === "no_liquidity" ? "no_liquidity" 
+          : errMessage === "transient" ? "degraded" 
+          : "network";
+        setState({ loading: false, error: errMessage || "quote_failed", errorCode: code });
       }
     }
 

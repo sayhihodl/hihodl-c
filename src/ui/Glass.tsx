@@ -1,6 +1,7 @@
 import React from "react";
 import { View, StyleSheet, ViewStyle } from "react-native";
 import { legacy as legacyColors } from "@/theme/colors";
+import { tokens } from "@/lib/layout";
 
 const GLASS_BG   = "rgba(3, 12, 16, 0.35)"; // translúcido (glass)
 const PANEL_BG   = "#0F151A";               // sólido estilo menú (ajusta si tu token es otro)
@@ -22,12 +23,13 @@ export const glass = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16, // misma altura que el menú
+    paddingHorizontal: tokens.space[12], // Padding interno reducido
+    paddingVertical: 20, // Más espacio vertical entre filas
+    paddingRight: tokens.space[12], // Mismo padding derecho para consistencia
   },
   rowTitle: { color: "#fff", fontSize: 14, fontWeight: "600" },
   rowSub:   { color: legacyColors.SUB ?? "rgba(255,255,255,0.65)", fontSize: 12, fontWeight: "400", marginTop: 2 },
-  divider:  { height: StyleSheet.hairlineWidth, backgroundColor: DIVIDER, marginLeft: 46 },
+  divider:  { height: StyleSheet.hairlineWidth, backgroundColor: DIVIDER, marginLeft: tokens.space[12] + 46 }, // Respeta padding del row
 });
 
 export function GlassCard({
@@ -38,6 +40,9 @@ export function GlassCard({
   const toneStyle = tone === "panel" ? glass.cardPanel : glass.cardGlass;
   return <View style={[glass.cardBase, toneStyle, style]}>{children}</View>;
 }
+
+// Export para compatibilidad con tokens
+export { GlassCard as default };
 
 export function Divider() {
   return <View style={glass.divider} />;

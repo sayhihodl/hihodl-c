@@ -10,6 +10,8 @@ import GlassHeader from "@/ui/GlassHeader";
 import { GlassCard } from "@/ui/Glass";
 import AccountFilterSheet from "@/payments/AccountFilterSheet";
 import { SkeletonLine } from "@/ui/Skeleton";
+import SearchField from "@/ui/SearchField";
+import type { RecipientKind } from "@/send/types";
 
 const BG = "#0D1820";
 const AVATAR_SIZE = 34;
@@ -22,6 +24,7 @@ type Thread = {
   name: string;
   alias: string;
   avatar?: string;
+  emoji?: string; // Emoji del usuario HiHODL
   lastMsg: string;   // origen crudo (p.ej. "–15 USDT", "paid 5 DAI", "request 2 USDC", "split pending")
   lastTime: string;
   lastTs?: number; 
@@ -29,30 +32,44 @@ type Thread = {
   isGroup?: boolean;
   favourite?: boolean;
   account?: SingleAccount;
+  recipientKind?: RecipientKind | "group" | "card"; // Tipo de destinatario para formateo
+  recipientAddress?: string; // Dirección completa (para wallets, IBAN, cards)
 };
 
 const MOCK_THREADS: Thread[] = [
-  { id: "2",  name: "@helloalex", alias: "@helloalex", lastMsg: "–15 USDT",         lastTime: "21:17", favourite: true, account: "daily" },
-  { id: "3",  name: "@friend2",   alias: "@friend2",   lastMsg: "+4.20 USDT",       lastTime: "16:03", isGroup: true,   account: "social" }, // ejemplo recibido
-  { id: "4",  name: "@maria",     alias: "@maria",     lastMsg: "request 2 USDC",   lastTime: "09:12",                  account: "savings" },
-  { id: "5",  name: "@satoshi",   alias: "@satoshi",   lastMsg: "paid 0.001 BTC",   lastTime: "08:40",                  account: "daily" },
-  { id: "6",  name: "@luna",      alias: "@luna",      lastMsg: "–7.50 USDC",       lastTime: "08:20",                  account: "social" },
-  { id: "7",  name: "@groupTrip", alias: "@groupTrip", lastMsg: "split pending",    lastTime: "Ayer", isGroup: true,    account: "social" },
-  { id: "8",  name: "@john",      alias: "@john",      lastMsg: "request 12 USDT",  lastTime: "Ayer",                   account: "savings" },
-  { id: "9",  name: "@sara",      alias: "@sara",      lastMsg: "–1.2 SOL",         lastTime: "Ayer",                   account: "daily" },
-  { id: "10", name: "@li",        alias: "@li",        lastMsg: "paid 5 DAI",       lastTime: "Lun",                    account: "savings" },
-  { id: "11", name: "@cami",      alias: "@cami",      lastMsg: "–3.00 USDC",       lastTime: "Lun",                    account: "daily" },
-  { id: "12", name: "@devsquad",  alias: "@devsquad",  lastMsg: "group created",    lastTime: "Dom", isGroup: true,     account: "social" },
-  { id: "13", name: "@memo",      alias: "@memo",      lastMsg: "tip 2 HODL",       lastTime: "Dom",                    account: "daily" },
-  { id: "14", name: "@daniela",   alias: "@dani",      lastMsg: "–0.05 ETH",        lastTime: "Dom",                    account: "savings" },
-  { id: "15", name: "@pablo",     alias: "@pablo",     lastMsg: "paid 9 USDT",      lastTime: "Sab",                    account: "daily" },
-  { id: "16", name: "@noa",       alias: "@noa",       lastMsg: "request 1.5 USDC", lastTime: "Sab", favourite: true,   account: "savings" },
-  { id: "17", name: "@lucas",     alias: "@lucas",     lastMsg: "–22 USDT",         lastTime: "Sab",                    account: "daily" },
-  { id: "18", name: "@julia",     alias: "@julia",     lastMsg: "+0.2 SOL",         lastTime: "Vie",                    account: "daily" },
-  { id: "19", name: "@groupBBQ",  alias: "@groupBBQ",  lastMsg: "split settled",    lastTime: "Vie", isGroup: true,     account: "social" },
-  { id: "20", name: "@nina",      alias: "@nina",      lastMsg: "–3.33 USDC",       lastTime: "Vie",                    account: "savings" },
-  { id: "21", name: "@omar",      alias: "@omar",      lastMsg: "paid 4 USDT",      lastTime: "Jue",                    account: "daily" },
-  { id: "22", name: "@zoe",       alias: "@zoe",       lastMsg: "request 0.5 USDC", lastTime: "Jue",                    account: "savings" },
+  // Usuarios HiHODL
+  { id: "2",  name: "@helloalex", alias: "@helloalex", lastMsg: "–15 USDT",         lastTime: "21:17", favourite: true, account: "daily", recipientKind: "hihodl" },
+  { id: "4",  name: "@maria",     alias: "@maria",     lastMsg: "request 2 USDC",   lastTime: "09:12",                  account: "savings", recipientKind: "hihodl" },
+  { id: "6",  name: "@luna",      alias: "@luna",      lastMsg: "–7.50 USDC",       lastTime: "08:20",                  account: "social", recipientKind: "hihodl" },
+  { id: "8",  name: "@john",      alias: "@john",      lastMsg: "request 12 USDT",  lastTime: "Ayer",                   account: "savings", recipientKind: "hihodl" },
+  { id: "10", name: "@li",        alias: "@li",        lastMsg: "paid 5 DAI",       lastTime: "Lun",                    account: "savings", recipientKind: "hihodl" },
+  { id: "11", name: "@cami",      alias: "@cami",      lastMsg: "–3.00 USDC",       lastTime: "Lun",                    account: "daily", recipientKind: "hihodl" },
+  { id: "13", name: "@memo",      alias: "@memo",      lastMsg: "tip 2 HODL",       lastTime: "Dom",                    account: "daily", recipientKind: "hihodl" },
+  { id: "15", name: "@pablo",     alias: "@pablo",     lastMsg: "paid 9 USDT",      lastTime: "Sab",                    account: "daily", recipientKind: "hihodl" },
+  { id: "16", name: "@noa",       alias: "@noa",       lastMsg: "request 1.5 USDC", lastTime: "Sab", favourite: true,   account: "savings", recipientKind: "hihodl" },
+  { id: "17", name: "@lucas",     alias: "@lucas",     lastMsg: "–22 USDT",         lastTime: "Sab",                    account: "daily", recipientKind: "hihodl" },
+  { id: "18", name: "@julia",     alias: "@julia",     lastMsg: "+0.2 SOL",         lastTime: "Vie",                    account: "daily", recipientKind: "hihodl" },
+  { id: "20", name: "@nina",      alias: "@nina",      lastMsg: "–3.33 USDC",       lastTime: "Vie",                    account: "savings", recipientKind: "hihodl" },
+  { id: "21", name: "@omar",      alias: "@omar",      lastMsg: "paid 4 USDT",      lastTime: "Jue",                    account: "daily", recipientKind: "hihodl" },
+  { id: "22", name: "@zoe",       alias: "@zoe",       lastMsg: "request 0.5 USDC", lastTime: "Jue",                    account: "savings", recipientKind: "hihodl" },
+  
+  // Wallets
+  { id: "5",  name: "Wallet",     alias: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", lastMsg: "paid 0.001 BTC",   lastTime: "08:40", account: "daily", recipientKind: "evm", recipientAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" },
+  { id: "9",  name: "Wallet",     alias: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU", lastMsg: "–1.2 SOL",         lastTime: "Ayer", account: "daily", recipientKind: "sol", recipientAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU" },
+  { id: "14", name: "Wallet",     alias: "0x8ba1f109551bD432803012645Hac136c8C0dA5", lastMsg: "–0.05 ETH",        lastTime: "Dom", account: "savings", recipientKind: "evm", recipientAddress: "0x8ba1f109551bD432803012645Hac136c8C0dA5" },
+  
+  // IBAN
+  { id: "iban1", name: "IBAN", alias: "ES9121000418450200051332", lastMsg: "–500 USDC", lastTime: "Ayer", account: "savings", recipientKind: "iban", recipientAddress: "ES9121000418450200051332" },
+  { id: "iban2", name: "IBAN", alias: "DE89370400440532013000", lastMsg: "+250 USDT", lastTime: "Lun", account: "daily", recipientKind: "iban", recipientAddress: "DE89370400440532013000" },
+  
+  // Cards
+  { id: "card1", name: "Card", alias: "4532123456789012", lastMsg: "–50 USDC", lastTime: "Vie", account: "daily", recipientKind: "card", recipientAddress: "4532123456789012" },
+  
+  // Groups
+  { id: "3",  name: "Trip to Barcelona", alias: "@friend2",   lastMsg: "+4.20 USDT",       lastTime: "16:03", isGroup: true, account: "social", recipientKind: "group" },
+  { id: "7",  name: "Group Trip", alias: "@groupTrip", lastMsg: "split pending",    lastTime: "Ayer", isGroup: true, account: "social", recipientKind: "group" },
+  { id: "12", name: "Dev Squad", alias: "@devsquad",  lastMsg: "group created",    lastTime: "Dom", isGroup: true, account: "social", recipientKind: "group" },
+  { id: "19", name: "BBQ Group", alias: "@groupBBQ",  lastMsg: "split settled",    lastTime: "Vie", isGroup: true, account: "social", recipientKind: "group" },
 ];
 
 type Filter = "all" | "groups" | "favs";
@@ -129,6 +146,54 @@ function formatLastActivity(raw: string): string {
   return msg; // fallback
 }
 
+/** Formatea el nombre de display según el tipo de destinatario */
+function formatThreadDisplayName(thread: Thread): string {
+  // Si es grupo, mostrar el nombre del grupo
+  if (thread.isGroup || thread.recipientKind === "group") {
+    return thread.name;
+  }
+
+  // Usuario HiHODL
+  if (thread.recipientKind === "hihodl" || thread.alias.startsWith("@")) {
+    return thread.alias || thread.name;
+  }
+
+  // Wallet address (EVM o Solana)
+  if (thread.recipientKind === "evm" || thread.recipientKind === "sol" || thread.recipientKind === "tron") {
+    const addr = thread.recipientAddress || thread.alias || "";
+    if (addr.length > 10) {
+      const head = addr.slice(0, 6);
+      const tail = addr.slice(-4);
+      return `Wallet • ${head}...${tail}`;
+    }
+    return `Wallet • ${addr}`;
+  }
+
+  // IBAN
+  if (thread.recipientKind === "iban") {
+    const iban = thread.recipientAddress || thread.alias || "";
+    if (iban.length > 8) {
+      const country = iban.slice(0, 2);
+      const last4 = iban.slice(-4);
+      return `IBAN • ${country}...${last4}`;
+    }
+    return `IBAN • ${iban}`;
+  }
+
+  // Card number
+  if (thread.recipientKind === "card") {
+    const card = thread.recipientAddress || thread.alias || "";
+    if (card.length >= 4) {
+      const last4 = card.slice(-4);
+      return `Card • •••• ${last4}`;
+    }
+    return `Card • ${card}`;
+  }
+
+  // Fallback al nombre original
+  return thread.name || thread.alias || "Unknown";
+}
+
 export default function PaymentsHome() {
   const { t } = useTranslation(["payments"]);
   const scrolly = useRef(new Animated.Value(0)).current;
@@ -149,10 +214,15 @@ export default function PaymentsHome() {
   );
   const isAllAccounts = selectedKeys.length === 3;
 
-  const PHRASES = useMemo(() => [
-    'Buscar usuario, grupo o dirección',
-  ], []);
-  const searchPh = PHRASES[0];
+  const PHRASES = useMemo(
+    () => [
+      t("payments:searchPh", "Search"),
+      t("payments:ph.user", "Search @username"),
+      t("payments:ph.contact", "Search contact"),
+      t("payments:ph.addr", "Paste wallet address"),
+    ],
+    [t]
+  );
   useEffect(() => {
     const id = setInterval(() => setPhIdx((i) => (i + 1) % PHRASES.length), 2000);
     return () => clearInterval(id);
@@ -182,10 +252,10 @@ export default function PaymentsHome() {
     return MOCK_THREADS.filter(byFilter).filter(byAccount).filter(bySearch);
   }, [search, filter, isAllAccounts, selectedKeys]);
 
-  const HEADER_H = insets.top + 6+ 54;
+  const HEADER_TOTAL = insets.top + 6 + 62; // insets.top + innerTopPad + height
 
   const ChipsHeader = () => (
-    <View style={{ paddingTop: HEADER_H + 8 }}>
+    <View style={{ paddingTop: HEADER_TOTAL + 8 }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
         <Pressable
           onPress={() => setAccountSheetOpen(true)}
@@ -245,17 +315,13 @@ export default function PaymentsHome() {
           </Pressable>
         }
         centerSlot={
-          <View style={[styles.searchBar, { marginLeft: 4, marginRight: 18 }]}>
-            <Ionicons name="search" size={16} color="#8FD3E3" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={searchPh}
-              placeholderTextColor="rgba(255,255,255,0.45)"
-              value={search}
-              onChangeText={setSearch}
-              returnKeyType="search"
-            />
-          </View>
+          <SearchField
+            value={search}
+            onChangeText={setSearch}
+            placeholder={PHRASES[phIdx]}
+            containerStyle={{ marginLeft: 4, marginRight: 18 }}
+            enableAddressDetection={true}
+          />
         }
         rightSlot={
           <View style={styles.rightBtns}>
@@ -299,38 +365,90 @@ export default function PaymentsHome() {
         }
         renderItem={({ item }: { item: Thread }) => {
           const subtitle = formatLastActivity(item.lastMsg);
-          const rightTime = formatThreadTime(item.lastTs, item.lastTime); 
+          const rightTime = formatThreadTime(item.lastTs, item.lastTime);
+          const displayName = formatThreadDisplayName(item);
+          
+          // Determinar emoji/avatar según tipo
+          const getAvatarContent = () => {
+            if (item.avatar) {
+              return <Image source={{ uri: item.avatar }} style={styles.avatar} />;
+            }
+            
+            // Si es usuario HiHODL, usar emoji si está disponible, si no primera letra
+            if (item.recipientKind === "hihodl" || item.alias.startsWith("@")) {
+              // Si hay emoji del usuario, usarlo
+              if (item.emoji) {
+                return (
+                  <View
+                    style={[
+                      styles.avatar,
+                      { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)" },
+                    ]}
+                  >
+                    <Text style={{ fontSize: 18 }}>{item.emoji}</Text>
+                  </View>
+                );
+              }
+              // Si no hay emoji, usar primera letra como fallback
+              return (
+                <View
+                  style={[
+                    styles.avatar,
+                    { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)" },
+                  ]}
+                >
+                  <Text style={{ color: "#9CC6D1", fontWeight: "900" }}>
+                    {item.alias.replace("@", "").slice(0, 1).toUpperCase() || item.name.slice(0, 1).toUpperCase()}
+                  </Text>
+                </View>
+              );
+            }
+            
+            // Emoji según tipo de destinatario (no HiHODL)
+            let emoji = "👤";
+            if (item.isGroup || item.recipientKind === "group") emoji = "👥";
+            else if (item.recipientKind === "evm" || item.recipientKind === "sol" || item.recipientKind === "tron") emoji = "🔷";
+            else if (item.recipientKind === "iban") emoji = "🏦";
+            else if (item.recipientKind === "card") emoji = "💳";
+            
+            return (
+              <View
+                style={[
+                  styles.avatar,
+                  { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)" },
+                ]}
+              >
+                <Text style={{ fontSize: 18 }}>{emoji}</Text>
+              </View>
+            );
+          };
+          
           return (
             <Pressable
               style={styles.threadCard}
               onPress={() =>
                 router.push({
                   pathname: "/(internal)/payments/thread",
-                  params: { id: item.id, name: item.name, alias: item.alias },
+                  params: { 
+                    id: item.id, 
+                    name: displayName, 
+                    alias: item.alias,
+                    ...(item.emoji && { emoji: item.emoji }),
+                    ...(item.avatar && { avatar: item.avatar }),
+                    ...(item.recipientKind && { recipientKind: item.recipientKind }),
+                    ...(item.recipientAddress && { recipientAddress: item.recipientAddress }),
+                  },
                 })
               }
             >
               <GlassCard style={styles.threadGlass}>
                 <View style={styles.threadRow}>
                   <View style={styles.avatarWrap}>
-                    {item.avatar ? (
-                      <Image source={{ uri: item.avatar }} style={styles.avatar} />
-                    ) : (
-                      <View
-                        style={[
-                          styles.avatar,
-                          { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)" },
-                        ]}
-                      >
-                        <Text style={{ color: "#9CC6D1", fontWeight: "900" }}>
-                          {item.name.slice(0, 1).toUpperCase()}
-                        </Text>
-                      </View>
-                    )}
+                    {getAvatarContent()}
                   </View>
 
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={styles.threadName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.threadName} numberOfLines={1}>{displayName}</Text>
                     <Text style={styles.threadMsg} numberOfLines={1}>{subtitle}</Text>
                   </View>
 
@@ -366,13 +484,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.10)",
   },
 
-  searchBar: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "rgba(255,255,255,0.10)",
-    borderRadius: 14, paddingHorizontal: 10, height: 36, flex: 1,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255,255,255,0.08)",
-  },
-  searchInput: { flex: 1, color: "#fff", fontSize: 14, fontWeight: "400", letterSpacing: -0.2 },
 
   rightBtns: { flexDirection: "row", alignItems: "center", gap: 12 },
 

@@ -73,10 +73,10 @@ export function makeSolanaPayDirect(i: SolanaPayInput): string {
 }
 
 /**
- * Crea un URL Solana Pay con gateway propio: `solana:https://pay.hihodl.app/pay?...`
+ * Crea un URL Solana Pay con gateway propio: `solana:https://pay.hihodl.xyz/pay?...`
  * Útil si quieres mediar, añadir expiración/callback/anti-fraude, etc.
  */
-export function makeSolanaPayGateway(i: SolanaPayInput, base = "https://pay.hihodl.app/pay"): string {
+export function makeSolanaPayGateway(i: SolanaPayInput, base = "https://pay.hihodl.xyz/pay"): string {
   const qs = new URLSearchParams({ recipient: i.recipient });
   if (i.amount) qs.set("amount", i.amount);
   if (i.mint) qs.set("spl-token", i.mint);
@@ -105,8 +105,8 @@ export const newMemo = (): string =>
 /**
  * Parsea:
  *  - `solana:<recipient>?amount=...&spl-token=...`
- *  - `solana:https://pay.hihodl.app/pay?...`
- *  - `https://pay.hihodl.app/pay?...`   (por si te llega desde fuera)
+ *  - `solana:https://pay.hihodl.xyz/pay?...`
+ *  - `https://pay.hihodl.xyz/pay?...`   (por si te llega desde fuera)
  */
 export function parseSolanaPayUrl(raw: string): SolanaPayData | null {
   try {

@@ -13,6 +13,24 @@ const TEXT = legacyColors.TEXT ?? "#fff";
 const SUB  = legacyColors.SUB  ?? "rgba(255,255,255,0.65)";
 const GLASS_BORDER = "rgba(255,255,255,0.08)";
 
+const PRIVACY_URL = "https://hihodl.xyz/privacy";
+
+async function openPrivacyURL() {
+  try {
+    const canOpen = await Linking.canOpenURL(PRIVACY_URL);
+    if (canOpen) {
+      await Linking.openURL(PRIVACY_URL);
+    } else {
+      // Si no se puede abrir, mostrar mensaje de error
+      alert("No se pudo abrir el enlace. Por favor, visita hihodl.xyz/privacy");
+    }
+  } catch (error) {
+    // Manejar error al abrir URL
+    console.error("Error opening privacy URL:", error);
+    alert("Error al abrir el enlace. Por favor, intenta más tarde.");
+  }
+}
+
 export default function LegalPrivacy() {
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation(["menu"]);
@@ -32,7 +50,7 @@ export default function LegalPrivacy() {
       <View style={{ padding: 16 }}>
         <View style={styles.card}>
           <Text style={styles.p}>{t("menu:legal.privacyBlurb")}</Text>
-          <Pressable onPress={() => Linking.openURL("https://hihodl.com/privacy")}
+          <Pressable onPress={openPrivacyURL}
             style={styles.rowBtn}
           >
             <Ionicons name="open-outline" size={18} color={TEXT} />

@@ -15,6 +15,75 @@ export type TokenIndexItem = {
 let IDX: TokenIndexItem[] = [];
 let BUILT = false;
 
+/** Calcula similitud simple (Levenshtein aproximado para palabras) */
+function similarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  const na = a.toLowerCase();
+  const nb = b.toLowerCase();
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.8;
+  
+  // Distancia de caracteres comunes
+  let matches = 0;
+  const minLen = Math.min(na.length, nb.length);
+  for (let i = 0; i < minLen; i++) {
+    if (na[i] === nb[i]) matches++;
+  }
+  return matches / Math.max(na.length, nb.length);
+}
+
+/** Scoring de relevancia para un token */
+function scoreToken(item: TokenIndexItem, needle: string): number {
+  const normNeedle = normalizeText(needle);
+  let score = 0;
+
+  // 1. Match exacto en symbol (máxima prioridad)
+  const normSymbol = normalizeText(item.symbol);
+  if (normSymbol === normNeedle) score += 1000;
+  else if (normSymbol.startsWith(normNeedle)) score += 500;
+  else if (normSymbol.includes(normNeedle)) score += 200;
+
+  // 2. Match en name
+  const normName = normalizeText(item.name || "");
+  if (normName === normNeedle) score += 800;
+  else if (normName.startsWith(normNeedle)) score += 400;
+  else if (normName.includes(normNeedle)) score += 150;
+
+  // 3. Match en aliases
+  for (const alias of item.aliases) {
+    const normAlias = normalizeText(alias);
+    if (normAlias === normNeedle) score += 600;
+    else if (normAlias.startsWith(normNeedle)) score += 300;
+    else if (normAlias.includes(normNeedle)) score += 100;
+  }
+
+  // 4. Match en addresses (solo si parece ser una dirección)
+  const isAddress = /^0x[a-f0-9]+$|^[1-9A-HJ-NP-Za-km-z]{32,}$/i.test(needle);
+  if (isAddress) {
+    for (const addr of item.addresses) {
+      if (normalizeText(addr.addr).includes(normNeedle)) {
+        score += 900; // Alta prioridad para addresses exactos
+        break;
+      }
+    }
+  }
+
+  // 5. Fuzzy matching (si no hay match directo)
+  if (score === 0) {
+    const symSim = similarity(normSymbol, normNeedle);
+    const nameSim = similarity(normName, normNeedle);
+    score = Math.max(symSim, nameSim) * 50;
+  }
+
+  // 6. Boost por priority
+  score += item.priority * 0.1;
+
+  // 7. Boost si está en más chains (más popular)
+  score += item.chains.length * 5;
+
+  return score;
+}
+
 export function buildTokenSearchIndex(source = TOKENS_CATALOG) {
   IDX = source.map((t: any) => {
     const aliases: string[] = Array.from(
@@ -54,41 +123,45 @@ export function searchTokens(q: string, opts?: { recipientChains?: string[]; lim
   ensureBuilt();
 
   const needle = normalizeText(q);
-  const limit = opts?.limit ?? 50;
+  const limit = opts?.limit ?? 100; // Aumentado para mejor ranking
   const allowChains = opts?.recipientChains?.length ? new Set(opts.recipientChains) : undefined;
 
-  const hits = IDX.filter((it) => {
+  // Si no hay query, devuelve todos (filtrados por chains si aplica)
+  if (!needle) {
+    const all = IDX.filter((it) => {
     if (allowChains && !it.chains.some((c) => allowChains.has(c))) return false;
-    if (!needle) return true;
+      return true;
+    });
+    return all.slice(0, limit);
+  }
 
+  // Filtra y puntúa
+  const scored: Array<{ item: TokenIndexItem; score: number }> = [];
+  
+  for (const item of IDX) {
+    if (allowChains && !item.chains.some((c) => allowChains.has(c))) continue;
+
+    // Match básico: incluye needle o palabras que empiezan con needle
     const hay = [
-      it.symbol,
-      it.name,
-      ...it.aliases,
-      ...it.addresses.map((a) => a.addr),
+      item.symbol,
+      item.name,
+      ...item.aliases,
+      ...item.addresses.map((a) => a.addr),
     ].map(normalizeText).join(" | ");
 
-    // Fuzzy match mejorado
-    if (hay.includes(needle)) return true;
-    const words = hay.split(/\s|\|/g).filter(Boolean);
-    return words.some((w) => w.startsWith(needle));
-  });
+    const hasMatch = hay.includes(needle) || 
+      hay.split(/\s|\|/g).filter(Boolean).some((w) => w.startsWith(needle));
 
-  // ranking…
-  hits.sort((a, b) => {
-    const na = normalizeText(a.symbol);
-    const nb = normalizeText(b.symbol);
-    const exactA = na === needle ? 0 : 1;
-    const exactB = nb === needle ? 0 : 1;
-    if (exactA !== exactB) return exactA - exactB;
+    if (hasMatch || similarity(normalizeText(item.symbol), needle) > 0.3) {
+      const score = scoreToken(item, needle);
+      if (score > 0) {
+        scored.push({ item, score });
+      }
+    }
+  }
 
-    const prefA = na.startsWith(needle) ? 0 : 1;
-    const prefB = nb.startsWith(needle) ? 0 : 1;
-    if (prefA !== prefB) return prefA - prefB;
+  // Ordena por score descendente
+  scored.sort((a, b) => b.score - a.score);
 
-    if (b.priority !== a.priority) return b.priority - a.priority;
-    return a.symbol.localeCompare(b.symbol);
-  });
-
-  return hits.slice(0, limit);
+  return scored.slice(0, limit).map(({ item }) => item);
 }

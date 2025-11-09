@@ -6,6 +6,7 @@ import * as Google from 'expo-auth-session/providers/google';
 import { OAUTH } from '@/config/app';
 import { createOrLoadMPCWallet } from '@/lib/mpc';
 import { useSessionStore } from '@/store/session';
+import { analytics } from '@/utils/analytics';
 
 // Tipos propios (ajusta si tu store define otros)
 type Provider = 'google' | 'apple';
@@ -46,13 +47,27 @@ export function useGoogleSignIn() {
 
   useEffect(() => {
     (async () => {
-      if (response?.type !== 'success') return;
+      if (response?.type !== 'success') {
+        if (response?.type === 'error') {
+          analytics.trackEvent({
+            name: "login_failed",
+            parameters: { method: "google", error: response.error?.message || "unknown" },
+          });
+        }
+        return;
+      }
 
       const idToken: string | null = response.authentication?.idToken ?? null;
       const raw = await createOrLoadMPCWallet({ provider: 'google' as Provider, idToken: idToken ?? undefined });
       const wallet = normalizeWallet(raw);
 
       setSession({ provider: 'google', idToken, wallet } as any);
+      
+      // Trackear login exitoso
+      analytics.trackLogin("google");
+      if (wallet.address) {
+        analytics.setUserId(wallet.address);
+      }
     })();
   }, [response, setSession]);
 
@@ -85,4 +100,10 @@ export async function signInWithApple() {
   const wallet = normalizeWallet(raw);
 
   useSessionStore.getState().setSession({ provider: 'apple', idToken, wallet } as any);
+  
+  // Trackear login exitoso
+  analytics.trackLogin("apple");
+  if (wallet.address) {
+    analytics.setUserId(wallet.address);
+  }
 }

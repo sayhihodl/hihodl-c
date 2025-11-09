@@ -53,6 +53,7 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "eip155:1" as ChainId,
     supportedChains: ["eip155:1", "solana:mainnet", "eip155:8453", "eip155:137"],
     coingeckoId: "usd-coin",
+    logoURI: "https://assets.coingecko.com/coins/images/6319/large/USD_Coin_icon.png",
     priority: 100,
     aliases: ["usdc", "usd coin", "circle_usdc"],
     // addresses opcionales si quieres filtrar por contract/mint en el buscador:
@@ -70,6 +71,7 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "eip155:1" as ChainId,
     supportedChains: ["eip155:1", "solana:mainnet", "eip155:8453", "eip155:137"],
     coingeckoId: "tether",
+    logoURI: "https://assets.coingecko.com/coins/images/325/large/Tether.png",
     priority: 95,
     aliases: ["usdt", "tether"],
   },
@@ -81,8 +83,9 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     name: "Ethereum",
     decimals: 18,
     nativeChainId: "eip155:1" as ChainId,
-    supportedChains: ["eip155:1"],
+    supportedChains: ["eip155:1", "eip155:8453"], // ETH también está disponible en Base (Base usa ETH como token nativo)
     coingeckoId: "ethereum",
+    logoURI: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
     isNative: true,
     priority: 90,
     aliases: ["eth", "ethereum"],
@@ -95,9 +98,23 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "solana:mainnet" as ChainId,
     supportedChains: ["solana:mainnet"],
     coingeckoId: "solana",
+    logoURI: "https://assets.coingecko.com/coins/images/4128/large/solana.png",
     isNative: true,
     priority: 90,
     aliases: ["sol", "solana"],
+  },
+  {
+    id: "POL.native" as CurrencyId,
+    symbol: "POL",
+    name: "Polygon",
+    decimals: 18,
+    nativeChainId: "eip155:137" as ChainId,
+    supportedChains: ["eip155:137"],
+    coingeckoId: "matic-network",
+    logoURI: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
+    isNative: true,
+    priority: 85,
+    aliases: ["pol", "polygon", "matic"],
   },
 
   // ===== Solana (populares) =====
@@ -109,6 +126,7 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "solana:mainnet" as ChainId,
     supportedChains: ["solana:mainnet"],
     coingeckoId: "bonk",
+    logoURI: "https://assets.coingecko.com/coins/images/28600/large/bonk.png",
     priority: 85,
     aliases: ["bonk", "bonk token"],
   },
@@ -120,6 +138,7 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "solana:mainnet" as ChainId,
     supportedChains: ["solana:mainnet"],
     coingeckoId: "jupiter",
+    logoURI: "https://assets.coingecko.com/coins/images/34188/large/jup.png",
     priority: 80,
     aliases: ["jup", "jupiter"],
   },
@@ -131,19 +150,9 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "solana:mainnet" as ChainId,
     supportedChains: ["solana:mainnet"],
     coingeckoId: "raydium",
+    logoURI: "https://assets.coingecko.com/coins/images/13928/large/400x400_rays_logo.png",
     priority: 78,
     aliases: ["ray", "raydium"],
-  },
-  {
-    id: "ORCA.token" as CurrencyId,
-    symbol: "ORCA",
-    name: "Orca",
-    decimals: 6,
-    nativeChainId: "solana:mainnet" as ChainId,
-    supportedChains: ["solana:mainnet"],
-    coingeckoId: "orca",
-    priority: 70,
-    aliases: ["orca"],
   },
   {
     id: "JTO.token" as CurrencyId,
@@ -153,6 +162,7 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "solana:mainnet" as ChainId,
     supportedChains: ["solana:mainnet"],
     coingeckoId: "jito-governance-token",
+    logoURI: "https://assets.coingecko.com/coins/images/33958/large/jito.png",
     priority: 72,
     aliases: ["jito", "jto"],
   },
@@ -164,20 +174,11 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "solana:mainnet" as ChainId,
     supportedChains: ["solana:mainnet"],
     coingeckoId: "dogwifcoin",
+    logoURI: "https://assets.coingecko.com/coins/images/35614/large/wif.png",
     priority: 75,
     aliases: ["wif", "dogwifhat"],
   },
-  {
-    id: "PYTH.token" as CurrencyId,
-    symbol: "PYTH",
-    name: "Pyth Network",
-    decimals: 6,
-    nativeChainId: "solana:mainnet" as ChainId,
-    supportedChains: ["solana:mainnet"],
-    coingeckoId: "pyth-network",
-    priority: 74,
-    aliases: ["pyth"],
-  },
+  // REMOVIDO: PYTH - token poco conocido según feedback del usuario
   {
     id: "MSOL.token" as CurrencyId,
     symbol: "MSOL",
@@ -186,31 +187,11 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "solana:mainnet" as ChainId,
     supportedChains: ["solana:mainnet"],
     coingeckoId: "marinade-staked-sol",
+    logoURI: "https://assets.coingecko.com/coins/images/17752/large/mSOL.png",
     priority: 76,
     aliases: ["marinade", "msoL", "staked sol"],
   },
-  {
-    id: "JITOSOL.token" as CurrencyId,
-    symbol: "JITOSOL",
-    name: "Jito Staked SOL",
-    decimals: 9,
-    nativeChainId: "solana:mainnet" as ChainId,
-    supportedChains: ["solana:mainnet"],
-    coingeckoId: "jito-staked-sol",
-    priority: 70,
-    aliases: ["jito sol", "jitosol", "stsol jito"],
-  },
-  {
-    id: "WEN.token" as CurrencyId,
-    symbol: "WEN",
-    name: "WEN",
-    decimals: 5,
-    nativeChainId: "solana:mainnet" as ChainId,
-    supportedChains: ["solana:mainnet"],
-    coingeckoId: "wen",
-    priority: 60,
-    aliases: ["wen"],
-  },
+  // REMOVIDO: WEN - token poco conocido según feedback del usuario
 
   // ===== ETH / Base / Polygon (clásicos) =====
   {
@@ -221,8 +202,33 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "eip155:1" as ChainId,
     supportedChains: ["eip155:1", "eip155:8453", "eip155:137"],
     coingeckoId: "dai",
+    logoURI: "https://assets.coingecko.com/coins/images/9956/large/Badge_Dai.png",
     priority: 80,
     aliases: ["dai"],
+  },
+  {
+    id: "PYUSD.paypal" as CurrencyId,
+    symbol: "PYUSD",
+    name: "PayPal USD",
+    decimals: 6,
+    nativeChainId: "eip155:1" as ChainId,
+    supportedChains: ["eip155:1", "solana:mainnet"],
+    coingeckoId: "paypal-usd",
+    logoURI: "https://assets.coingecko.com/coins/images/33192/large/PYUSD.png",
+    priority: 85,
+    aliases: ["pyusd", "paypal usd"],
+  },
+  {
+    id: "FRAX.token" as CurrencyId,
+    symbol: "FRAX",
+    name: "Frax",
+    decimals: 18,
+    nativeChainId: "eip155:1" as ChainId,
+    supportedChains: ["eip155:1", "eip155:137"],
+    coingeckoId: "frax",
+    logoURI: "https://assets.coingecko.com/coins/images/13422/large/FRAX_icon.png",
+    priority: 75,
+    aliases: ["frax"],
   },
   {
     id: "WBTC.native" as CurrencyId,
@@ -232,6 +238,7 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "eip155:1" as ChainId,
     supportedChains: ["eip155:1", "eip155:137"],
     coingeckoId: "wrapped-bitcoin",
+    logoURI: "https://assets.coingecko.com/coins/images/7598/large/wrapped_bitcoin_wbtc.png",
     priority: 78,
     aliases: ["wbtc", "wrapped btc"],
   },
@@ -243,6 +250,7 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "eip155:1" as ChainId,
     supportedChains: ["eip155:1"],
     coingeckoId: "lido-dao",
+    logoURI: "https://assets.coingecko.com/coins/images/13573/large/Lido_DAO.png",
     priority: 70,
     aliases: ["lido"],
   },
@@ -254,6 +262,7 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "eip155:1" as ChainId,
     supportedChains: ["eip155:1", "eip155:137"],
     coingeckoId: "chainlink",
+    logoURI: "https://assets.coingecko.com/coins/images/877/large/chainlink-new-logo.png",
     priority: 75,
     aliases: ["link"],
   },
@@ -265,6 +274,7 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "eip155:1" as ChainId,
     supportedChains: ["eip155:1", "eip155:137"],
     coingeckoId: "uniswap",
+    logoURI: "https://assets.coingecko.com/coins/images/12504/large/uniswap-uni.png",
     priority: 72,
     aliases: ["uni"],
   },
@@ -276,33 +286,14 @@ export const TOKENS_CATALOG: TokenMeta[] = [
     nativeChainId: "eip155:1" as ChainId,
     supportedChains: ["eip155:1"],
     coingeckoId: "aave",
+    logoURI: "https://assets.coingecko.com/coins/images/12645/large/AAVE.png",
     priority: 68,
     aliases: ["aave"],
   },
 
   // ===== Base (memes/infra del ecosistema) =====
-  {
-    id: "DEGEN.base" as CurrencyId,
-    symbol: "DEGEN",
-    name: "Degen (Base)",
-    decimals: 18,
-    nativeChainId: "eip155:8453" as ChainId,
-    supportedChains: ["eip155:8453"],
-    coingeckoId: "degen-base",
-    priority: 65,
-    aliases: ["degen"],
-  },
-  {
-    id: "BRETT.base" as CurrencyId,
-    symbol: "BRETT",
-    name: "Brett (Base)",
-    decimals: 18,
-    nativeChainId: "eip155:8453" as ChainId,
-    supportedChains: ["eip155:8453"],
-    coingeckoId: "based-brett",
-    priority: 60,
-    aliases: ["brett"],
-  },
+  // REMOVIDO: DEGEN y BRETT - tokens poco conocidos según feedback del usuario
+  // Si en el futuro son más populares, se pueden re-agregar
 ];
 
 /* ===========================================================
@@ -330,6 +321,33 @@ export function hasTokenMeta(tokenId: string, chainKey: string): boolean {
 export function findTokenBySymbol(symbol: string): TokenMeta | undefined {
   const s = symbol.toUpperCase();
   return TOKENS_CATALOG.find((t) => t.symbol === s);
+}
+
+/** Devuelve el token por ID de moneda (case-insensitive). */
+export function findTokenById(currencyId: string): TokenMeta | undefined {
+  const id = currencyId.toLowerCase();
+  return TOKENS_CATALOG.find((t) => t.id.toLowerCase() === id);
+}
+
+/** Obtiene el CoinGecko ID de un token por símbolo o currencyId */
+export function getCoinGeckoId(symbolOrId: string): string | undefined {
+  const normalized = symbolOrId.toLowerCase();
+  
+  // Buscar por currencyId primero
+  const byId = findTokenById(normalized);
+  if (byId?.coingeckoId) return byId.coingeckoId;
+  
+  // Buscar por símbolo
+  const bySymbol = findTokenBySymbol(normalized);
+  if (bySymbol?.coingeckoId) return bySymbol.coingeckoId;
+  
+  // Buscar por alias
+  const byAlias = TOKENS_CATALOG.find((t) => 
+    t.aliases?.some((alias) => alias.toLowerCase() === normalized)
+  );
+  if (byAlias?.coingeckoId) return byAlias.coingeckoId;
+  
+  return undefined;
 }
 
 /** Añade un nuevo token dinámicamente (útil si importamos 40+). */

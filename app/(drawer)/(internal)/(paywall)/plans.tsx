@@ -22,6 +22,7 @@ import { CTAButton } from "@/ui/CTAButton";
 import ScreenBg from "@/ui/ScreenBg";
 import GlassHeader from "@/ui/GlassHeader";
 import { LinearGradient } from "expo-linear-gradient";
+import { useUser } from "@/hooks/useUser";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -43,35 +44,36 @@ export type Plan = {
 
 /* ====== PERKS (English copy, short) ====== */
 export const PERKS: Record<string, Perk> = {
+  // Standard Plan
   hero_selfcustody_passkey: { key: "hero_selfcustody_passkey", label: "Self-custody & Passkey login", tier: "free" },
   hero_three_wallets:       { key: "hero_three_wallets",       label: "3 wallets (Daily / Savings / Social)",       tier: "free" },
   hero_alias:               { key: "hero_alias",               label: "Alias (@nickname)",                           tier: "free" },
-  hero_gasless_quota:       { key: "hero_gasless_quota",       label: "Gasless — 5 tx/mo",                           tier: "free", note: "ETH, Solana, Base" },
-  hero_stablecard:          { key: "hero_stablecard",          label: "StableCard virtual + physical*",              tier: "free", note: "*physical with issuance fee" },
+  hero_gasless_quota:       { key: "hero_gasless_quota",       label: "Gasless transfers",                           tier: "free" },
+  hero_stablecard:          { key: "hero_stablecard",          label: "StableCard",                                   tier: "free", note: "Coming soon" },
+  stablecard_plus:          { key: "stablecard_plus",          label: "StableCard Plus",                               tier: "plus", note: "Coming soon" },
+  stablecard_premium:       { key: "stablecard_premium",       label: "StableCard Premium",                            tier: "premium", note: "Coming soon" },
+  address_rotation_none:   { key: "address_rotation_none",     label: "Address rotation",                            tier: "free", note: "Not available" },
+  support_community:       { key: "support_community",         label: "Support",                                       tier: "free", note: "Community" },
 
-  social_login:             { key: "social_login",             label: "Social login (Google / Apple)",               tier: "free" },
-  send_all_chains:          { key: "send_all_chains",          label: "Send across all supported blockchains",       tier: "free" },
-  cashback_base:            { key: "cashback_base",            label: "Cashback (1–2%)",                              tier: "free" },
-  hipoints:                 { key: "hipoints",                 label: "HiPoints — 1 point / €10 spent",              tier: "free" },
-  stablecard_virtual:       { key: "stablecard_virtual",       label: "StableCard virtual",                           tier: "free" },
-  stablecard_physical:      { key: "stablecard_physical",      label: "StableCard physical (issuance fee)",          tier: "free" },
-
+  // Plus Plan
+  gasless_plus:             { key: "gasless_plus",             label: "Gasless transfers",                           tier: "plus" },
   verified_badge:           { key: "verified_badge",           label: "Verified badge (NFT)",                         tier: "plus" },
-  domain_discount:          { key: "domain_discount",          label: "-20% on on-chain domains",                    tier: "plus" },
   perks_marketplace:        { key: "perks_marketplace",        label: "Perks marketplace (early access)",            tier: "plus" },
   card_physical_std:        { key: "card_physical_std",        label: "Physical card standard finish",               tier: "plus", note: "premium finishes in higher plans" },
+  address_rotation_manual:  { key: "address_rotation_manual",  label: "Address rotation",                            tier: "plus", note: "Manual (10 addresses)" },
+  wallets_plus:             { key: "wallets_plus",           label: "Wallets",                                     tier: "plus", note: "10 wallets" },
+  alias_custom:             { key: "alias_custom",             label: "Alias type",                                  tier: "plus", note: "Custom" },
+  support_email:            { key: "support_email",            label: "Support",                                       tier: "plus", note: "Email" },
 
-  gasless_unlimited:        { key: "gasless_unlimited",        label: "Gasless — Unlimited",                         tier: "premium" },
+  // Premium Plan
+  gasless_unlimited:        { key: "gasless_unlimited",        label: "Gasless transfers",                           tier: "premium" },
   cashback_boost:           { key: "cashback_boost",           label: "Cashback boost (5–7%)",                       tier: "premium" },
   wallets_unlimited:        { key: "wallets_unlimited",        label: "Unlimited sub-wallets",                       tier: "premium" },
-  privacy_rotation:         { key: "privacy_rotation",         label: "Address rotation (auto)",                     tier: "premium" },
-
-  card_metal:               { key: "card_metal",               label: "Metal / NFT card designs",                    tier: "metal" },
-
+  privacy_rotation:         { key: "privacy_rotation",         label: "Automatic address rotation",                  tier: "premium" },
   advanced_notifications:   { key: "advanced_notifications",   label: "Advanced notifications",                      tier: "premium" },
   insights_ai:              { key: "insights_ai",              label: "Insights & analytics (AI)",                   tier: "premium" },
-
-  ibans_locales:            { key: "ibans_locales",            label: "Local IBANs / payroll",                       tier: "coming", note: "coming soon" },
+  alias_premium:            { key: "alias_premium",            label: "Alias type",                                   tier: "premium", note: "Premium (3 handles)" },
+  support_priority:         { key: "support_priority",         label: "Support",                                      tier: "premium", note: "Priority" },
 };
 
 /* ====== Plans ====== */
@@ -88,21 +90,61 @@ export const PLANS: Plan[] = [
       "hero_stablecard",
     ],
     perks: [
-      "send_all_chains",
-      "cashback_base",
-      "hipoints",
-      "stablecard_virtual",
-      "stablecard_physical",
-      "social_login",
-      "hero_selfcustody_passkey",
+      "hero_gasless_quota",
+      "address_rotation_none",
       "hero_three_wallets",
       "hero_alias",
-      "hero_gasless_quota",
+      "hero_stablecard",
+      "support_community",
     ],
   },
-  { id: "plus", name: "Plus", priceMonthlyEUR: 4.99, perks: ["verified_badge", "domain_discount", "perks_marketplace", "card_physical_std"] },
-  { id: "premium", name: "Premium", priceMonthlyEUR: 9.99, perks: ["gasless_unlimited", "cashback_boost", "wallets_unlimited", "privacy_rotation", "advanced_notifications", "insights_ai"] },
-  { id: "metal", name: "Metal", priceMonthlyEUR: 19.99, perks: ["card_metal", "cashback_boost", "gasless_unlimited", "perks_marketplace"] },
+  { 
+    id: "plus", 
+    name: "Plus", 
+    priceMonthlyEUR: 4.99, 
+    heroPerks: [
+      "gasless_plus",
+      "verified_badge",
+      "perks_marketplace",
+      "card_physical_std",
+    ],
+    perks: [
+      "gasless_plus",
+      "address_rotation_manual",
+      "wallets_plus",
+      "alias_custom",
+      "stablecard_plus",
+      "support_email",
+    ],
+  },
+  { 
+    id: "premium", 
+    name: "Premium", 
+    priceMonthlyEUR: 9.99, 
+    heroPerks: [
+      "gasless_unlimited",
+      "cashback_boost",
+      "wallets_unlimited",
+      "privacy_rotation",
+      "advanced_notifications",
+      "insights_ai",
+    ],
+    perks: [
+      "gasless_unlimited",
+      "privacy_rotation",
+      "wallets_unlimited",
+      "alias_premium",
+      "stablecard_premium",
+      "support_priority",
+    ],
+  },
+  { 
+    id: "metal", 
+    name: "Metal", 
+    priceMonthlyEUR: 0, // Coming Soon
+    heroPerks: [],
+    perks: [],
+  },
 ];
 
 /* ===================== Helpers ===================== */
@@ -111,7 +153,18 @@ function tierIndex(tier: Perk["tier"] | Plan["id"]) {
   return order.indexOf(tier as any);
 }
 function useCurrentPlanId(): Plan["id"] | undefined {
-  return "standard"; // demo
+  const { user } = useUser();
+  // Map backend plan IDs to frontend plan IDs
+  const planMap: Record<string, Plan["id"]> = {
+    free: "standard",
+    standard: "standard",
+    plus: "plus",
+    premium: "premium",
+    pro: "premium", // 'pro' maps to 'premium'
+    metal: "metal",
+  };
+  const backendPlan = user?.profile?.plan || "standard";
+  return planMap[backendPlan] || "standard";
 }
 
 /* ===== Themes by plan ===== */
@@ -141,13 +194,8 @@ export default function PlansScreen() {
   const vRefs = useRef<Record<string, Animated.FlatList<any> | null>>({});
   const setVRef = useCallback((id: string) => (r: Animated.FlatList<any> | null) => { vRefs.current[id] = r; }, []);
 
-  const [benefitsYByPlan, setBenefitsYByPlan] = useState<Record<string, number>>({});
   const scrollYMap = useRef<Record<string, Animated.Value>>({}).current;
   const getScrollY = (id: string) => (scrollYMap[id] ??= new Animated.Value(0));
-
-  const [showTopCTAByPlan, setShowTopCTAByPlan] = useState<Record<string, boolean>>({});
-
-  const allPerks = useMemo(() => Object.values(PERKS).filter((p) => p.tier !== "coming"), []);
 
   const currentPlanId = useCurrentPlanId();
   useEffect(() => {
@@ -167,35 +215,16 @@ export default function PlansScreen() {
     hRef.current?.scrollToIndex({ index: i, animated: true });
   }, [index]);
 
-  const onJoin = (planId: Plan["id"]) => console.log("Join plan:", planId);
+  const onJoin = (planId: Plan["id"]) => {
+    router.push(`/(drawer)/(internal)/(paywall)/checkout?planId=${planId}`);
+  };
 
   const getCtaLabel = (planId: Plan["id"]) =>
     planId === "plus" ? "Join Plus" : planId === "premium" ? "Join Premium" : planId === "metal" ? "Join Metal" : "Subscribe for Free";
 
-  const handleViewAll = (planId: Plan["id"]) => {
-    setShowTopCTAByPlan((s) => ({ ...s, [planId]: false })); // hide mini CTA(s)
-    const ref = vRefs.current[planId];
-    const y = benefitsYByPlan[planId] ?? 0;
-    if (ref && typeof (ref as any).scrollToOffset === "function") {
-      (ref as any).scrollToOffset({ offset: Math.max(0, y - 8), animated: true });
-    }
-  };
-
-  /* ----- Section definitions for Standard benefits ----- */
-  const STANDARD_SECTIONS: { title: string; emoji: string; keys: string[] }[] = [
-    { title: "Your Wallets, Your Rules", emoji: "🟣", keys: ["hero_three_wallets", "social_login", "hero_alias", "hero_selfcustody_passkey"] },
-    { title: "Send Without Limits",       emoji: "🔵", keys: ["send_all_chains", "hero_gasless_quota"] },
-    { title: "Spend & Earn Every Day",    emoji: "🟡", keys: ["stablecard_virtual", "stablecard_physical", "cashback_base", "hipoints"] },
-    { title: "Next-Level Privacy",        emoji: "🔒", keys: ["privacy_rotation", "advanced_notifications", "insights_ai"] },
-  ];
-
   /* ---------- Page renderer ---------- */
   const renderPage = useCallback(
     ({ item: plan }: { item: Plan }) => {
-      const perksForMatrix = allPerks.map((p) => ({
-        ...p,
-        available: tierIndex(p.tier) <= tierIndex(plan.id),
-      }));
 
       const theme = PLAN_THEMES[plan.id];
       const gradColors: ColorValue[] = theme.gradient ? [...theme.gradient] : (["#222", "#111"] as ColorValue[]);
@@ -203,25 +232,27 @@ export default function PlansScreen() {
       const coverTitleStyle = [styles.coverTitle, isStandard && { color: "#CFE3EC" }];
       const coverPriceStyle = [styles.coverPrice, isStandard && { color: "#CFE3EC" }];
 
+      const isMetal = plan.id === "metal";
+      const priceText = isMetal ? "Coming Soon" : plan.priceMonthlyEUR === 0 ? "Free" : `€${plan.priceMonthlyEUR}/month`;
+      
       const cover = theme.image ? (
         <ImageBackground source={theme.image} style={styles.cover} imageStyle={styles.coverImageRadius}>
           <Text style={coverTitleStyle} numberOfLines={1}>{plan.name}</Text>
-          <Text style={coverPriceStyle} numberOfLines={1}>{plan.priceMonthlyEUR === 0 ? "Free" : `€${plan.priceMonthlyEUR}/month`}</Text>
+          <Text style={coverPriceStyle} numberOfLines={1}>{priceText}</Text>
         </ImageBackground>
       ) : theme.gradient ? (
         <View style={styles.cover}>
           <LinearGradient colors={gradColors as any} start={{ x: 0, y: 1 }} end={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
           <Text style={coverTitleStyle} numberOfLines={1}>{plan.name}</Text>
-          <Text style={coverPriceStyle} numberOfLines={1}>{plan.priceMonthlyEUR === 0 ? "Free" : `€${plan.priceMonthlyEUR}/month`}</Text>
+          <Text style={coverPriceStyle} numberOfLines={1}>{priceText}</Text>
         </View>
       ) : (
         <View style={[styles.cover, { backgroundColor: theme.solid ?? "transparent" }]}>
           <Text style={coverTitleStyle} numberOfLines={1}>{plan.name}</Text>
-          <Text style={coverPriceStyle} numberOfLines={1}>{plan.priceMonthlyEUR === 0 ? "Free" : `€${plan.priceMonthlyEUR}/month`}</Text>
+          <Text style={coverPriceStyle} numberOfLines={1}>{priceText}</Text>
         </View>
       );
 
-      const showTopCTAs = showTopCTAByPlan[plan.id] !== false;
 
       const header = (
         <View style={{ paddingHorizontal: 18, marginTop: 18, marginBottom: 160 }}>
@@ -230,93 +261,43 @@ export default function PlansScreen() {
 
             {/* ===== Hero highlights (first card) ===== */}
             <View style={styles.cardPad}>
-              {plan.id === currentPlanId && <Text style={styles.currentNote}>You’re on this plan</Text>}
+              {plan.id === currentPlanId && <Text style={styles.currentNote}>You're on this plan</Text>}
 
-              <GlassCard tone="panel" style={{ marginTop: 12 }}>
-                {(plan.heroPerks ?? plan.perks).map((k, idx) => {
-                  const p = PERKS[k];
-                  return (
-                    <View key={p.key}>
-                      {idx > 0 && <Divider />}
-                      <Row
-                        icon="ellipse"
-                        rightIcon={null}
-                        labelNode={
-                          <>
-                            <Text style={styles.rowTitleNormal} numberOfLines={2}>{p.label}</Text>
-                            {p.note ? <Text style={styles.rowSub} numberOfLines={2}>{p.note}</Text> : null}
-                          </>
-                        }
-                      />
-                    </View>
-                  );
-                })}
-              </GlassCard>
-
-              {/* Mini CTA solo: View all features (se elimina el botón Join aquí) */}
-              {showTopCTAs && (
-                <View style={{ marginTop: 14, alignItems: "center" }}>
-                  <Pressable onPress={() => handleViewAll(plan.id)} hitSlop={8} style={styles.viewAllPill}>
-                    <Text style={styles.viewAllPillText}>View all features</Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
-          </GlassCard>
-        </View>
-      );
-
-      /* ----- BENEFITS content (with sections for Standard) ----- */
-      const BenefitsContent =
-        plan.id === "standard" ? (
-          <GlassCard tone="panel" style={{ marginTop: 8 }}>
-            {STANDARD_SECTIONS.map((section, si) => (
-              <View key={`${plan.id}-section-${section.title}`}>
-                {si > 0 && <View style={{ height: 10 }} />}
-                <Text style={styles.sectionHeader}>{section.emoji} {section.title}</Text>
-                <View style={{ marginTop: 4 }}>
-                  {section.keys.map((k, idx) => {
-                    const pp = perksForMatrix.find((x) => x.key === k)!;
-                    const available = !!pp && pp.available;
+              {isMetal ? (
+                <GlassCard tone="panel" style={{ marginTop: 12 }}>
+                  <View style={{ padding: 20, alignItems: "center" }}>
+                    <Text style={[styles.rowTitleNormal, { textAlign: "center", opacity: 0.7 }]}>Coming Soon</Text>
+                    <Text style={[styles.rowSub, { textAlign: "center", marginTop: 8 }]}>Stay tuned for exclusive features</Text>
+                  </View>
+                </GlassCard>
+              ) : (
+                <GlassCard tone="panel" style={{ marginTop: 12 }}>
+                  {plan.perks.map((k, idx) => {
+                    const p = PERKS[k];
+                    if (!p) return null;
                     return (
-                      <View key={`${plan.id}-${k}`}>
+                      <View key={p.key}>
                         {idx > 0 && <Divider />}
                         <Row
-                          icon={available ? "checkmark-circle" : "close-circle"}
+                          icon="ellipse"
                           rightIcon={null}
                           labelNode={
                             <>
-                              <Text style={styles.rowTitleNormal} numberOfLines={2}>{PERKS[k].label}</Text>
-                              {PERKS[k].note ? <Text style={styles.rowSub} numberOfLines={3}>{PERKS[k].note}</Text> : null}
+                              <Text style={styles.rowTitleNormal} numberOfLines={2}>{p.label}</Text>
+                              {p.note ? <Text style={styles.rowSub} numberOfLines={2}>{p.note}</Text> : null}
                             </>
                           }
                         />
                       </View>
                     );
                   })}
-                </View>
-              </View>
-            ))}
+                </GlassCard>
+              )}
+            </View>
           </GlassCard>
-        ) : (
-          <GlassCard tone="panel" style={{ marginTop: 8 }}>
-            {perksForMatrix.map((pp, idx) => (
-              <View key={`${plan.id}-${pp.key}`}>
-                {idx > 0 && <Divider />}
-                <Row
-                  icon={pp.available ? "checkmark-circle" : "close-circle"}
-                  rightIcon={null}
-                  labelNode={
-                    <>
-                      <Text style={styles.rowTitleNormal} numberOfLines={2}>{pp.label}</Text>
-                      {pp.note ? <Text style={styles.rowSub} numberOfLines={3}>{pp.note}</Text> : null}
-                    </>
-                  }
-                />
-              </View>
-            ))}
-          </GlassCard>
-        );
+        </View>
+      );
+
 
       return (
         <View style={{ width: SCREEN_WIDTH }}>
@@ -327,17 +308,7 @@ export default function PlansScreen() {
             ListHeaderComponent={header}
             renderItem={() => null}
             ListFooterComponent={
-              <View
-                style={{ paddingHorizontal: 18, marginTop: 32, paddingBottom: BOTTOM_BAR_H + 16 }}
-                onLayout={(e) => {
-                  if (benefitsYByPlan[plan.id] != null) return;
-                  const y = e?.nativeEvent?.layout?.y ?? 0;
-                  setBenefitsYByPlan((s) => ({ ...s, [plan.id]: y }));
-                }}
-              >
-                <Text style={styles.sectionTitle}>Benefits in {plan.name}</Text>
-                {BenefitsContent}
-              </View>
+              <View style={{ paddingHorizontal: 18, marginTop: 32, paddingBottom: BOTTOM_BAR_H + 16 }} />
             }
             showsVerticalScrollIndicator
             contentContainerStyle={{
@@ -348,22 +319,16 @@ export default function PlansScreen() {
             initialNumToRender={1}
             maxToRenderPerBatch={1}
             windowSize={3}
-            onScroll={Animated.event(
+                onScroll={Animated.event(
               [{ nativeEvent: { contentOffset: { y: getScrollY(plan.id) } } }],
-              {
-                useNativeDriver: true,
-                listener: (ev: NativeSyntheticEvent<NativeScrollEvent>) => {
-                  const y = ev.nativeEvent.contentOffset.y || 0;
-                  if (y < 40) setShowTopCTAByPlan((s) => ({ ...s, [plan.id]: true }));
-                },
-              }
+              { useNativeDriver: true }
             )}
             scrollEventThrottle={16}
           />
         </View>
       );
     },
-    [allPerks, benefitsYByPlan, insets.bottom, insets.top, currentPlanId, showTopCTAByPlan]
+    [insets.bottom, insets.top, currentPlanId]
   );
 
   const activeScrollY = getScrollY(PLANS[Math.max(0, Math.min(index, PLANS.length - 1))].id);
@@ -378,22 +343,10 @@ export default function PlansScreen() {
         scrolly={activeScrollY}
         height={HEADER_H}
         innerTopPad={HEADER_TOPPAD}
-        leftSlot={                                      /* 👈 NUEVO: botón X */
-          <Pressable
-            onPress={() => {
-              if (router.canGoBack()) router.back();
-              else router.replace("/(drawer)/(tabs)");
-            }}
-            hitSlop={12}
-            style={{ padding: 8, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.08)" }}
-          >
-            <Ionicons name="close" size={18} color="#CFE3EC" />
-          </Pressable>
-        }
+        sideWidth={45}
+        leftSlot={null}
         centerSlot={
-          <View style={{ alignSelf: "stretch" }}>
-            <Text style={styles.headerTitle}>Upgrade plan</Text>
-            <View style={{ height: TITLE_GAP }} />
+          <View style={{ alignItems: "center", justifyContent: "center", marginTop: 44 + TITLE_GAP }}>
             <SegmentedPills
               items={PLANS.map((p) => ({ id: String(p.id), label: p.name }))}
               activeIndex={index}
@@ -410,8 +363,28 @@ export default function PlansScreen() {
             />
           </View>
         }
-        contentStyle={{ flexDirection: "column", gap: 10, paddingHorizontal: 16 }}
+        rightSlot={<View style={{ width: 45 }} />}
+        contentStyle={{ flexDirection: "column", gap: 10 }}
       />
+      {/* Overlay: X y título en la misma fila */}
+      <View style={{ position: "absolute", top: insets.top + HEADER_TOPPAD, left: 0, right: 0, height: 44, flexDirection: "row", alignItems: "center", paddingHorizontal: 16, zIndex: 21, pointerEvents: "box-none" }}>
+        <View style={{ width: 45, alignItems: "flex-start", justifyContent: "center" }} pointerEvents="auto">
+          <Pressable
+            onPress={() => {
+              if (router.canGoBack()) router.back();
+              else router.replace("/(drawer)/(tabs)");
+            }}
+            hitSlop={12}
+            style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.10)" }}
+          >
+            <Ionicons name="close" size={22} color="#fff" />
+          </Pressable>
+        </View>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }} pointerEvents="none">
+          <Text style={styles.headerTitle}>Upgrade plan</Text>
+        </View>
+        <View style={{ width: 45 }} pointerEvents="none" />
+      </View>
 
       <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
         <Animated.FlatList<Plan>
@@ -457,7 +430,7 @@ export default function PlansScreen() {
       </SafeAreaView>
 
       {/* Bottom CTA — único CTA por plan */}
-      {!isCurrent && activePlan.id !== "standard" && (
+      {!isCurrent && activePlan.id !== "standard" && activePlan.id !== "metal" && (
         <View
           style={{
             position: "absolute",

@@ -1,0 +1,12 @@
+{
+  "platforms": ["ios"],
+  "ios": {
+    "modules": ["NativeTabBarModule"]
+  }
+}
+
+
+
+
+
+

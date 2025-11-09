@@ -6,7 +6,8 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 
-import { isLockEnabled, tryBiometricAuth, verifyPin } from "@/lib/lock";
+import { isLockEnabled, tryBiometricAuth, verifyPin, disableLock } from "@/lib/lock";
+import { useAuthStore } from "@/store/auth";
 
 const BG = "#0E1722";
 const CARD = "#08232E";
@@ -17,15 +18,41 @@ export default function LockScreen() {
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [biometryTried, setBiometryTried] = useState(false);
+  const { clearAuth } = useAuthStore();
 
   // ✅ navega al root del grupo de tabs
-  const goDashboard = useCallback(() => router.replace("/(tabs)"), []);
+  const goDashboard = useCallback(() => router.replace("/(drawer)/(tabs)/(home)"), []);
+  
+  // Cerrar sesión y volver al login
+  const handleSignOut = useCallback(async () => {
+    try {
+      await clearAuth();
+      await disableLock(); // Deshabilitar lock al cerrar sesión
+      router.replace("/auth/login");
+    } catch (error) {
+      console.error('[LockScreen] Error signing out:', error);
+    }
+  }, [clearAuth]);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
-      const enabled = await isLockEnabled();
-      if (!enabled) goDashboard();
+      try {
+        const enabled = await isLockEnabled();
+        if (!enabled && mounted) {
+          goDashboard();
+        }
+      } catch (error) {
+        console.error('[LockScreen] Error checking lock:', error);
+        // Si hay error, ir al dashboard
+        if (mounted) {
+          goDashboard();
+        }
+      }
     })();
+    return () => {
+      mounted = false;
+    };
   }, [goDashboard]);
 
   useEffect(() => {
@@ -111,6 +138,19 @@ export default function LockScreen() {
           </Text>
         </Pressable>
 
+        {/* Botón para cerrar sesión y cambiar de cuenta */}
+        <Pressable
+          onPress={handleSignOut}
+          disabled={busy}
+          style={({ pressed }) => [
+            styles.signOutBtn,
+            (pressed || busy) && { opacity: 0.7 }
+          ]}
+        >
+          <Ionicons name="log-out-outline" size={18} color={TEXT} />
+          <Text style={styles.signOutTxt}>Cerrar sesión y cambiar de cuenta</Text>
+        </Pressable>
+
         {__DEV__ && (
           <Pressable onPress={goDashboard} style={{ marginTop: 10 }}>
             <Text style={{ color: "#7aa6b4", fontWeight: "700" }}>Skip (dev)</Text>
@@ -152,4 +192,17 @@ const styles = StyleSheet.create({
   btnTxt: { color: "#0A1A24", fontWeight: "900" },
   linkBtn: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 16 },
   linkTxt: { color: YELLOW, fontWeight: "800" },
+  signOutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  signOutTxt: { color: TEXT, fontWeight: "600", fontSize: 14 },
 });

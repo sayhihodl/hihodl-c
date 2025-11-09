@@ -49,7 +49,7 @@ export default function AboutScreen() {
             <Text style={styles.rowText}>Terms & Privacy</Text>
             <Ionicons name="chevron-forward" size={16} color={SUB} style={{ marginLeft: "auto" }} />
           </Pressable>
-          <Pressable onPress={() => Linking.openURL("https://hihodl.com")} style={styles.rowBtn}>
+          <Pressable onPress={() => Linking.openURL("https://hihodl.xyz")} style={styles.rowBtn}>
             <Ionicons name="globe-outline" size={18} color={TEXT} />
             <Text style={styles.rowText}>Website</Text>
             <Ionicons name="open-outline" size={16} color={SUB} style={{ marginLeft: "auto" }} />

@@ -1,6 +1,6 @@
 // app/menu/index.tsx  (o app/(drawer)/(internal)/menu/index.tsx)
-import { useMemo } from "react";
-import { View, Pressable, StyleSheet, ScrollView } from "react-native";
+import { useMemo, useRef } from "react";
+import { View, Pressable, StyleSheet, Animated, Platform, Text } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -11,6 +11,11 @@ import T from "@/ui/T";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { preloadNamespaces } from "@/i18n/i18n";
+import GlassHeader from "@/ui/GlassHeader";
+import { useUser } from "@/hooks/useUser";
+import { useAuthStore } from "@/store/auth";
+import { disableLock } from "@/lib/lock";
+import { Alert } from "react-native";
 
 /* ===== theme ===== */
 const BG = colors.navBg ?? legacyColors.BG ?? "#0D1820";
@@ -50,7 +55,37 @@ export default function MenuScreen() {
   const username = useProfileStore((s) => s.username) ?? "@username";
   const avatar = useProfileStore((s) => s.avatar) ?? "🚀";
   const { t, i18n } = useTranslation(["menu"]);
+  const { user } = useUser();
+  const { clearAuth } = useAuthStore();
   useEffect(() => { preloadNamespaces(["menu"]); }, [i18n.language]);
+  const scrolly = useRef(new Animated.Value(0)).current;
+
+  // Get current plan name
+  const currentPlanId = user?.profile?.plan || "standard";
+  const planNameMap: Record<string, string> = {
+    free: "Standard",
+    standard: "Standard",
+    plus: "Plus",
+    premium: "Premium",
+    pro: "Premium",
+    metal: "Metal",
+  };
+  const currentPlanName = planNameMap[currentPlanId] || "Standard";
+  
+  // Get plan subtitle
+  const getPlanSubtitle = (planId: string) => {
+    switch (planId) {
+      case "plus":
+        return "Gasless transfers";
+      case "premium":
+      case "pro":
+        return "Gasless transfers";
+      case "metal":
+        return "Coming Soon";
+      default:
+        return "Your plan";
+    }
+  };
 
   // 🔁 Helper: salir del Menú sin dejarlo en la pila
   const go = (path: string) => router.replace(path);
@@ -59,6 +94,34 @@ export default function MenuScreen() {
   const closeMenu = () => {
     if (router.canGoBack?.()) router.back();
     else router.replace("/(drawer)/(tabs)/(home)");
+  };
+
+  // Cerrar sesión
+  const handleLogout = () => {
+    Alert.alert(
+      t("rows.logout.label", "Sign Out"),
+      t("rows.logout.confirm", "Are you sure you want to sign out?"),
+      [
+        {
+          text: t("rows.logout.cancel", "Cancel"),
+          style: "cancel",
+        },
+        {
+          text: t("rows.logout.confirmButton", "Sign Out"),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await clearAuth();
+              await disableLock(); // Deshabilitar lock al cerrar sesión
+              router.replace("/auth/login");
+            } catch (error) {
+              console.error('[Menu] Error signing out:', error);
+              Alert.alert("Error", "Failed to sign out. Please try again.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   const TopCapOverlay = useMemo(
@@ -87,28 +150,83 @@ export default function MenuScreen() {
     [insets.top]
   );
 
+  const HEADER_TOTAL = insets.top + 6 + 42; // insets.top + innerTopPad + height
+
+  // Animación para mostrar avatar y username cuando hay scroll
+  const userInfoOpacity = scrolly.interpolate({
+    inputRange: [20, 60],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+
+  const userInfoTranslateY = scrolly.interpolate({
+    inputRange: [20, 60],
+    outputRange: [-8, 0],
+    extrapolate: "clamp",
+  });
+
   return (
     <View style={{ flex: 1, backgroundColor: BG }}>
       {MenuBackdrop}
       {TopCapOverlay}
 
-      <SafeAreaView style={{ flex: 1 }} edges={["left", "top", "right", "bottom"]}>
-        <View style={{ flex: 1, paddingTop: TOP_CAP - 25 }}>
-          {/* Spacer del layout */}
-          <T kind="h2" style={styles.titleSpacer} />
-        </View>
-
-        {/* Cerrar Menú */}
-        <View style={{ position: "absolute", top: insets.top + 16, left: 20, zIndex: 10 }}>
-          <Pressable onPress={closeMenu} hitSlop={10}>
+      <GlassHeader
+        scrolly={scrolly}
+        blurTint="dark"
+        overlayColor="rgba(7,16,22,0.45)"
+        height={42}
+        innerTopPad={6}
+        sideWidth={45}
+        leftSlot={
+          <Pressable onPress={closeMenu} hitSlop={10} style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.10)" }}>
             <Ionicons name="close" size={22} color="#fff" />
           </Pressable>
-        </View>
+        }
+        centerSlot={
+          <Pressable
+            onPress={() => go("/(drawer)/(internal)/menu/profile")}
+            hitSlop={10}
+            style={{ opacity: 1 }}
+          >
+            <Animated.View
+              style={{
+                opacity: userInfoOpacity,
+                transform: [{ translateY: userInfoTranslateY }],
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(255,255,255,0.10)", alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontSize: 16 }}>{avatar}</Text>
+              </View>
+              <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }} numberOfLines={1}>
+                {username}
+              </Text>
+            </Animated.View>
+          </Pressable>
+        }
+        rightSlot={<View style={{ width: 45 }} />}
+        contentStyle={{ paddingHorizontal: 12 }}
+      />
 
-        <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 24 }}
+      <SafeAreaView 
+        style={{ flex: 1 }} 
+        edges={["left", "bottom", "right"]}
+        {...(Platform.OS === "android" && {
+          // Forzar renderizado en Android
+          collapsable: false,
+        })}
+      >
+        <Animated.ScrollView
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: HEADER_TOTAL + 8, paddingBottom: insets.bottom + 24 }}
           bounces
           showsVerticalScrollIndicator={false}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrolly } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
         >
           {/* Hero */}
           <Pressable
@@ -126,9 +244,9 @@ export default function MenuScreen() {
           <View style={styles.tileGrid}>
             <Tile
               icon="card-outline"
-              title="Standard"
-              sub="Your plan"
-              onPress={() => go("/(drawer)/(paywall)/plans")}
+              title={currentPlanName}
+              sub={getPlanSubtitle(currentPlanId)}
+              onPress={() => go("/(drawer)/(internal)/(paywall)/plans")}
             />
             <Tile
               icon="person-add-outline"
@@ -139,59 +257,71 @@ export default function MenuScreen() {
           </View>
 
           {/* Account */}
-          <T kind="caption" style={{ color: SUB, marginTop: 6, marginBottom: 8, fontWeight: "600" }}>{t("menu:sections.account")}</T>
+          <T kind="caption" style={{ color: SUB, marginTop: 6, marginBottom: 8, fontWeight: "600" }}>{t("sections.account", "Account")}</T>
           <GlassCard>
             <MenuRow
               icon="settings-outline"
-              label={t("menu:rows.settings.label")}
-              sub={t("menu:rows.settings.sub")}
+              label={t("rows.settings.label", "Settings")}
+              sub={t("rows.settings.sub", "Notifications, language & currency")}
               onPress={() => go("/(drawer)/(internal)/menu/settings")}
             />
             <Divider />
             <MenuRow
               icon="shield-checkmark-outline"
-              label={t("menu:rows.security.label")}
-              sub={t("menu:rows.security.sub")}
+              label={t("rows.security.label", "Security")}
+              sub={t("rows.security.sub", "Passcode, biometrics")}
               onPress={() => go("/(drawer)/(internal)/menu/security")}
             />
           </GlassCard>
 
           {/* Support & About */}
-          <T kind="caption" style={{ color: SUB, marginTop: 16, marginBottom: 8, fontWeight: "600" }}>{t("menu:sections.supportLegal")}</T>
+          <T kind="caption" style={{ color: SUB, marginTop: 16, marginBottom: 8, fontWeight: "600" }}>{t("sections.supportLegal", "Support & Legal")}</T>
           <GlassCard>
             <MenuRow
               icon="help-circle-outline"
-              label={t("menu:rows.help.label")}
-              sub={t("menu:rows.help.sub")}
+              label={t("rows.help.label", "Help & Support")}
+              sub={t("rows.help.sub", "FAQs and contact")}
               onPress={() => go("/(drawer)/(internal)/menu/help")} 
             />
             <Divider />
             <MenuRow
               icon="document-text-outline"
-              label={t("menu:rows.terms.label")}
-              sub={t("menu:rows.terms.sub")}
+              label={t("rows.terms.label", "Terms of Service")}
+              sub={t("rows.terms.sub", "Legal")}
               onPress={() => go("/(drawer)/(internal)/menu/legal-terms")}
             />
             <Divider />
             <MenuRow
               icon="shield-outline"
-              label={t("menu:rows.privacy.label")}
-              sub={t("menu:rows.privacy.sub")}
+              label={t("rows.privacy.label", "Privacy Policy")}
+              sub={t("rows.privacy.sub", "Legal")}
               onPress={() => go("/(drawer)/(internal)/menu/legal-privacy")}
             />
             <Divider />
             <MenuRow
               icon="information-circle-outline"
-              label={t("menu:rows.about.label")}
-              sub={t("menu:rows.about.sub")}
+              label={t("rows.about.label", "About HIHODL")}
+              sub={t("rows.about.sub", "App info")}
               onPress={() => go("/(drawer)/(internal)/menu/about")}
             />
           </GlassCard>
 
+          {/* Logout - Separado al final */}
+          <View style={{ marginTop: 24 }}>
+            <GlassCard>
+              <MenuRow
+                icon="log-out-outline"
+                label={t("rows.logout.label", "Sign Out")}
+                sub={t("rows.logout.sub", "Sign out and switch account")}
+                onPress={handleLogout}
+              />
+            </GlassCard>
+          </View>
+
           <T kind="caption" style={[{ color: SUB }, styles.footerNote]}>
-            Need something else? We’re here to help.
+            Need something else? We're here to help.
           </T>
-        </ScrollView>
+        </Animated.ScrollView>
       </SafeAreaView>
     </View>
   );

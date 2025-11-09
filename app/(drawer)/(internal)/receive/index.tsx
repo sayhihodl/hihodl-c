@@ -1,5 +1,5 @@
 // app/(tabs)/receive/index.tsx
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, Alert, Image, Animated } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,6 +9,7 @@ import ReceiveSheet from "../../../../src/components/ReceiveSheet";
 import { legacy } from "@/theme/colors";
 import GlassHeader from "@/ui/GlassHeader";
 import ScreenBg from "@/ui/ScreenBg";
+import SearchField from "@/ui/SearchField";
 
 /** ===== Chain logos ===== */
 import SolBadge from "@assets/chains/Solana-chain.svg";
@@ -154,7 +155,7 @@ function capitalize(s: string) {
 /* ================================== */
 export default function ReceiveScreen() {
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ account?: string }>();
+  const params = useLocalSearchParams<{ account?: string; token?: string; network?: string }>();
   const nav = useNavigation<any>();
 
   const account: Account = useMemo(() => {
@@ -178,6 +179,21 @@ export default function ReceiveScreen() {
   const [showAllTokens, setShowAllTokens] = useState(false);
   const [showAllChains, setShowAllChains] = useState(false);
   const [qrState, setQrState] = useState<null | { token?: TokenMeta; chain: ChainKey }>(null);
+
+  // Si se pasa token y network, abrir QR directamente
+  useEffect(() => {
+    if (params.token && params.network) {
+      const tokenSymbol = params.token.toLowerCase();
+      const network = params.network.toLowerCase() as ChainKey;
+      const foundToken = TOKENS.find(t => 
+        t.symbol.toLowerCase() === tokenSymbol || 
+        t.id.toLowerCase() === tokenSymbol
+      );
+      if (foundToken) {
+        setQrState({ token: foundToken, chain: network });
+      }
+    }
+  }, [params.token, params.network]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -254,20 +270,14 @@ export default function ReceiveScreen() {
             </View>
 
             {/* Search — spacing: ROW_SEARCH_GAP & AFTER_SEARCH_GAP */}
-            <View style={[styles.searchInHeader, { marginTop: ROW_SEARCH_GAP, height: SEARCH_H, marginBottom: AFTER_SEARCH_GAP }]}>
-              <Ionicons name="search" size={18} color={SUB} />
-              <TextInput
+            <View style={{ marginTop: ROW_SEARCH_GAP, marginBottom: AFTER_SEARCH_GAP }}>
+              <SearchField
                 value={query}
                 onChangeText={setQuery}
                 placeholder="Search token or network"
-                placeholderTextColor={SUB}
-                style={styles.input}
+                height={SEARCH_H}
+                onClear={() => setQuery("")}
               />
-              {query ? (
-                <Pressable onPress={() => setQuery("")}>
-                  <Ionicons name="close-circle" size={18} color={SUB} />
-                </Pressable>
-              ) : null}
             </View>
           </>
         }
@@ -401,17 +411,6 @@ const styles = StyleSheet.create({
   title: { color: TEXT, fontSize: 18, fontWeight: "800", textAlign: "center" },
 
   /* Search inside header */
-  searchInHeader: {
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    backgroundColor: GLASS_BG,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: GLASS_BORDER,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  input: { flex: 1, color: TEXT, fontSize: 15 },
 
   /* Lists */
   sectionTitle: { color: SUB, fontSize: 12, letterSpacing: 0.3, marginBottom: 8 },

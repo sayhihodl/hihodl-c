@@ -109,6 +109,12 @@ function PopoverMenu<T extends string>({
 export default function SwapScreen() {
   const { t, i18n } = useTranslation(["swap", "common"]);
   React.useEffect(() => { preloadNamespaces(["swap"]); }, [i18n.language]);
+  
+  // Trackear vista de pantalla Swap
+  React.useEffect(() => {
+    const { analytics } = require("@/utils/analytics");
+    analytics.trackScreenView({ screen_name: "Swap", screen_class: "SwapScreen" });
+  }, []);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -334,6 +340,16 @@ export default function SwapScreen() {
         setTimeout(() => {
           setTimeline((tl) => tl.map((x) => (x.id === "m" ? { ...x, done: true } : x)));
           setTxState("mined");
+          
+          // Trackear swap completado
+          const { analytics } = require("@/utils/analytics");
+          const amountNum = parseFloat(amount || "0");
+          analytics.trackTokenSwapped({
+            from: payToken?.symbol || "unknown",
+            to: receiveToken?.symbol || "unknown",
+            amount: amountNum,
+          });
+          
           // simulate balances sync
           setTimeout(() => {
             setTxState("idle");

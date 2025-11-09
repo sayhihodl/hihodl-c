@@ -54,8 +54,8 @@ export default function Backup() {
   };
 
   const goNext = () => {
-    // Tras el backup, vamos a elegir la cuenta principal (labels)
-    router.replace('/onboarding/principalaccount');
+    // Tras el backup, vamos al dashboard
+    router.replace('/(drawer)/(tabs)');
   };
 
   return (
@@ -93,7 +93,7 @@ const YELLOW = '#FFB703';
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#062B39' },
-  close: { position: 'absolute', right: 18, width: 28, height: 28, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+  close: { position: 'absolute', left: 18, width: 28, height: 28, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
   closeTxt: { color: TEXT_LIGHT, fontSize: 24, lineHeight: 24, fontWeight: '700' },
 
   card: {

@@ -1,5 +1,8 @@
 // src/services/alchemy.ts
 // Enriquecimiento ERC-20 via Alchemy (ETH, BASE, POLYGON)
+import { logger } from "@/utils/logger";
+import { TIMEOUTS } from "@/constants/config";
+
 export type EvmChain = "ethereum" | "base" | "polygon";
 
 const KEY: Record<EvmChain, string> = {
@@ -16,30 +19,66 @@ const RPC: Record<EvmChain, string> = {
 
 function assertKey(chain: EvmChain) {
   if (!KEY[chain]) {
-    console.warn(`[alchemy] Missing key for ${chain}. Check EXPO_PUBLIC_ALCHEMY_KEY_*`);
+    logger.warn(`[alchemy] Missing key for ${chain}. Check EXPO_PUBLIC_ALCHEMY_KEY_*`);
   }
 }
 
-async function rpc<T>(chain: EvmChain, body: any, signal?: AbortSignal): Promise<T> {
+// Tipo para el body de RPC request
+type RpcRequestBody = {
+  method: string;
+  params?: unknown[];
+  [key: string]: unknown;
+};
+
+// Tipo para respuesta RPC
+type RpcResponse<T> = {
+  jsonrpc: string;
+  id: number;
+  result?: T;
+  error?: {
+    code: number;
+    message: string;
+    data?: unknown;
+  };
+};
+
+async function rpc<T>(chain: EvmChain, body: RpcRequestBody, signal?: AbortSignal): Promise<T> {
   assertKey(chain);
   const url = RPC[chain] + KEY[chain];
-  const res = await Promise.race([
-    fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, ...body }),
-      signal,
-    }),
-    new Promise<Response>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)) as any,
-  ]);
+  
+  const fetchPromise = fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, ...body }),
+    signal,
+  });
 
-  if (!("ok" in res) || !res.ok) {
-    const txt = typeof (res as any).text === "function" ? await (res as any).text() : "";
-    throw new Error(`[alchemy] ${chain} HTTP ${"status" in res ? (res as any).status : "??"} ${txt}`);
+  const timeoutPromise = new Promise<never>((_, reject) => 
+    setTimeout(() => reject(new Error("timeout")), TIMEOUTS.HTTP_REQUEST)
+  );
+
+  const res = await Promise.race<Response | never>([fetchPromise, timeoutPromise]);
+
+  if (!res.ok) {
+    let responseText = "";
+    try {
+      responseText = await res.text();
+    } catch {
+      // Ignore text extraction errors
+    }
+    throw new Error(`[alchemy] ${chain} HTTP ${res.status} ${responseText}`);
   }
-  const json = await (res as Response).json();
-  if (json.error) throw new Error(`[alchemy] ${chain} ${json.error?.message || "rpc error"}`);
-  return json.result as T;
+  
+  const json = (await res.json()) as RpcResponse<T>;
+  if (json.error) {
+    throw new Error(`[alchemy] ${chain} ${json.error.message || "rpc error"}`);
+  }
+  
+  if (json.result === undefined) {
+    throw new Error(`[alchemy] ${chain} missing result`);
+  }
+  
+  return json.result;
 }
 
 /** ERC-20 metadata (name/symbol/decimals/logo) */
@@ -68,7 +107,7 @@ export async function enrichEvmTokens(items: Array<{ chain: EvmChain; address: s
       const meta = await fetchErc20Meta(it.chain, it.address, ctrl?.signal);
       return { ...it, ...meta };
     } catch (e) {
-      console.debug("[alchemy] fail", it.chain, it.address, String(e));
+      logger.debug("[alchemy] fail", it.chain, it.address, String(e));
       return { ...it, /* sin meta: UI mostrará 'needs_meta' */ };
     }
   });

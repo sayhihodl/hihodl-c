@@ -17,6 +17,7 @@ import StepToken from "@/send/steps/StepToken";
 import { AccountPickerContent } from "@/send/sheets/AccountPickerSheet";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
+import SearchField from "@/ui/SearchField";
 
 export default function QuickSendGroupScreen() {
   const insets = useSafeAreaInsets();
@@ -209,13 +210,22 @@ export default function QuickSendGroupScreen() {
           center: (
             <View style={{ width: "100%", alignItems: "center" }}>
               <Text style={{ color: "#fff", fontSize: 18, fontWeight: "700", marginBottom: 6 }}>Select currency</Text>
-              <View style={{ position: "relative", borderRadius: 14, overflow: "hidden", height: 44, width: "100%", borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255,255,255,0.10)" }}>
+              <View style={{ position: "relative", borderRadius: 14, overflow: "hidden", width: "100%", borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255,255,255,0.10)" }}>
                 <BlurView tint="dark" intensity={50} style={StyleSheet.absoluteFill} />
-                <Pressable style={{ flex: 1, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 10 }} onPress={() => tokenSearchRef.current?.focus()} hitSlop={8}>
-                  <Ionicons name="search" size={18} color="#9CB4C1" />
-                  <TextInput ref={tokenSearchRef} value={tokenSearch} onChangeText={setTokenSearch} placeholder="Search currency…" placeholderTextColor="#9CB4C1" style={{ flex: 1, color: "#fff", fontSize: 15 }} autoCapitalize="none" autoCorrect={false} returnKeyType="search" />
-                  {!!tokenSearch && (<Pressable onPress={() => setTokenSearch("")} hitSlop={8}><Ionicons name="close-circle" size={18} color="#9CB4C1" /></Pressable>)}
-                </Pressable>
+                <SearchField
+                  ref={tokenSearchRef}
+                  value={tokenSearch}
+                  onChangeText={setTokenSearch}
+                  placeholder="Search currency…"
+                  height={44}
+                  onClear={() => setTokenSearch("")}
+                  inputProps={{
+                    autoCapitalize: "none",
+                    autoCorrect: false,
+                    returnKeyType: "search",
+                  }}
+                  containerStyle={{ backgroundColor: "transparent", borderWidth: 0 }}
+                />
               </View>
             </View>
           ),

@@ -15,12 +15,26 @@ export default function DrawerLayout() {
           gestureDirection: "horizontal",
           // amplia el borde izquierdo para el swipe-back (iOS)
           gestureResponseDistance: { start: 40 },
+          // Fix para el error de navegación: previene el menú de back button que causa conflictos
+          headerBackButtonMenuEnabled: false,
         }}
       >
         {/* Pilar con TabBar */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="(tabs)" 
+          options={{ 
+            headerShown: false,
+            headerBackButtonMenuEnabled: false,
+          }} 
+        />
         {/* Pilar sin TabBar (cards, receive, send, menu, tokens, account, etc.) */}
-        <Stack.Screen name="(internal)" options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="(internal)" 
+          options={{ 
+            headerShown: false,
+            headerBackButtonMenuEnabled: false,
+          }} 
+        />
       </Stack>
 
       {/* Overlay global sin bloquear el borde */}

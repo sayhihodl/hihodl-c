@@ -5,9 +5,9 @@ import { useTranslation } from "react-i18next";
 
 import BottomKeyboardModal from "@/components/BottomSheet/BottomKeyboardModal";
 import Row from "@/ui/Row";
-import SegmentedPills from "@/ui/SegmentedPills";
+import SegmentedPills, { type PillItem } from "@/ui/SegmentedPills";
 import { legacy as legacyColors, glass as glassColors } from "@/theme/colors";
-import { useSwapStore } from "@/store/swap.store";
+import { useSwapStore, type SettingsState } from "@/store/swap.store";
 
 const TEXT = legacyColors.TEXT ?? "#fff";
 const SUB = legacyColors.SUB ?? "rgba(255,255,255,0.65)";
@@ -23,7 +23,7 @@ export default function SwapSettingsSheet({ visible, onClose }: Props) {
   const settings = useSwapStore((s) => s.settings);
   const setSettings = useSwapStore((s) => s.setSettings);
 
-  const [draft, setDraft] = useState(settings);
+  const [draft, setDraft] = useState<SettingsState>(settings);
   useEffect(() => {
     if (visible) setDraft(settings);
   }, [visible, settings]);
@@ -34,7 +34,7 @@ export default function SwapSettingsSheet({ visible, onClose }: Props) {
     onClose();
   };
 
-  const slipItems = useMemo(
+  const slipItems = useMemo<PillItem[]>(
     () => [
       { id: "auto", label: t("swap:simple.auto", "Auto") },
       { id: "0.5", label: t("swap:simple.low", "Low (0.5%)") },
@@ -82,13 +82,13 @@ export default function SwapSettingsSheet({ visible, onClose }: Props) {
         <View style={styles.card}>
           <Row leftSlot={<Text style={styles.groupLabel}>{t("swap:simple.priceProtection", "Price protection")}</Text>} rightIcon={null} />
           <SegmentedPills
-            items={slipItems as any}
+            items={slipItems}
             activeIndex={slipIndex < 0 ? 0 : slipIndex}
             onPress={(_, item) => {
               setDraft((d) =>
                 item.id === "auto"
-                  ? { ...d, slippage: { mode: "auto" } as any }
-                  : { ...d, slippage: { mode: "fixed", fixedPct: Number(item.id) } as any }
+                  ? { ...d, slippage: { mode: "auto" as const, fixedPct: d.slippage.fixedPct } }
+                  : { ...d, slippage: { mode: "fixed" as const, fixedPct: Number(item.id) || 0.5 } }
               );
             }}
             height={36}

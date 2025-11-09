@@ -1,97 +1,189 @@
-// app/cards/[id].tsx
-import React, { useMemo } from "react";
+// app/(drawer)/(internal)/cards/[id].tsx
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
-  FlatList,
-  Dimensions,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import Svg, { Defs, LinearGradient as SvgLG, Stop, Rect } from "react-native-svg";
+import * as Haptics from "expo-haptics";
 
 import colors from "@/theme/colors";
 import ScreenBg from "@/ui/ScreenBg";
 import { CTAButton } from "@/ui/CTAButton";
+import StableCard from "@/components/cards/StableCard";
+import { useStableCards } from "@/hooks/useStableCards";
+import type { StableCard as StableCardType } from "@/types/api";
 import {
   type Account,
-  ACCOUNT_PRIMARY,      // color del pill de cuenta
-  CARD_GRADS,           // gradiente de la tarjeta
+  ACCOUNT_PRIMARY,
 } from "@/theme/gradients";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_ASPECT = 1.586; // 85.60 × 53.98 mm
-const CARD_WIDTH = SCREEN_WIDTH - 24;
-const CARD_HEIGHT = Math.round(CARD_WIDTH / CARD_ASPECT);
-
-// apoyo
-const H_NAVY = "#023047";
-
-// ===== utils de seguridad =====
-const DEFAULT_GRADIENT: [string, string] = ["#0D1820", "#16232E"];
 const DEFAULT_ACC_COLOR = "#FFB703";
 
-function normalizeGradient(
-  maybe: ReadonlyArray<string> | undefined,
-  fallbackBase?: string
-): [string, string] {
-  if (Array.isArray(maybe) && maybe.length > 0) {
-    const c0 = (maybe[0] as string) ?? fallbackBase ?? DEFAULT_GRADIENT[0];
-    const c1 = (maybe[1] as string) ?? c0;
-    return [c0, c1];
-  }
-  const base = fallbackBase ?? DEFAULT_GRADIENT[0];
-  return [base, DEFAULT_GRADIENT[1]];
-}
+const accountMap: Record<string, Account> = {
+  daily: "Daily",
+  savings: "Savings",
+  social: "Social",
+};
 
-type Tx = { id: string; name: string; date: string; amount: string };
+const schemeMap: Record<string, "visa" | "mastercard" | "none"> = {
+  VISA: "visa",
+  MASTERCARD: "mastercard",
+};
 
 export default function CardDetails() {
   const params = useLocalSearchParams<{ id?: string; account?: Account }>();
-  const account: Account = (params.account as Account) ?? "Daily";
-  const cardId = (params.id as string) ?? "general";
-
+  const cardId = (params.id as string) ?? "";
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { getCardDetails, freeze, remove, reveal } = useStableCards();
 
-  const txs = useMemo<Tx[]>(
-    () => [
-      { id: "1", name: "Nuzest Uk & Eu", date: "2 September, 22:18", amount: "-66,45 €" },
-      { id: "2", name: "Renfe", date: "12 August, 15:25", amount: "-110 €" },
-      { id: "3", name: "Renfe", date: "12 August, 15:25 · Card verification", amount: "0 €" },
-    ],
-    []
-  );
+  const [card, setCard] = useState<StableCardType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [secrets, setSecrets] = useState<{
+    panFull?: string;
+    exp?: string;
+    cvv?: string;
+  } | null>(null);
+  const [showSecrets, setShowSecrets] = useState(false);
 
-  // color/gradiente seguros
+  useEffect(() => {
+    const loadCard = async () => {
+      if (!cardId || cardId === "general") {
+        setLoading(false);
+        return;
+      }
+      try {
+        const details = await getCardDetails(cardId);
+        setCard(details.card);
+        if (details.secrets) {
+          setSecrets(details.secrets);
+        }
+      } catch (error: any) {
+        Alert.alert("Error", error.message || "Failed to load card details");
+        router.back();
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCard();
+  }, [cardId, getCardDetails, router]);
+
+  const handleFreeze = async () => {
+    if (!card) return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const isFrozen = card.status === "frozen";
+    const newFreezeState = !isFrozen;
+    try {
+      await freeze(card.id, newFreezeState);
+      setCard({ ...card, status: newFreezeState ? "frozen" : "active" });
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        "Success",
+        newFreezeState ? "Card frozen" : "Card unfrozen"
+      );
+    } catch (error: any) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert("Error", error.message || "Failed to update card");
+    }
+  };
+
+  const handleDelete = () => {
+    if (!card) return;
+    Alert.alert(
+      "Delete Card",
+      "Are you sure you want to delete this card? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await remove(card.id);
+              Alert.alert("Success", "Card deleted", [
+                { text: "OK", onPress: () => router.back() },
+              ]);
+            } catch (error: any) {
+              Alert.alert("Error", error.message || "Failed to delete card");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRevealSecrets = async () => {
+    if (!card) return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (secrets) {
+      setShowSecrets(!showSecrets);
+      return;
+    }
+    try {
+      const revealed = await reveal(card.id);
+      setSecrets(revealed);
+      setShowSecrets(true);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error: any) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert("Error", error.message || "Failed to reveal secrets");
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <ScreenBg account="Daily" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>Loading card...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!card) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <ScreenBg account="Daily" />
+        <View style={styles.loadingContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color="#ff6b6b" />
+          <Text style={styles.errorText}>Card not found</Text>
+          <CTAButton
+            title="Go Back"
+            onPress={() => router.back()}
+            variant="secondary"
+            style={{ marginTop: 16 }}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  const account: Account = accountMap[card.account] || "Daily";
   const accountColor = ACCOUNT_PRIMARY[account] ?? DEFAULT_ACC_COLOR;
-  const gradient = normalizeGradient(CARD_GRADS[account] as ReadonlyArray<string> | undefined, accountColor);
-
-  // Título visible
-  const cardTitle =
-    cardId.toLowerCase() === "general"
-      ? "General"
-      : cardId.charAt(0).toUpperCase() + cardId.slice(1);
-
-  const alias = `@alex.${account.toLowerCase()}`;
+  const cardTitle = card.label || `${account} Card`;
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
-      {/* background del menú */}
       <ScreenBg account={account} />
 
       {/* Top bar */}
       <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Back">
+        <Pressable onPress={() => router.back()} hitSlop={10}>
           <Ionicons name="chevron-back" size={24} color="#fff" />
         </Pressable>
         <Text style={styles.brand}>HiHODL</Text>
-        <Pressable hitSlop={10} accessibilityLabel="Help">
-          <Ionicons name="help-circle-outline" size={22} color="rgba(255,255,255,0.9)" />
+        <Pressable hitSlop={10} onPress={handleDelete}>
+          <Ionicons name="trash-outline" size={22} color="rgba(255,255,255,0.9)" />
         </Pressable>
       </View>
 
@@ -101,160 +193,82 @@ export default function CardDetails() {
       >
         {/* HERO: tarjeta grande */}
         <View style={styles.cardWrap}>
-          <CardFaceSVG
-            gradient={gradient}
-            accountLabel={account}
-            accountColor={accountColor}
-            masked="•• 4011"
-            alias={alias}
-            variant="virtual"
-            network="mastercard"
-            title={cardTitle}
+          <StableCard
+            issuer="HIHODL"
+            topRightLabel={card.type.toUpperCase()}
+            last4={card.last4}
+            scheme={schemeMap[card.brand] || "none"}
+            size="l"
+            style={styles.card}
           />
         </View>
+
+        {/* Card Info */}
+        <View style={styles.infoSection}>
+          <InfoRow label="Status" value={card.status} />
+          <InfoRow
+            label="Type"
+            value={card.type === "virtual" ? "Virtual" : "Physical"}
+          />
+          <InfoRow label="Provider" value={card.provider.toUpperCase()} />
+          <InfoRow label="Brand" value={card.brand} />
+          {card.limit && (
+            <InfoRow
+              label="Limit"
+              value={`$${card.limit.amount}/${card.limit.frequency === "per24HourPeriod" ? "day" : card.limit.frequency === "perMonth" ? "month" : "transaction"}`}
+            />
+          )}
+          <InfoRow
+            label="Expires"
+            value={`${card.expirationMonth}/${card.expirationYear}`}
+          />
+        </View>
+
+        {/* Secrets Section */}
+        {showSecrets && secrets && (
+          <View style={styles.secretsSection}>
+            <Text style={styles.secretsTitle}>Card Details</Text>
+            {secrets.panFull && (
+              <InfoRow label="Card Number" value={secrets.panFull} />
+            )}
+            {secrets.exp && <InfoRow label="Expiration" value={secrets.exp} />}
+            {secrets.cvv && <InfoRow label="CVV" value={secrets.cvv} />}
+            <Text style={styles.secretsWarning}>
+              ⚠️ Keep this information secure
+            </Text>
+          </View>
+        )}
 
         {/* Acciones */}
         <View style={styles.actionsRow}>
-          <Action icon="eye-outline" label="Show details" onPress={() => {}} />
-          <Action icon="snow-outline" label="Freeze" onPress={() => {}} />
-          <Action icon="settings-outline" label="Settings" onPress={() => {}} />
-        </View>
-
-        {/* Movimientos + CTA */}
-        <View style={styles.sheet}>
-          <FlatList
-            data={txs}
-            keyExtractor={(i) => i.id}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-            ListHeaderComponent={<View style={{ height: 6 }} />}
-            renderItem={({ item }) => (
-              <Pressable style={styles.txRow} onPress={() => {}}>
-                <View style={styles.txIcon}>
-                  <Ionicons name="bag-handle" size={18} color="#fff" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.txName}>{item.name}</Text>
-                  <Text style={styles.txMeta}>{item.date}</Text>
-                </View>
-                <Text style={styles.txAmount}>{item.amount}</Text>
-              </Pressable>
-            )}
-            ListFooterComponent={
-              <>
-                <Pressable onPress={() => {}} style={styles.seeAll}>
-                  <Text style={styles.seeAllText}>See all</Text>
-                </Pressable>
-
-                <CTAButton
-                  title="Add to Apple Wallet"
-                  onPress={() => {}}
-                  style={styles.appleCta}
-                  variant="secondary"
-                  leftIcon={<Ionicons name="wallet-outline" size={18} color="#000" />}
-                />
-              </>
-            }
+          <Action
+            icon="eye-outline"
+            label={showSecrets ? "Hide details" : "Show details"}
+            onPress={handleRevealSecrets}
           />
+          <Action
+            icon="snow-outline"
+            label={card.status === "frozen" ? "Unfreeze" : "Freeze"}
+            onPress={handleFreeze}
+          />
+          <Action icon="trash-outline" label="Delete" onPress={handleDelete} />
         </View>
       </ScrollView>
     </View>
   );
 }
 
-/* ---------- Card UI con SVG gradient ---------- */
-function CardFaceSVG({
-  gradient,
-  accountLabel,
-  accountColor,
-  variant,
-  title,
-  alias,
-  masked,
-  network,
-}: {
-  gradient: [string, string];
-  accountLabel: string;
-  accountColor: string;
-  variant: "virtual" | "physical";
-  title: string;
-  alias?: string;
-  masked: string;
-  network: "mastercard" | "visa";
-}) {
-  const [c0, c1] = gradient;
-
-  // evitar colisiones de id en <Defs> si se renderizan varias tarjetas
-  const gradId = useMemo(() => `cardGrad-${Math.random().toString(36).slice(2)}`, []);
-
+/* ---------- Info Row Component ---------- */
+function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.card}>
-      {/* fondo gradiente */}
-      <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
-        <Defs>
-          <SvgLG id={gradId} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={c0} />
-            <Stop offset="1" stopColor={c1} />
-          </SvgLG>
-        </Defs>
-        <Rect width="100%" height="100%" rx={22} fill={`url(#${gradId})`} />
-      </Svg>
-
-      {/* contenido */}
-      <View style={{ flex: 1, padding: 18 }}>
-        {/* Top pills */}
-        <View style={styles.cardTopRow}>
-          <View style={[styles.pillSolid, { backgroundColor: accountColor }]}>
-            <Text style={styles.pillSolidTxt}>{accountLabel}</Text>
-          </View>
-          <View style={styles.pillMuted}>
-            <Text style={styles.pillMutedTxt}>
-              {variant === "virtual" ? "Virtual" : "Physical"}
-            </Text>
-          </View>
-        </View>
-
-        {/* Title */}
-        <Text style={styles.cardTitle}>{title}</Text>
-
-        {/* Chip + contactless */}
-        <View style={styles.cardMidRow}>
-          <View style={styles.chip}>
-            <View style={styles.chipLine} />
-            <View style={[styles.chipLine, { width: 18 }]} />
-            <View style={[styles.chipLine, { width: 22 }]} />
-          </View>
-          <Ionicons
-            name="wifi-outline"
-            size={18}
-            color="rgba(0,0,0,0.75)"
-            style={{ transform: [{ rotate: "90deg" }] }}
-          />
-        </View>
-
-        {/* Alias + masked */}
-        <View style={{ marginTop: 10 }}>
-          {!!alias && <Text style={styles.alias}>{alias}</Text>}
-          <Text style={styles.masked}>{masked}</Text>
-        </View>
-
-        {/* Marca */}
-        <View style={styles.brandRow}>
-          {network === "mastercard" ? (
-            <View style={styles.mcRight}>
-              <View style={[styles.mcCircle, { backgroundColor: "#EA001B" }]} />
-              <View style={[styles.mcCircle, { backgroundColor: "#F79E1B", marginLeft: -14 }]} />
-            </View>
-          ) : (
-            <Text style={styles.visa}>VISA</Text>
-          )}
-        </View>
-      </View>
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
     </View>
   );
 }
 
-/* ---------- tiny ---------- */
+/* ---------- Action Component ---------- */
 function Action({
   icon,
   label,
@@ -264,8 +278,19 @@ function Action({
   label: string;
   onPress: () => void;
 }) {
+  const handlePress = async () => {
+    await Haptics.selectionAsync();
+    onPress();
+  };
+
   return (
-    <Pressable onPress={onPress} style={styles.actionItem}>
+    <Pressable
+      onPress={handlePress}
+      style={({ pressed }) => [
+        styles.actionItem,
+        pressed && styles.actionItemPressed,
+      ]}
+    >
       <View style={styles.actionIconWrap}>
         <Ionicons name={icon} size={18} color="#fff" />
       </View>
@@ -285,71 +310,72 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   brand: { color: "#fff", fontSize: 16, fontWeight: "900", letterSpacing: 0.5 },
-
-  cardWrap: { marginTop: 6, paddingHorizontal: 12 },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 16,
+  },
+  loadingText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  errorText: {
+    color: "#ff6b6b",
+    fontSize: 16,
+    marginTop: 8,
+  },
+  cardWrap: { marginTop: 6, paddingHorizontal: 12, alignItems: "center" },
   card: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    borderRadius: 22,
-    padding: 0, // el padding va en el contenido interior
-    overflow: "hidden", // para que el rect con rx haga el borde redondeado
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
+    width: "100%",
+    maxWidth: 360,
   },
-  cardTopRow: {
+  infoSection: {
+    marginTop: 24,
+    marginHorizontal: 12,
+    padding: 16,
+    borderRadius: 18,
+    backgroundColor: "#0F151A",
+  },
+  infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 18,
-    paddingTop: 18,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255,255,255,0.08)",
   },
-
-  pillSolid: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+  infoLabel: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 14,
+    fontWeight: "600",
   },
-  pillSolidTxt: { color: "#0B0B0F", fontWeight: "900", letterSpacing: 0.2, fontSize: 12 },
-
-  pillMuted: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.22)",
+  infoValue: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
   },
-  pillMutedTxt: { color: "#111", fontWeight: "700", letterSpacing: 0.2, fontSize: 12 },
-
-  cardTitle: { color: H_NAVY, fontSize: 20, fontWeight: "900", marginTop: 8, paddingHorizontal: 18 },
-
-  cardMidRow: {
+  secretsSection: {
     marginTop: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 18,
+    marginHorizontal: 12,
+    padding: 16,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,183,3,0.1)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,183,3,0.2)",
   },
-  chip: {
-    width: 44,
-    height: 34,
-    borderRadius: 6,
-    backgroundColor: "rgba(255,255,255,0.65)",
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.18)",
-    padding: 6,
-    gap: 4,
+  secretsTitle: {
+    color: "#FFB703",
+    fontSize: 16,
+    fontWeight: "800",
+    marginBottom: 12,
   },
-  chipLine: { height: 3, width: 24, backgroundColor: "rgba(0,0,0,0.35)", borderRadius: 2 },
-
-  alias: { color: H_NAVY, fontWeight: "800", fontSize: 14, letterSpacing: 0.2, paddingHorizontal: 18 },
-  masked: { color: "#0F1720", fontWeight: "900", fontSize: 22, marginTop: 2, paddingHorizontal: 18 },
-
-  brandRow: { flex: 1, alignItems: "flex-end", justifyContent: "flex-end", padding: 18 },
-  mcRight: { flexDirection: "row", alignItems: "center" },
-  mcCircle: { width: 36, height: 36, borderRadius: 18, opacity: 0.95 },
-  visa: { fontWeight: "900", fontSize: 22, color: "#14213D" },
+  secretsWarning: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 12,
+    marginTop: 12,
+    fontStyle: "italic",
+  },
 
   actionsRow: {
     marginTop: 18,
@@ -357,7 +383,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-evenly",
     paddingHorizontal: 12,
   },
-  actionItem: { alignItems: "center", gap: 8 },
+  actionItem: {
+    alignItems: "center",
+    gap: 8,
+    padding: 8,
+    borderRadius: 12,
+  },
+  actionItemPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.95 }],
+  },
   actionIconWrap: {
     width: 44,
     height: 44,
@@ -367,36 +402,4 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.08)",
   },
   actionLabel: { color: "rgba(255,255,255,0.92)", fontSize: 12, fontWeight: "600" },
-
-  sheet: {
-    marginTop: 18,
-    marginHorizontal: 12,
-    padding: 14,
-    borderRadius: 18,
-    backgroundColor: "#0F151A",
-  },
-  txRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 6,
-    borderRadius: 12,
-  },
-  txIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  txName: { color: "#fff", fontWeight: "800", fontSize: 15 },
-  txMeta: { color: "rgba(255,255,255,0.6)", marginTop: 2, fontSize: 12 },
-  txAmount: { color: "#fff", fontWeight: "800", fontSize: 15, marginLeft: 8 },
-
-  seeAll: { alignItems: "center", paddingVertical: 14 },
-  seeAllText: { color: "#fff", fontWeight: "900", letterSpacing: 0.2, fontSize: 15 },
-
-  appleCta: { marginTop: 6, borderRadius: 14 },
 });

@@ -41,13 +41,38 @@ export async function createThreeWallets() {
   await SecureStore.setItemAsync(SEED_KEYS.savings, savings);
   await SecureStore.setItemAsync(SEED_KEYS.social, social);
 
+  // Verificar si hay una preferencia guardada del onboarding
+  const principalPreference = await AsyncStorage.getItem(PRINCIPAL_KEY);
+  const customName = await AsyncStorage.getItem('HIHODL_CUSTOM_PRINCIPAL_NAME');
+  
+  // Determinar el label para la cuenta principal
+  let principalLabel = 'Daily';
+  if (principalPreference === 'Other' && customName) {
+    principalLabel = customName;
+  } else if (principalPreference && principalPreference !== 'Other') {
+    principalLabel = principalPreference;
+  }
+
   const meta: WalletMeta[] = [
-    { label: 'Daily',   type: 'daily',   createdAt: Date.now() },
-    { label: 'Savings', type: 'savings', createdAt: Date.now() },
-    { label: 'Social',  type: 'social',  createdAt: Date.now() },
+    { label: principalLabel, type: 'daily',   createdAt: Date.now() },
+    { label: 'Savings',      type: 'savings', createdAt: Date.now() },
+    { label: 'Social',        type: 'social',  createdAt: Date.now() },
   ];
 
+  // Reordenar según la preferencia del usuario
+  if (principalPreference === 'Savings') {
+    // Mover Savings al principio
+    const [savingsWallet] = meta.splice(1, 1);
+    meta.unshift(savingsWallet);
+  } else if (principalPreference === 'Social') {
+    // Mover Social al principio
+    const [socialWallet] = meta.splice(2, 1);
+    meta.unshift(socialWallet);
+  }
+
   await AsyncStorage.setItem(META_KEY, JSON.stringify(meta));
+  await AsyncStorage.setItem(PRINCIPAL_KEY, meta[0].label);
+  
   return meta;
 }
 

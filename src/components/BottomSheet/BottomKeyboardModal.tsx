@@ -176,8 +176,9 @@ export default function BottomKeyboardModal({
       visible
       animationType="none"
       onRequestClose={onClose}
-      presentationStyle={Platform.OS === "ios" ? "overFullScreen" : "fullScreen"}
+      presentationStyle={Platform.OS === "ios" ? "overFullScreen" : "overFullScreen"}
       supportedOrientations={["portrait"]}
+      statusBarTranslucent={Platform.OS === "android"}
     >
       {/* scrim */}
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: "black", opacity: scrimAnimatedOpacity }]} />

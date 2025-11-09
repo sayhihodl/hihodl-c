@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { signInWithGoogle } from '@/lib/google-auth'; // ✅ sin /src
+import { signInWithGoogle } from '@/auth/oauth'; // ✅ Usar la implementación correcta con Supabase
 
 // ✅ para assets usa require relativo (no alias @)
 const BG     = require('../../assets/onboarding/onboarding-background-0.png');
@@ -111,7 +111,13 @@ export default function Choose() {
 
             <Pressable
               style={[s.cta, s.ctaLight]}
-              onPress={() => { signInWithGoogle(); }}
+              onPress={async () => {
+                const result = await signInWithGoogle();
+                if (result.error) {
+                  console.error('Google sign in error:', result.error);
+                  // El error se maneja en el store de auth
+                }
+              }}
               android_ripple={Platform.OS === 'android' ? { color: 'rgba(0,0,0,0.08)', radius: 220 } : undefined}
             >
               <View style={s.row}>

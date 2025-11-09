@@ -3,9 +3,9 @@ import { View, Text, TouchableOpacity, Image, ImageBackground, StyleSheet, Dimen
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import LogoIcon from '@assets/logos/logo-icon.svg';
 
 const BG    = require('@assets/onboarding/onboarding-background-0.png');
-const LOGO  = require('@assets/logos/HIHODL-white.png');
 const SLOGAN = require('@assets/logos/dont-save-hodl.png');
 
 const { height, width } = Dimensions.get('window');
@@ -15,7 +15,11 @@ export default function Welcome() {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(opacity, { toValue: 1, duration: 380, useNativeDriver: true }).start();
+    Animated.timing(opacity, { 
+      toValue: 1, 
+      duration: 250, // Más rápido: 250ms en lugar de 380ms
+      useNativeDriver: true 
+    }).start();
   }, [opacity]);
 
   return (
@@ -34,7 +38,7 @@ export default function Welcome() {
       <Animated.View style={{ flex: 1, opacity }}>
         {/* Centro: logo + slogan */}
         <View style={styles.center}>
-          <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+          <LogoIcon width={Math.min(width * 0.78, 420)} height={height * 0.18} />
           <Image source={SLOGAN} style={styles.slogan} resizeMode="contain" />
         </View>
 
@@ -62,14 +66,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  logo: {
-    width: Math.min(width * 0.78, 420),
-    height: height * 0.18,
-    marginBottom: -30,
-  },
   slogan: {
     width: Math.min(width * 0.65, 420),
     height: height * 0.06,
+    marginTop: -30,
     marginBottom: 180,
   },
   bottom: {

@@ -1,5 +1,5 @@
 // app/menu/settings/currency.tsx 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, Animated, TextInput } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,9 +7,11 @@ import { router } from "expo-router";
 
 import ScreenBg from "@/ui/ScreenBg";
 import GlassHeader from "@/ui/GlassHeader";
+import SearchField from "@/ui/SearchField";
 import colors, { legacy as legacyColors } from "@/theme/colors";
 import { CURRENCIES } from "@/constants/currencies";
 import { CTAButton } from "@/ui/CTAButton";
+import { useSettingsStore } from "@/store/settings";
 
 /* ===== theme ===== */
 const BG   = colors.navBg ?? legacyColors.BG ?? "#0B0B0F";
@@ -30,10 +32,19 @@ export default function CurrencyScreen() {
   const insets = useSafeAreaInsets();
   const HEADER_TOTAL = insets.top + HEADER_INNER_TOP + HEADER_CONTENT_H;
 
-  // TODO: hidratar desde tu store (Zustand/AsyncStorage)
-  const initialCurrency = "EUR";
-  const [selected, setSelected] = useState(initialCurrency);
+  // Leer currency del settings store
+  const currentCurrency = useSettingsStore((state) => state.currency);
+  const setCurrency = useSettingsStore((state) => state.setCurrency);
+  
+  const [selected, setSelected] = useState(currentCurrency || "USD");
   const [query, setQuery] = useState("");
+
+  // Sincronizar selected con el currency del store cuando cambie externamente
+  useEffect(() => {
+    if (currentCurrency && currentCurrency !== selected) {
+      setSelected(currentCurrency);
+    }
+  }, [currentCurrency, selected]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -50,11 +61,11 @@ export default function CurrencyScreen() {
   const closeScreen = () =>
     (router as any)?.canGoBack?.() ? router.back() : router.replace("/menu");
 
-  const hasChanges = selected !== initialCurrency;
+  const hasChanges = selected !== currentCurrency;
 
   const onSave = async () => {
-    // TODO: persist selected (store/AsyncStorage)
-    // p.ej: useSettingsStore.getState().setCurrency(selected)
+    // Guardar en el store (se persiste automáticamente)
+    setCurrency(selected);
     router.replace("/menu"); // ← evita volver a Currency al hacer back
   };
 
@@ -84,22 +95,18 @@ export default function CurrencyScreen() {
             </View>
 
             {/* Search */}
-            <View style={[styles.searchInHeader, { marginTop: ROW_SEARCH_GAP, height: SEARCH_H }]}>
-              <Ionicons name="search" size={18} color={SUB} />
-              <TextInput
+            <View style={{ marginTop: ROW_SEARCH_GAP }}>
+              <SearchField
                 value={query}
                 onChangeText={setQuery}
                 placeholder="Search by code or name"
-                placeholderTextColor={SUB}
-                style={styles.input}
-                autoCapitalize="characters"
-                autoCorrect={false}
+                height={SEARCH_H}
+                onClear={() => setQuery("")}
+                inputProps={{
+                  autoCapitalize: "characters",
+                  autoCorrect: false,
+                }}
               />
-              {query ? (
-                <Pressable onPress={() => setQuery("")} hitSlop={8}>
-                  <Ionicons name="close-circle" size={18} color={SUB} />
-                </Pressable>
-              ) : null}
             </View>
 
             <View style={{ height: AFTER_SEARCH_GAP }} />
@@ -181,17 +188,6 @@ const styles = StyleSheet.create({
   title: { color: TEXT, fontSize: 18, fontWeight: "800", textAlign: "center" },
 
   // Search
-  searchInHeader: {
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    backgroundColor: GLASS_BG,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: GLASS_BORDER,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  input: { flex: 1, color: TEXT, fontSize: 15 },
 
   // Rows
   row: {

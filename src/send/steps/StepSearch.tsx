@@ -11,6 +11,7 @@ import * as Haptics from "expo-haptics";
 
 import GlassHeader from "@/ui/GlassHeader";
 import Row from "@/ui/Row";
+import SearchField from "@/ui/SearchField";
 import { legacy, glass } from "@/theme/colors";
 import { parseRecipient } from "@/send/parseRecipient";
 import { ChainBadge } from "@/lib/chainBadges";
@@ -218,29 +219,23 @@ export default function StepSearch({ dragGateRef }: StepSearchProps) {
               </View>
             </View>
 
-            <View style={[styles.searchInHeader, { marginTop: 14, height: 50, marginBottom: 10 }]}>
-              <Ionicons name="search" size={18} color={SUB} />
-              <TextInput
+            <View style={{ marginTop: 14, marginBottom: 10 }}>
+              <SearchField
                 ref={searchRef}
                 value={q}
                 onChangeText={setQ}
                 placeholder="Name, @alias, phone, email, ENS, address, IBAN…"
-                placeholderTextColor={SUB}
-                style={styles.input}
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="search"
-                selectTextOnFocus
-                onSubmitEditing={useParsed}
+                height={50}
+                onPaste={pasteFromClipboard}
+                onClear={() => setQ("")}
+                inputProps={{
+                  autoCapitalize: "none",
+                  autoCorrect: false,
+                  returnKeyType: "search",
+                  selectTextOnFocus: true,
+                  onSubmitEditing: useParsed,
+                }}
               />
-              <Pressable onPress={pasteFromClipboard} hitSlop={8} accessibilityLabel="Paste from clipboard">
-                <Ionicons name="clipboard-outline" size={18} color={SUB} />
-              </Pressable>
-              {!!q && (
-                <Pressable onPress={() => setQ("")} hitSlop={8} accessibilityLabel="Clear search">
-                  <Ionicons name="close-circle" size={18} color={SUB} />
-                </Pressable>
-              )}
             </View>
           </>
         }
@@ -445,17 +440,6 @@ const styles = StyleSheet.create({
   },
   title: { color: legacy.TEXT, fontSize: 18, fontWeight: "800", textAlign: "center" },
 
-  searchInHeader: {
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    backgroundColor: GLASS_BG,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: GLASS_BORDER,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  input: { flex: 1, color: "#fff", fontSize: 15 },
 
   sectionTitle: { color: SUB, fontSize: 12, letterSpacing: 0.3, marginTop: 10, marginBottom: 6 },
 

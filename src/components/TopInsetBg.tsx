@@ -5,8 +5,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TopInsetBg({ color }: { color: string }) {
   const { top } = useSafeAreaInsets();
-  // En Android el StatusBar puede pintarse directamente; en iOS cubrimos el "notch"
-  if (Platform.OS !== "ios" || top === 0) return null;
+  // En Android con StatusBar translúcido también necesitamos cubrir el área del notch
+  if (top === 0) return null;
   return (
     <View
       pointerEvents="none"

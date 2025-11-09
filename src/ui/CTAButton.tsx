@@ -27,6 +27,9 @@ export type CTAButtonProps = {
   labelColor?: string;
   /** 👉 tamaño visual del botón */
   size?: "md" | "lg"; // NEW
+  /** 👉 Accesibilidad */
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 };
 
 export function CTAButton({
@@ -43,6 +46,8 @@ export function CTAButton({
   fullWidth = true,
   labelColor,
   size = "lg", // NEW (por defecto igual que antes)
+  accessibilityLabel,
+  accessibilityHint,
 }: CTAButtonProps) {
   const BRAND = colors.cta ?? legacyColors.CTA ?? "#FFB703";
   const BRAND_TEXT = colors.ctaTextOn ?? legacyColors.CTA_ON ?? "#0B0B0F";
@@ -96,6 +101,10 @@ export function CTAButton({
       activeOpacity={0.85}
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: !!disabled }}
       style={[
         styles.btn,
         sizeStyle, // NEW

@@ -6,42 +6,24 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-
-import * as W from '@/lib/walletsetup';
-const { renameDailyLabel, setPrincipalByLabel } = W as {
-  renameDailyLabel: (label: string) => Promise<void>;
-  setPrincipalByLabel: (label: string) => Promise<void>;
-};
+import { CTAButton } from '@/ui/CTAButton';
+import { SuccessAnimation } from '@/components/SuccessAnimation';
+import { OnboardingProgressBar } from '@/components/OnboardingProgressBar';
+import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
+import colors from '@/theme/colors';
+import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PRINCIPAL_KEY } from '@/lib/walletsetup';
 
 const BG = require('@assets/wallet-setup/wallet-setup-principal-account.png');
 
 const OPTIONS = ['Daily', 'Savings', 'Social', 'Other'] as const;
 type Opt = typeof OPTIONS[number];
 
-async function ensureWallets() {
-  try {
-    if (typeof (W as any).ensureDefaultWallets === 'function') {
-      await (W as any).ensureDefaultWallets(); return;
-    }
-    if (typeof (W as any).initDefaultWallets === 'function') {
-      await (W as any).initDefaultWallets(); return;
-    }
-    if (typeof (W as any).getWalletsMeta === 'function') {
-      const meta = await (W as any).getWalletsMeta();
-      const labels: string[] = Array.isArray(meta?.labels) ? meta.labels : [];
-      const needDaily = !labels.includes('Daily');
-      const needSavings = !labels.includes('Savings');
-      const needSocial = !labels.includes('Social');
-      if ((needDaily || needSavings || needSocial) && typeof (W as any).createDefaultWallets === 'function') {
-        await (W as any).createDefaultWallets();
-      }
-    }
-  } catch {}
-}
-
 export default function PrincipalAccount() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { saveProgress } = useOnboardingProgress();
 
   const [selected, setSelected] = useState<Opt | null>(null);
   const [customName, setCustomName] = useState('');
@@ -98,20 +80,32 @@ export default function PrincipalAccount() {
         return;
       }
 
-      // preparar wallets (best-effort)
-      await ensureWallets();
-
-      // aplicar principal
-      if (effective === 'Other') {
-        const newLabel = customName.trim();
-        try { await renameDailyLabel(newLabel); } catch (e) { console.log('renameDailyLabel err', e); }
-        try { await setPrincipalByLabel(newLabel); } catch (e) { console.log('setPrincipalByLabel err', e); }
-      } else {
-        try { await setPrincipalByLabel(effective); } catch (e) { console.log('setPrincipalByLabel err', e); }
+      // NO crear wallets aquí - se crearán cuando el usuario presione "Create Account" en el dashboard
+      // Las wallets se crean solo cuando el usuario explícitamente lo solicita
+      
+      // Guardar solo la preferencia del usuario para cuando cree las cuentas
+      // Esto se usará cuando el usuario presione "Create Account" en el dashboard
+      const principalPreference = effective === 'Other' ? customName.trim() : effective;
+      try {
+        await AsyncStorage.setItem(PRINCIPAL_KEY, principalPreference);
+        if (effective === 'Other') {
+          // Guardar también el nombre personalizado para usar cuando se creen las wallets
+          await AsyncStorage.setItem('HIHODL_CUSTOM_PRINCIPAL_NAME', customName.trim());
+        }
+      } catch (e) {
+        console.log('Error saving principal preference:', e);
       }
 
-      // navega a success sí o sí
-      router.replace('/onboarding/success');
+      // Animación de éxito
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      // Guardar progreso
+      await saveProgress('principalaccount');
+      
+      // navega a success sí o sí con delay para feedback
+      setTimeout(() => {
+        router.replace('/onboarding/success');
+      }, 400);
     } finally {
       setSubmitting(false);
     }
@@ -133,7 +127,8 @@ export default function PrincipalAccount() {
       </Pressable>
 
       {/* GRID */}
-      <View style={[styles.grid, { paddingTop: 160 + insets.top }]}>
+      <View style={[styles.grid, { paddingTop: 140 + insets.top }]}>
+        <OnboardingProgressBar currentStep="principalaccount" />
         {OPTIONS.map(opt => {
           const active = selected === opt;
           return (
@@ -144,6 +139,8 @@ export default function PrincipalAccount() {
                 onPress={() => pick(opt)}
                 style={[styles.tile, active && styles.tileActive]}
                 accessibilityRole="button"
+                accessibilityLabel={`Select ${opt} as principal account`}
+                accessibilityHint="Choose this wallet as your main account"
                 accessibilityState={{ selected: active }}
               >
                 <Text style={[styles.tileTxt, active && styles.tileTxtActive]}>{opt}</Text>
@@ -154,14 +151,14 @@ export default function PrincipalAccount() {
       </View>
 
       {/* CTA */}
-      <View style={[styles.bottom, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity
+      <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
+        <CTAButton
+          title={submitting ? 'Continuing…' : 'Continue'}
           onPress={continueFlow}
           disabled={submitting}
-          style={[styles.btn, submitting ? styles.btnDisabled : styles.btnPrimary]}
-        >
-          <Text style={[styles.btnText, { color: '#0A1A24' }]}>{submitting ? 'Continuing…' : 'Continue'}</Text>
-        </TouchableOpacity>
+          variant="primary"
+          fullWidth={true}
+        />
       </View>
 
       {/* SHEET Other */}
@@ -185,14 +182,17 @@ export default function PrincipalAccount() {
             autoCapitalize="words"
             returnKeyType="done"
             onSubmitEditing={() => hasCustom && setSheetOpen(false)}
+            accessibilityLabel="Custom wallet name"
+            accessibilityHint="Enter a custom name for your principal wallet"
           />
-          <TouchableOpacity
+          <CTAButton
+            title="Save"
             onPress={() => hasCustom && setSheetOpen(false)}
-            style={[styles.sheetBtn, hasCustom ? styles.btnPrimary : styles.btnDisabled]}
             disabled={!hasCustom}
-          >
-            <Text style={[styles.btnText, { color: '#0A1A24' }]}>Save</Text>
-          </TouchableOpacity>
+            variant="primary"
+            fullWidth={true}
+            style={{ marginTop: 8 }}
+          />
         </Animated.View>
       </KeyboardAvoidingView>
     </View>
@@ -202,31 +202,43 @@ export default function PrincipalAccount() {
 const TILE_H = 110;
 
 const styles = StyleSheet.create({
-  close: { position: 'absolute', right: 18, width: 28, height: 28, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
-  closeTxt: { color: '#CFE3EC', fontSize: 24, fontWeight: '700', lineHeight: 24 },
+  close: { position: 'absolute', left: 18, width: 36, height: 36, alignItems: 'center', justifyContent: 'center', zIndex: 10, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.08)' },
+  closeTxt: { color: colors.textMuted, fontSize: 26, fontWeight: '800', lineHeight: 26 },
 
   grid: {
     position: 'absolute', left: 24, right: 24,
     flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 16,
   },
-  tile: { height: TILE_H, borderRadius: 20, backgroundColor: '#2D2F36', alignItems: 'center', justifyContent: 'center' },
-  tileActive: { backgroundColor: '#FFB703' },
-  tileTxt: { color: '#E5E7EB', fontWeight: '800', fontSize: 18 },
-  tileTxtActive: { color: '#0A1A24' },
+  tile: { 
+    height: TILE_H, 
+    borderRadius: 20, 
+    backgroundColor: 'rgba(255,255,255,0.06)', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  tileActive: { backgroundColor: colors.cta, borderColor: colors.cta },
+  tileTxt: { color: colors.textMuted, fontWeight: '800', fontSize: 18 },
+  tileTxtActive: { color: colors.ctaTextOn },
 
   bottom: { position: 'absolute', left: 24, right: 24, bottom: 24 },
-  btn: { height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
-  btnPrimary: { backgroundColor: '#FFB703' },
-  btnDisabled: { backgroundColor: '#374151' },
-  btnText: { fontWeight: '800', fontSize: 18 },
-
   sheet: {
     position: 'absolute', left: 0, right: 0, bottom: 0,
-    backgroundColor: '#0B2E3B', padding: 16,
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    backgroundColor: colors.sheetBgSolid, padding: 20,
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.dividerOnDark,
   },
-  handle: { width: 64, height: 5, borderRadius: 3, backgroundColor: '#CFE3EC' },
-  sheetTitle: { color: '#fff', fontSize: 18, fontWeight: '800', textAlign: 'center', marginBottom: 12 },
-  input: { borderWidth: 1, borderColor: '#CFE3EC', color: '#fff', borderRadius: 12, padding: 12, backgroundColor: 'transparent' },
-  sheetBtn: { marginTop: 12, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  handle: { width: 64, height: 5, borderRadius: 3, backgroundColor: colors.sheetHandle, marginBottom: 16 },
+  sheetTitle: { color: colors.text, fontSize: 22, fontWeight: '900', textAlign: 'center', marginBottom: 16, letterSpacing: -0.5 },
+  input: { 
+    borderWidth: StyleSheet.hairlineWidth, 
+    borderColor: colors.dividerOnDark, 
+    color: colors.text, 
+    borderRadius: 16, 
+    padding: 16, 
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    fontSize: 16,
+  },
 });

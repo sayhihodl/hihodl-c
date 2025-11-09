@@ -7,6 +7,8 @@ type SettingsState = {
   showBalances: boolean;
   toggleBalances(): void;
   setShowBalances(v: boolean): void;
+  currency: string; // ISO 4217 currency code (e.g., "USD", "EUR", "GBP")
+  setCurrency(code: string): void;
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -15,6 +17,8 @@ export const useSettingsStore = create<SettingsState>()(
       showBalances: true,
       toggleBalances: () => set({ showBalances: !get().showBalances }),
       setShowBalances: (v) => set({ showBalances: v }),
+      currency: "USD", // Default currency
+      setCurrency: (code: string) => set({ currency: code }),
     }),
     {
       name: "hihodl-settings",

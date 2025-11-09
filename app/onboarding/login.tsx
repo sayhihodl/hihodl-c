@@ -9,10 +9,10 @@ import {
   StyleSheet,
 } from 'react-native';
 import { router } from 'expo-router';
+import LogoIcon from '@assets/logos/logo-icon.svg';
 
 // Background correcto (archivo en assets/onboarding/onboarding-background-0.png)
 const BG   = require('@assets/onboarding/onboarding-background-0.png');
-const LOGO = require('@assets/logos/HIHODL-white.png');
 
 // Iconos (opcionales)
 let G_ICON: any, A_ICON: any;
@@ -30,7 +30,9 @@ export default function Login() {
       </View>
 
       <View style={styles.container}>
-        <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+        <View style={styles.logo}>
+          <LogoIcon width={120} height={48} />
+        </View>
 
         <Pressable style={[styles.cta, styles.ctaLight]} onPress={() => { /* TODO: Google Auth */ }}>
           <View style={styles.row}>
@@ -60,7 +62,7 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'flex-end', padding: 24, gap: 12 },
-  logo: { width: 120, height: 48, position: 'absolute', top: 24, left: 24 },
+  logo: { position: 'absolute', top: 24, left: 24 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'center' },
   icon: { width: 20, height: 20 },
   cta: { height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },

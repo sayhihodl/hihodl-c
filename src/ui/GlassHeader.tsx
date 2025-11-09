@@ -1,17 +1,22 @@
 // ui/GlassHeader.tsx
-import React from "react";
-import { View, StyleSheet, Animated, ViewStyle } from "react-native";
+import React, { useMemo } from "react";
+import { View, Text, StyleSheet, Animated, ViewStyle, Platform } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 
 type GlassHeaderProps = {
-  scrolly: Animated.Value;
+  scrolly?: Animated.Value;
   height?: number;
   innerTopPad?: number;
 
   leftSlot?: React.ReactNode;
   centerSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
+  
+  // Nueva API: titlePrimary/titleSecondary para simplificar
+  titlePrimary?: string;
+  titleSecondary?: string;
+  rightAccessory?: React.ReactNode;
 
   /** Control de estética del fondo */
   blurRange?: [number, number, number];
@@ -37,6 +42,9 @@ export default function GlassHeader({
   leftSlot,
   centerSlot,
   rightSlot,
+  titlePrimary,
+  titleSecondary,
+  rightAccessory,
   blurRange = [0, 12, 60],
   solidRange = [0, 80, 140],
   solidColor = "transparent",
@@ -50,20 +58,39 @@ export default function GlassHeader({
   centerWidthPct,
   centerMaxWidth,
 }: GlassHeaderProps) {
+  // Si se pasan titlePrimary/titleSecondary, construir centerSlot automáticamente
+  const resolvedCenterSlot = centerSlot || (titlePrimary ? (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <Text style={{ fontSize: 16, fontWeight: "700", color: "#fff" }}>{titlePrimary}</Text>
+      {titleSecondary && (
+        <Text style={{ fontSize: 14, fontWeight: "600", color: "rgba(255,255,255,0.7)" }}>
+          {titleSecondary}
+        </Text>
+      )}
+    </View>
+  ) : null);
+  
+  const resolvedRightSlot = rightSlot || rightAccessory;
   const insets = useSafeAreaInsets();
   const TOTAL_H = insets.top + innerTopPad + height;
 
-  const blurOpacity = scrolly.interpolate({
-    inputRange: blurRange,
-    outputRange: [0, 0.6, 1],
-    extrapolate: "clamp",
-  });
+  const staticZeroOpacity = useMemo(() => new Animated.Value(0), []);
 
-  const solidOpacity = scrolly.interpolate({
-    inputRange: solidRange,
-    outputRange: [0, 0, 0.45],
-    extrapolate: "clamp",
-  });
+  const blurOpacity = scrolly
+    ? scrolly.interpolate({
+        inputRange: blurRange,
+        outputRange: [0, 0.6, 1],
+        extrapolate: "clamp",
+      })
+    : staticZeroOpacity;
+
+  const solidOpacity = scrolly
+    ? scrolly.interpolate({
+        inputRange: solidRange,
+        outputRange: [0, 0, 0.45],
+        extrapolate: "clamp",
+      })
+    : staticZeroOpacity;
 
   // Estilo dinámico del centro cuando se fija porcentaje / máximo
   const centerSizing =
@@ -116,10 +143,10 @@ export default function GlassHeader({
           <View style={[styles.side, { width: sideWidth }]}>{leftSlot}</View>
 
           <View style={[styles.center, ...centerSizing]} pointerEvents="box-none">
-            {centerSlot}
+            {resolvedCenterSlot}
           </View>
 
-          <View style={[styles.side, { width: sideWidth, alignItems: "flex-end" }]}>{rightSlot}</View>
+          <View style={[styles.side, { width: sideWidth, alignItems: "flex-end" }]}>{resolvedRightSlot}</View>
         </View>
       </SafeAreaView>
 

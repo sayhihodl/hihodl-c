@@ -1,5 +1,8 @@
-import { API_URL } from "@/config/runtime";
+// src/send/api/sendPayment.ts
+// Updated to use new API client
+import { sendPayment as sendPaymentService } from '@/services/api/payments.service';
 import type { ChainKey } from "@/config/sendMatrix";
+import { API_URL } from "@/config/runtime";
 
 export type SendParams = {
   to: string;
@@ -7,6 +10,10 @@ export type SendParams = {
   chain: ChainKey;
   amount: string; // como string para no perder precisión
   account: "daily" | "savings" | "social";
+  autoBridge?: {
+    plan: Array<{ chain: ChainKey; amount: number }>;
+    sourceChains: ChainKey[];
+  };
 };
 
 export type SendResult = {
@@ -20,7 +27,11 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-export async function sendPayment(p: SendParams): Promise<SendResult> {
+/**
+ * Send payment using backend API
+ * Falls back to mock if API_URL is not configured
+ */
+export async function sendPayment(p: SendParams, idempotencyKey?: string): Promise<SendResult> {
   // Mock automático si no hay API_URL todavía
   if (!API_URL) {
     await sleep(600);
@@ -32,21 +43,32 @@ export async function sendPayment(p: SendParams): Promise<SendResult> {
     };
   }
 
-  const res = await fetch(`${API_URL}/payments/send`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(p),
-  });
+  try {
+    // Use new API service
+    const response = await sendPaymentService(
+      {
+        to: p.to,
+        tokenId: p.tokenId,
+        chain: p.chain,
+        amount: p.amount,
+        account: p.account,
+        autoBridge: p.autoBridge,
+      },
+      idempotencyKey
+    );
 
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Send failed (${res.status}) ${txt}`.trim());
+    // Convert fee from string to number if present
+    return {
+      txId: response.txId,
+      status: response.status,
+      ts: response.ts,
+      fee: response.fee ? parseFloat(response.fee) : undefined,
+    };
+  } catch (error) {
+    // Re-throw with better error message
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(`Send payment failed: ${String(error)}`);
   }
-
-  const json = (await res.json()) as SendResult;
-  // Validación mínima
-  if (!json?.txId) throw new Error("Send failed: missing txId");
-  return json;
 }

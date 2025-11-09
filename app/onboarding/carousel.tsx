@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { CTAButton } from '@/ui/CTAButton';
+import colors from '@/theme/colors';
 
 // ✅ importa las imágenes con el alias @assets (carpeta /assets)
 // app/onboarding/carousel.tsx  ✅ CORRECTO
@@ -78,25 +80,52 @@ export default function Carousel() {
 
       {/* Controles inferiores */}
       <View style={[styles.controls, { paddingBottom: insets.bottom + 24 }]}>
-        <TouchableOpacity onPress={goBack} hitSlop={12} style={styles.smallBtn}>
-          <Text style={styles.smallTxt}>{index === 0 ? 'Back' : 'Back'}</Text>
-        </TouchableOpacity>
+        {index > 0 && (
+          <TouchableOpacity 
+            onPress={goBack} 
+            hitSlop={12} 
+            style={styles.smallBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Go back to previous slide"
+          >
+            <Text style={styles.smallTxt}>Back</Text>
+          </TouchableOpacity>
+        )}
 
-        <View style={styles.dots}>
+        <View 
+          style={styles.dots}
+          accessibilityRole="tablist"
+          accessibilityLabel={`Slide ${index + 1} of ${SLIDES.length}`}
+        >
           {SLIDES.map((_, i) => (
-            <View key={i} style={[styles.dot, index === i && styles.dotActive]} />
+            <View 
+              key={i} 
+              style={[styles.dot, index === i && styles.dotActive]}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: index === i }}
+            />
           ))}
         </View>
 
-        <TouchableOpacity
-          onPress={goNext}
-          hitSlop={12}
-          style={[styles.cta, index === SLIDES.length - 1 && styles.ctaPrimary]}
-        >
-          <Text style={[styles.ctaTxt, index === SLIDES.length - 1 && styles.ctaTxtDark]}>
-            {index === SLIDES.length - 1 ? 'Start' : 'Next'}
-          </Text>
-        </TouchableOpacity>
+        {index === SLIDES.length - 1 ? (
+          <CTAButton
+            title="Start"
+            onPress={goNext}
+            variant="primary"
+            fullWidth={false}
+            style={styles.ctaButton}
+          />
+        ) : (
+          <TouchableOpacity
+            onPress={goNext}
+            hitSlop={12}
+            style={styles.smallBtnNext}
+            accessibilityRole="button"
+            accessibilityLabel="Go to next slide"
+          >
+            <Text style={styles.smallTxt}>Next</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -114,62 +143,83 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 28,
+    fontWeight: '900',
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowRadius: 6,
+    textShadowRadius: 8,
     textShadowOffset: { width: 0, height: 2 },
-    marginBottom: 15,
-    minHeight: 40,
+    marginBottom: 16,
+    minHeight: 44,
     justifyContent: 'center',
+    letterSpacing: -0.5,
   },
   body: {
     color: '#DAE6EE',
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 24,
     textAlign: 'center',
-    maxWidth: 320,
+    maxWidth: 340,
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowRadius: 4,
     textShadowOffset: { width: 0, height: 1 },
-    minHeight: 80,
+    minHeight: 88,
     justifyContent: 'center',
+    fontWeight: '500',
   },
 
   controls: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: 20,
+    right: 20,
     bottom: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
   smallBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  smallTxt: { color: '#CFE3EC', fontWeight: '700' },
+  smallBtnNext: {
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  smallTxt: { color: colors.textMuted, fontWeight: '700', fontSize: 15 },
+  ctaButton: { paddingHorizontal: 24, minWidth: 100 },
 
   dots: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 8 },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.35)',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.3)',
   },
-  dotActive: { backgroundColor: '#FFB703' },
-
-  cta: {
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+  dotActive: { 
+    backgroundColor: colors.cta,
+    width: 24,
+    shadowColor: colors.cta,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 3, // Android shadow
   },
-  ctaPrimary: { backgroundColor: '#FFB703' },
-  ctaTxt: { color: '#FFFFFF', fontWeight: '800' },
-  ctaTxtDark: { color: '#0A1A24' },
 });

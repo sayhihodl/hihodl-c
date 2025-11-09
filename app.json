@@ -1,9 +1,23 @@
 {
   "expo": {
-    "name": "hihodl-yes",
+    "name": "HIHODL",
     "slug": "hihodl-yes",
+    "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "orientation": "portrait",
     "scheme": "hihodl",
     "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/logos/HIHODL.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -14,14 +28,23 @@
         "android.permission.USE_FINGERPRINT",
         "android.permission.CAMERA"
       ],
-      "package": "com.sayhihodl.hihodlyes"
+      "package": "com.sayhihodl.hihodlyes",
+      "versionCode": 1
     },
     "ios": {
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Usamos Face ID/Touch ID para proteger tu cuenta.",
-        "NSCameraUsageDescription": "Usamos la cámara para escanear códigos QR de pago."
+        "NSFaceIDUsageDescription": "HIHODL usa Face ID/Touch ID para proteger tu cuenta y autorizar transacciones de forma segura.",
+        "NSCameraUsageDescription": "HIHODL usa la cámara para escanear códigos QR de direcciones de wallet y facilitar el envío de pagos.",
+        "NSPhotoLibraryUsageDescription": "Permite seleccionar imágenes de códigos QR desde tu galería.",
+        "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.sayhihodl.hihodlyes"
+      "bundleIdentifier": "com.sayhihodl.hihodlyes",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "supportsTablet": true,
+      "requireFullScreen": false
     },
     "plugins": [
       "expo-font",
@@ -29,16 +52,38 @@
       "expo-local-authentication",
       "expo-router",
       "expo-web-browser",
-      "expo-barcode-scanner"
+      "expo-barcode-scanner",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "minifyEnabled": true,
+            "shrinkResources": true,
+            "enableMinifyInReleaseBuilds": true
+          },
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ]
     ],
     "extra": {
-      "EXPO_PUBLIC_FIREBASE_API_KEY": "...",
-      "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "hihodlapp.web.app",
-      "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "hihodlapp",
-      "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "928131091332",
-      "EXPO_PUBLIC_FIREBASE_APP_ID": "1:928131091332:web:b2b41bde81247e25892bd1",
-      "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "xxxxxxxxxx-aaaaaaaaaaaaaaaaaaaaaaaaaaaa.apps.googleusercontent.com",
-      "EXPO_PUBLIC_FEATURE_DISCOVER": "false"
+      "EXPO_PUBLIC_SUPABASE_URL": "${EXPO_PUBLIC_SUPABASE_URL}",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "${EXPO_PUBLIC_SUPABASE_ANON_KEY}",
+      "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID}",
+      "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID}",
+      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "${EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID}",
+      "EXPO_PUBLIC_ALCHEMY_API_KEY": "${EXPO_PUBLIC_ALCHEMY_API_KEY}",
+      "EXPO_PUBLIC_HELIUS_API_KEY": "${EXPO_PUBLIC_HELIUS_API_KEY}",
+      "EXPO_PUBLIC_API_URL": "${EXPO_PUBLIC_API_URL}",
+      "EXPO_PUBLIC_FEATURE_DISCOVER": "${EXPO_PUBLIC_FEATURE_DISCOVER}",
+      "EXPO_PUBLIC_PRIVY_APP_ID": "${EXPO_PUBLIC_PRIVY_APP_ID}",
+      "EXPO_PUBLIC_PRIVY_CLIENT_ID": "${EXPO_PUBLIC_PRIVY_CLIENT_ID}",
+      "router": {},
+      "eas": {
+        "projectId": "aaf7f217-c7bb-4d7d-9b4e-dd93f82d22db"
+      }
     }
   }
 }

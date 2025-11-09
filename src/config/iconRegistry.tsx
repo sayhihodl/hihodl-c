@@ -100,50 +100,311 @@ function resolveRemoteLogo(tokenId: string): { uri: string } | undefined {
   // 1) URL directa
   if (isHttpUrl(key)) return { uri: key };
 
-  // 2) Mint SPL (Jupiter)
+  // 2) Mint SPL (Jupiter) - PRIORITARIO para tokens de Solana
   if (isSolMintLike(key)) {
     return { uri: `https://assets.jup.ag/icons/${key}.png` };
   }
 
-  // 3) Catálogo
-  const meta: any = TOKENS_CATALOG.find((t) => t.id === key);
-  if (!meta) return undefined;
-
-  if (meta.logoURI && isHttpUrl(meta.logoURI)) {
-    return { uri: String(meta.logoURI) };
+  // 3) Catálogo - buscar por ID exacto PRIMERO (tokenId original), luego normalizado
+  // IMPORTANTE: Buscar primero con el tokenId original porque los IDs en el catálogo son exactos (ej: "BONK.token")
+  let meta: any = TOKENS_CATALOG.find((t) => 
+    t.id === tokenId || 
+    t.id?.toLowerCase() === tokenId?.toLowerCase()
+  );
+  // Si no se encuentra con el original, intentar con el key normalizado
+  if (!meta) {
+    meta = TOKENS_CATALOG.find((t) => 
+      t.id === key || 
+      t.id?.toLowerCase() === key?.toLowerCase()
+    );
   }
-
-  // 4) TrustWallet / Jupiter por addresses
-  const prefer: string[] = [
-    meta.nativeChainId,
-    "eip155:1",        // Ethereum
-    "solana:mainnet",  // Solana
-    "eip155:8453",     // Base
-    "eip155:137",      // Polygon
-  ].filter(Boolean);
-
-  for (const cid of prefer) {
-    const addr = getAddressFromCatalog(key, cid);
-    if (!addr) continue;
-
-    if (cid === "solana:mainnet") {
-      // mejor cobertura para Solana
-      return { uri: `https://assets.jup.ag/icons/${addr}.png` };
-    }
-
-    if (cid.startsWith("eip155:")) {
-      const chain =
-        cid === "eip155:1"   ? "ethereum" :
-        cid === "eip155:8453"? "base"     :
-        cid === "eip155:137" ? "polygon"  :
-        "ethereum";
-      return {
-        uri: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${chain}/assets/${addr}/logo.png`,
+  
+  // Si encontramos metadata del catálogo, intentar múltiples fuentes en orden de confiabilidad:
+  if (meta) {
+    // 3a) Para tokens de Solana, usar Jupiter PRIMERO SIEMPRE (más confiable que CoinGecko)
+    if (meta.nativeChainId === "solana:mainnet" || (meta.supportedChains as string[])?.includes("solana:mainnet")) {
+      // Mapa de tokens conocidos de Solana en Jupiter (CON mint addresses)
+      const symbolLower = (meta.symbol || "").toLowerCase();
+      const jupiterKnown: Record<string, string> = {
+        "bonk": "DezXAZ8z7PnrnRJjz3wXBoRgixH6nWoQKrPjjkwyqS2P",
+        "jup": "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
+        "wif": "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+        "ray": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+        "orca": "orcaEKTdK7LKz57vaAYr9QeNsVcfz6ygEbGeQ3Pnj",
+        "jto": "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL",
+        "msol": "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+        "jitosol": "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGHPn",
       };
+      
+      // Intentar obtener el mint address del catálogo primero
+      const solAddr = getAddressFromCatalog(key, "solana:mainnet");
+      if (solAddr) {
+        return { uri: `https://assets.jup.ag/icons/${solAddr}.png` };
+      }
+      
+      // Si no hay address pero el symbol está en el mapa, usar el mint address conocido
+      if (symbolLower && jupiterKnown[symbolLower]) {
+        const mintAddr = jupiterKnown[symbolLower];
+        // Intentar múltiples fuentes para tokens de Solana
+        // 1. Jupiter (primera opción)
+        // 2. TrustWallet GitHub (fallback confiable)
+        // Devolver ambas URLs y que el componente intente ambas
+        return { 
+          uri: `https://assets.jup.ag/icons/${mintAddr}.png`,
+          // Agregar fallback alternativo en el componente
+          _fallbackUri: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/${mintAddr}/logo.png`
+        };
+      }
+      
+      // Si no hay ninguna de las anteriores, intentar TrustWallet como último recurso
+      // (usando address del catálogo si existe - usar solAddr2 para evitar duplicado)
+      const solAddr2 = getAddressFromCatalog(key, "solana:mainnet");
+      if (solAddr2) {
+        return { 
+          uri: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/${solAddr2}/logo.png`
+        };
+      }
+      
+      // Si todo falla, retornar undefined para que use el fallback inicial
+      return undefined;
+    }
+    
+    // 3b) Para tokens NO-Solana, usar logoURI del catálogo (CoinGecko)
+    if (meta.logoURI && isHttpUrl(meta.logoURI)) {
+      return { uri: String(meta.logoURI) };
+    }
+  }
+  
+  // 4) TrustWallet / Jupiter por addresses (para tokens no encontrados en catálogo)
+  if (meta) {
+    const prefer: string[] = [
+      meta.nativeChainId,
+      "solana:mainnet",  // Priorizar Solana para usar Jupiter
+      "eip155:1",        // Ethereum
+      "eip155:8453",     // Base
+      "eip155:137",      // Polygon
+    ].filter(Boolean);
+
+    for (const cid of prefer) {
+      const addr = getAddressFromCatalog(key, cid);
+      if (!addr) continue;
+
+      if (cid === "solana:mainnet") {
+        // mejor cobertura para Solana - Jupiter es más confiable
+        return { uri: `https://assets.jup.ag/icons/${addr}.png` };
+      }
+
+      if (cid.startsWith("eip155:")) {
+        const chain =
+          cid === "eip155:1"   ? "ethereum" :
+          cid === "eip155:8453"? "base"     :
+          cid === "eip155:137" ? "polygon"  :
+          "ethereum";
+        // Usar TrustWallet como fallback para EVM
+        return {
+          uri: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${chain}/assets/${addr}/logo.png`,
+        };
+      }
     }
   }
 
   return undefined;
+}
+
+/* ============================ Componente con múltiples fallbacks ============================ */
+function ImageWithMultipleFallbacks({
+  primaryUri,
+  fallbackUri,
+  size,
+  onError,
+}: {
+  primaryUri: string;
+  fallbackUri?: string;
+  size: number;
+  onError?: () => void;
+}): React.ReactNode {
+  const [currentUri, setCurrentUri] = React.useState(primaryUri);
+  const [hasError, setHasError] = React.useState(false);
+
+  const handleError = React.useCallback(() => {
+    if (!hasError && fallbackUri && currentUri === primaryUri) {
+      // Intentar fallback si existe
+      setCurrentUri(fallbackUri);
+      setHasError(false); // Resetear para intentar fallback
+    } else {
+      // Si el fallback también falló, llamar al onError del padre
+      setHasError(true);
+      onError?.();
+    }
+  }, [hasError, fallbackUri, currentUri, primaryUri, onError]);
+
+  return (
+    <Image
+      source={{ uri: currentUri }}
+      style={{ width: size, height: size, borderRadius: size / 2 }}
+      resizeMode="cover"
+      onError={handleError}
+    />
+  );
+}
+
+function RemoteIconWithFallback({
+  remote,
+  tokenId,
+  size,
+  inner,
+  withCircle,
+}: {
+  remote: { uri: string; _fallbackUri?: string };
+  tokenId: string;
+  size: number;
+  inner: number;
+  withCircle: boolean;
+}): React.ReactNode {
+  const [error, setError] = React.useState(false);
+  const [fallbackUri, setFallbackUri] = React.useState<string | undefined>((remote as any)._fallbackUri);
+
+  const handleError = React.useCallback(() => {
+    if (!error) {
+      setError(true);
+      // Si hay fallbackUri en remote, usarlo
+      if (!fallbackUri && (remote as any)._fallbackUri) {
+        setFallbackUri((remote as any)._fallbackUri);
+      } else if (!fallbackUri) {
+        // Intentar fallback hardcodeado como último recurso
+        const tokenLower = tokenId.toLowerCase();
+        const jupiterKnown: Record<string, string> = {
+          "bonk": "DezXAZ8z7PnrnRJjz3wXBoRgixH6nWoQKrPjjkwyqS2P",
+          "jup": "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
+          "wif": "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+          "ray": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+          "orca": "orcaEKTdK7LKz57vaAYr9QeNsVcfz6ygEbGeQ3Pnj",
+          "jto": "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL",
+          "msol": "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+          "jitosol": "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGHPn",
+        };
+        
+        if (jupiterKnown[tokenLower]) {
+          const mint = jupiterKnown[tokenLower];
+          setFallbackUri(`https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/${mint}/logo.png`);
+        }
+      }
+    }
+  }, [error, fallbackUri, tokenId]);
+
+  const uriToUse = fallbackUri || remote.uri;
+
+  // SIEMPRE mostrar algo: usar overlay con fallback garantizado
+  return (
+    <ImageWithGuaranteedFallback
+      uri={uriToUse}
+      fallbackUri={(remote as any)._fallbackUri}
+      tokenId={tokenId}
+      size={size}
+      inner={inner}
+      withCircle={withCircle}
+    />
+  );
+}
+
+// Componente que GARANTIZA mostrar algo - si la URL falla, muestra renderTokenIcon con inicial
+function ImageWithGuaranteedFallback({
+  uri,
+  fallbackUri,
+  tokenId,
+  size,
+  inner,
+  withCircle,
+}: {
+  uri: string;
+  fallbackUri?: string;
+  tokenId: string;
+  size: number;
+  inner: number;
+  withCircle: boolean;
+}): React.ReactNode {
+  const [imageError, setImageError] = React.useState(false);
+  const [fallbackError, setFallbackError] = React.useState(false);
+  const [currentUri, setCurrentUri] = React.useState(uri);
+
+  // Intentar fallback si la primera URI falla
+  React.useEffect(() => {
+    if (imageError && !fallbackError && fallbackUri && currentUri === uri) {
+      setCurrentUri(fallbackUri);
+      setImageError(false); // Resetear para intentar fallback
+    }
+  }, [imageError, fallbackError, fallbackUri, currentUri, uri]);
+
+  // Si ambas URLs fallaron, mostrar fallback con inicial
+  if (imageError && fallbackError) {
+    const ch = String(tokenId).replace(/\W+/g, "").slice(0, 1).toUpperCase() || "•";
+    const bubble = (
+      <View
+        style={{
+          width: inner,
+          height: inner,
+          borderRadius: inner / 2,
+          backgroundColor: "rgba(255,255,255,0.10)",
+          alignItems: "center",
+          justifyContent: "center",
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.18)",
+        }}
+      >
+        <Text style={{ color: "#fff", fontWeight: "800", fontSize: inner * 0.55 }}>{ch}</Text>
+      </View>
+    );
+    if (!withCircle) return bubble;
+    return (
+      <View
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: "#fff",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {bubble}
+      </View>
+    );
+  }
+
+  // Intentar cargar la imagen
+  const node = (
+    <Image
+      source={{ uri: currentUri }}
+      style={{ width: inner, height: inner, borderRadius: inner / 2 }}
+      resizeMode="cover"
+      onError={() => {
+        if (currentUri === uri && fallbackUri) {
+          // Intentar fallback
+          setCurrentUri(fallbackUri);
+        } else {
+          // Ambas fallaron
+          setImageError(true);
+          setFallbackError(true);
+        }
+      }}
+    />
+  );
+
+  if (!withCircle) return node;
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: "#fff",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {node}
+    </View>
+  );
 }
 
 /* ============================ Render ============================ */
@@ -167,30 +428,19 @@ export function renderTokenIcon(
     return <Image source={def.src} style={{ width: inner, height: inner }} resizeMode="contain" />;
   }
 
-  // 2) remoto (URL / mint / catálogo)
+  // 2) remoto (URL / mint / catálogo) - con mejor manejo de errores y múltiples fallbacks
   const remote = resolveRemoteLogo(key);
   if (remote) {
-    const node = (
-      <Image
-        source={remote}
-        style={{ width: inner, height: inner, borderRadius: inner / 2 }}
-        resizeMode="cover"
-      />
-    );
-    if (!withCircle) return node;
+    // Usar componente con fallback automático
     return (
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: "#fff",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {node}
-      </View>
+      <RemoteIconWithFallback
+        remote={remote}
+        tokenId={tokenId}
+        key={key}
+        size={size}
+        inner={inner}
+        withCircle={withCircle}
+      />
     );
   }
 

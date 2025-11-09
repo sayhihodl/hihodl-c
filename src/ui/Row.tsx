@@ -4,6 +4,7 @@ import { Pressable, Text, View, StyleSheet, StyleProp, TextStyle, ViewStyle } fr
 import { Ionicons } from "@expo/vector-icons";
 import { glass } from "@/ui/Glass";
 import { legacy as legacyColors } from "@/theme/colors";
+import { tokens } from "@/lib/layout";
 
 const SUB = legacyColors.SUB ?? "rgba(255,255,255,0.65)";
 
@@ -26,19 +27,23 @@ export type RowProps = {
 };
 
 export default function Row({
-  icon = "chevron-forward-outline",
+  icon,
   leftSlot,
   label,
   labelNode,
   value,
   rightSlot,
-  rightIcon = "chevron-forward",
+  rightIcon,
   onPress,
   onLongPress,
   disabled = false,
   titleStyle,
   containerStyle,
 }: RowProps) {
+  // Solo mostrar icon por defecto si no hay leftSlot y no se especifica explícitamente icon={null}
+  const showLeftIcon = leftSlot ? false : (icon !== null && icon !== undefined);
+  const showRightIcon = rightIcon !== null && rightIcon !== undefined;
+
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
@@ -58,8 +63,8 @@ export default function Row({
     >
       {leftSlot ? (
         <View style={styles.leftWrap}>{leftSlot}</View>
-      ) : icon ? (
-        <Ionicons name={icon} size={18} color="#fff" style={styles.leftIcon} />
+      ) : showLeftIcon ? (
+        <Ionicons name={icon || "chevron-forward-outline"} size={18} color="#fff" style={styles.leftIcon} />
       ) : null}
 
       {labelNode ? (
@@ -76,7 +81,7 @@ export default function Row({
 
       {value != null &&
         (typeof value === "string" || typeof value === "number" ? (
-          <Text numberOfLines={1} style={[glass.rowSub, styles.rightWrapText]}>
+          <Text numberOfLines={1} style={[glass.rowSub, styles.rightWrapText]} ellipsizeMode="tail">
             {value}
           </Text>
         ) : (
@@ -85,9 +90,9 @@ export default function Row({
 
       {rightSlot ? <View style={styles.rightWrap}>{rightSlot}</View> : null}
 
-      {rightIcon ? (
+      {showRightIcon ? (
         <View style={styles.chevronWrap}>
-          <Ionicons name={rightIcon} size={16} color={SUB} />
+          <Ionicons name={rightIcon || "chevron-forward-outline"} size={16} color={SUB} />
         </View>
       ) : null}
     </Pressable>
@@ -97,8 +102,8 @@ export default function Row({
 const styles = StyleSheet.create({
   leftWrap: { marginRight: 10 },
   leftIcon: { marginRight: 10 },
-  centerWrap: { flex: 1, minWidth: 0 },
-  rightWrap: { flexShrink: 0, alignItems: "flex-end", justifyContent: "center" },
-  rightWrapText: { flexShrink: 0, textAlign: "right" },
+  centerWrap: { flex: 1, minWidth: 0, paddingRight: tokens.space[8], maxWidth: "55%" }, // Máximo 55% para el label
+  rightWrap: { flexShrink: 0, alignItems: "flex-end", justifyContent: "center", minWidth: 0, maxWidth: "45%", paddingLeft: 4 }, // Máximo 45% para el valor
+  rightWrapText: { flexShrink: 1, textAlign: "right", flex: 0, minWidth: 0, maxWidth: "100%" }, // No se expande, se trunca con ellipsis
   chevronWrap: { marginLeft: 6, flexShrink: 0 },
 });

@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { CTAButton } from '@/ui/CTAButton';
+import colors from '@/theme/colors';
 
 const BG = require('@assets/onboarding/onboarding-background-0.png');
 
@@ -41,8 +43,8 @@ export default function Entry() {
     fade.setValue(0);
     translateY.setValue(SCREEN_H);
     Animated.parallel([
-      Animated.timing(fade, { toValue: 1, duration: 180, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 1, duration: 150, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: 0, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
   };
   const goCreate = () => openSheet('signup');
@@ -81,8 +83,8 @@ export default function Entry() {
 
   const closeSheet = () => {
     Animated.parallel([
-      Animated.timing(fade, { toValue: 0, duration: 160, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: SCREEN_H, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 0, duration: 120, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: SCREEN_H, duration: 180, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
     ]).start(() => {
       setOpen(false);
       setMode(null);
@@ -112,15 +114,32 @@ export default function Entry() {
 
         {/* Controles inferiores */}
         <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
-          <Pressable style={[styles.btn, styles.btnPrimary]} onPress={goCreate}>
-            <Text style={[styles.btnTxt, styles.btnTxtDark]}>Create an account</Text>
-          </Pressable>
+          <CTAButton
+            title="Create an account"
+            onPress={goCreate}
+            variant="primary"
+            fullWidth={true}
+            style={styles.primaryBtn}
+          />
 
-          <Pressable style={[styles.btn, styles.btnSecondary]} onPress={goLogin}>
-            <Text style={[styles.btnTxt, styles.btnTxtLight]}>I have already an account</Text>
-          </Pressable>
+          <CTAButton
+            title="I already have an account"
+            onPress={goLogin}
+            variant="secondary"
+            tone="dark"
+            backdrop="glass"
+            fullWidth={true}
+            style={styles.secondaryBtn}
+          />
 
-          <Pressable onPress={goImport} hitSlop={12} style={styles.importWrap}>
+          <Pressable 
+            onPress={goImport} 
+            hitSlop={12} 
+            style={styles.importWrap}
+            accessibilityRole="button"
+            accessibilityLabel="Import existing wallet"
+            accessibilityHint="Opens the wallet import screen"
+          >
             <Text style={styles.importTxt}>Import wallet</Text>
           </Pressable>
 
@@ -167,17 +186,26 @@ export default function Entry() {
             <ActionRow
               icon={EMAIL_ICON}
               label={mode === 'signin' ? 'Sign in with Email' : 'Sign up with Email'}
-              onPress={() => router.push(`/onboarding/email?mode=${mode ?? 'signup'}`)}
+              onPress={() => {
+                closeSheet();
+                router.push(`/onboarding/email?mode=${mode ?? 'signup'}`);
+              }}
             />
             <ActionRow
               icon={GOOGLE_ICON}
               label={mode === 'signin' ? 'Sign in with Google' : 'Sign up with Google'}
-              onPress={() => {/* hook de Google (mock en Expo Go) */}}
+              onPress={() => {
+                closeSheet();
+                // TODO: hook de Google (mock en Expo Go)
+              }}
             />
             <ActionRow
               icon={APPLE_ICON}
               label={mode === 'signin' ? 'Sign in with Apple' : 'Sign up with Apple'}
-              onPress={() => {/* hook de Apple (mock en Expo Go) */}}
+              onPress={() => {
+                closeSheet();
+                // TODO: hook de Apple (mock en Expo Go)
+              }}
             />
           </View>
         </Animated.View>
@@ -197,7 +225,14 @@ function ActionRow({
   onPress: () => void;
 }) {
   return (
-    <Pressable style={styles.row} onPress={onPress}>
+    <Pressable 
+      style={styles.row} 
+      onPress={onPress}
+      android_ripple={{ color: 'rgba(255,255,255,0.1)' }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={`Selects ${label} as authentication method`}
+    >
       {icon ? (
         <Image source={icon} style={styles.rowIcon} resizeMode="contain" />
       ) : (
@@ -220,27 +255,17 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#fff',
-    fontSize: 25,
-    lineHeight: 40,
-    fontWeight: '800',
+    fontSize: 32,
+    lineHeight: 42,
+    fontWeight: '900',
     textAlign: 'center',
     paddingBottom: 250, // para respetar la composición de tu referencia
+    letterSpacing: -0.5,
   },
 
-  bottom: { paddingHorizontal: 20, gap: 16 },
-
-  btn: {
-    height: 48,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  btnPrimary: { backgroundColor: HIHODL_YELLOW },
-  btnSecondary: { backgroundColor: HIHODL_DARK },
-  btnTxt: { fontSize: 20, fontWeight: '800' },
-  btnTxtLight: { color: '#FFFFFF' },
-  btnTxtDark: { color: '#0B0B0B' },
+  bottom: { paddingHorizontal: 20, gap: 14 },
+  primaryBtn: { marginBottom: 2 },
+  secondaryBtn: { marginBottom: 2 },
 
   importWrap: { alignSelf: 'center', paddingVertical: 10 },
   importTxt: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
@@ -253,38 +278,44 @@ const styles = StyleSheet.create({
   sheet: {
     position: 'absolute',
     left: 0, right: 0, bottom: 0,
-    backgroundColor: HIHODL_DARK,
+    backgroundColor: colors.sheetBgSolid,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
     paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderColor: colors.dividerOnDark,
   },
   handle: {
     alignSelf: 'center',
     width: 48,
     height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.35)',
-    marginBottom: 8,
-  },
-  sheetTitle: {
-    color: '#fff',
-    fontWeight: '800',
-    fontSize: 24,
+    backgroundColor: colors.sheetHandle,
     marginBottom: 12,
   },
-  sheetList: { marginTop: 4 },
+  sheetTitle: {
+    color: colors.text,
+    fontWeight: '900',
+    fontSize: 26,
+    marginBottom: 16,
+    letterSpacing: -0.5,
+  },
+  sheetList: { marginTop: 4, gap: 10 },
 
   row: {
     height: 56,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 16,
+    backgroundColor: 'rgba(3, 12, 16, 0.35)', // Glass background
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.dividerOnDark,
   },
-  rowIcon: { width: 26, height: 26, marginRight: 12 },
+  rowIcon: { width: 26, height: 26, marginRight: 14 },
   rowIconFallback: { backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 6 },
-  rowLabel: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  rowLabel: { color: colors.text, fontSize: 16, fontWeight: '700', flex: 1 },
 });

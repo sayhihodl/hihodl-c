@@ -24,7 +24,8 @@ type PaymentsState = {
   addMsg: (m: PayMsg) => void;
   updateMsg: (id: string, patch: Partial<PayMsg>) => void;
   selectByThread: (threadId: string) => PayMsg[];
-  deleteMsg: (id: string) => void; // NUEVO
+  deleteMsg: (id: string) => void;
+  remindRequest?: (id: string) => void; // Opcional para compatibilidad
 };
 
 export const usePaymentsStore = create<PaymentsState>((set, get) => ({
@@ -48,13 +49,11 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
       } catch {}
       return { msgs, byThread: { ...s.byThread, [m.threadId]: ids } };
     }),
-
-    // en usePaymentsStore()
-    remindRequest: (id: string) => {
-      const s = get();
-      // ejemplo: solo marca un timestamp o lanza un toast
-      s.updateMsg?.(id, { ts: Date.now() });
-    },
+  remindRequest: (id: string) => {
+    const s = get();
+    // Solo marca un timestamp para refrescar UI
+    s.updateMsg(id, { ts: Date.now() });
+  },
   updateMsg: (id, patch) =>
     set((s) => {
       const current = s.msgs[id];

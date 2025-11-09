@@ -12,13 +12,30 @@ type UserPrefsState = {
   setDefaultAccount: (a?: Account) => void;
   threadCompact?: boolean;        // vista compacta en PaymentsThread
   setThreadCompact: (v: boolean) => void;
+  // Chain favorita por token (ej: { "usdc": "base", "eth": "ethereum" })
+  favoriteChainByToken?: Record<TokenId, ChainKey>;
+  setFavoriteChainForToken: (tokenId: TokenId, chain: ChainKey) => void;
 };
 
-export const useUserPrefs = create<UserPrefsState>()((set) => ({
-  defaultTokenId: undefined,
+// Inicializar con USDC en Solana como favorito por defecto
+const INITIAL_DEFAULT_TOKEN = "usdc";
+const INITIAL_DEFAULT_CHAIN = "solana";
+
+export const useUserPrefs = create<UserPrefsState>()((set, get) => ({
+  // Por defecto: USDC en Solana (se puede cambiar en ajustes o aprender del comportamiento)
+  defaultTokenId: INITIAL_DEFAULT_TOKEN,
   defaultAccount: "Daily",
-  setDefaultTokenId: (t?: TokenId) => set({ defaultTokenId: t }),
+  setDefaultTokenId: (t?: TokenId) => set({ defaultTokenId: t || INITIAL_DEFAULT_TOKEN }),
   setDefaultAccount: (a?: Account) => set({ defaultAccount: a }),
   threadCompact: false,
   setThreadCompact: (v: boolean) => set({ threadCompact: v }),
+  // Por defecto: USDC en Solana como chain favorita
+  favoriteChainByToken: { [INITIAL_DEFAULT_TOKEN]: INITIAL_DEFAULT_CHAIN },
+  setFavoriteChainForToken: (tokenId: TokenId, chain: ChainKey) =>
+    set((state) => ({
+      favoriteChainByToken: {
+        ...(state.favoriteChainByToken || { [INITIAL_DEFAULT_TOKEN]: INITIAL_DEFAULT_CHAIN }),
+        [tokenId.toLowerCase()]: chain,
+      },
+    })),
 }));

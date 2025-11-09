@@ -44,7 +44,7 @@ const buildPayUrl = (p: { chain: Chain; token: Token; amount?: string; note?: st
   if (p.amount) qs.set("amount", String(Number(p.amount)));
   qs.set("token", p.token);
   if (p.note) qs.set("message", p.note);
-  return `https://pay.hihodl.app/pay?${qs.toString()}`;
+  return `https://pay.hihodl.xyz/pay?${qs.toString()}`;
 };
 
 export default function RequestAmount() {

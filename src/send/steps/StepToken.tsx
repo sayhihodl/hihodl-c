@@ -16,14 +16,19 @@ import type { TokenMeta } from "@/send/SendFlowProvider";
 import { renderTokenIcon, iconKeyForTokenId } from "@/config/iconRegistry";
 import { useRecentTokens } from "@/hooks/useRecentTokens";
 import { HighlightedText } from "@/utils/highlight";
+import { useUserPrefs } from "@/store/userPrefs";
+import { useBalancesStore } from "@/store/balances";
 
 import { multichainSearch, type MCGroup, type MCItem } from "@/services/multichainSearch";
+import TokenItemWithChainSelector, { type TokenVariant } from "@/components/TokenItemWithChainSelector";
+import { selectBestChain } from "@/services/tokenSelectionRules";
 // ⬇️ añade TextInput al import de tipos si no estaba
 import type { TextInput as RNTextInput } from "react-native"; // 👈 solo para el tipo del ref
 import SolBadge from "@assets/chains/Solana-chain.svg";
 import EthBadge from "@assets/chains/ETH-chain.svg";
 import BaseBadge from "@assets/chains/Base-chain.svg";
 import PolyBadge from "@assets/chains/Polygon-chain.svg";
+import { logger } from "@/utils/logger";
 
 const { SUB } = legacy;
 const GLASS_BG = glass.cardOnSheet;
@@ -37,25 +42,64 @@ const AVATAR = 34;
 const MINI_BADGE = 18;
 const MINI_INNER = 18;
 
-function useDebounced<T>(val: T, ms = 220) {
+function useDebounced<T>(val: T, ms = 300) {
   const [v, setV] = useState(val);
-  useEffect(() => { const h = setTimeout(() => setV(val), ms); return () => clearTimeout(h); }, [val, ms]);
+  const isFirstRender = useRef(true);
+  
+  useEffect(() => { 
+    // Si el valor está vacío, actualizar inmediatamente (para limpiar resultados rápido)
+    if (val === "" || (typeof val === "string" && val.trim() === "")) {
+      setV(val);
+      return;
+    }
+    
+    // En el primer render, si hay un valor, establecerlo inmediatamente
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      setV(val);
+      return;
+    }
+    
+    const h = setTimeout(() => setV(val), ms); 
+    return () => clearTimeout(h); 
+  }, [val, ms]);
+  
+  // Reset flag si el valor cambia a vacío
+  if (val === "" || (typeof val === "string" && val.trim() === "")) {
+    isFirstRender.current = false;
+  }
+  
   return v;
 }
 
-/* token icon + mini chain, con soporte de iconUrl remoto */
+/* token icon + mini chain, con soporte de iconUrl remoto - GARANTIZA fallback */
 function TokenWithMini({ iconKey, bestNet, iconUrl }: { iconKey?: string; bestNet: ChainKey; iconUrl?: string }) {
   const Mini = CHAIN_MINI[bestNet];
   const safeKey = (iconKey || "generic").toLowerCase();
+  const [imageError, setImageError] = React.useState(false);
   const url = (iconUrl || "").trim();
   const isSvg = !!url && url.toLowerCase().endsWith(".svg");
 
   return (
     <View style={{ width: AVATAR, height: AVATAR, position: "relative" }}>
-      {url ? (
-        isSvg ? <SvgUri width={AVATAR} height={AVATAR} uri={url} /> :
-        <Image source={{ uri: url }} style={{ width: AVATAR, height: AVATAR, borderRadius: 8 }} resizeMode="cover" />
+      {url && !imageError ? (
+        isSvg ? (
+          <SvgUri 
+            width={AVATAR} 
+            height={AVATAR} 
+            uri={url}
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <Image 
+            source={{ uri: url }} 
+            style={{ width: AVATAR, height: AVATAR, borderRadius: 8 }} 
+            resizeMode="cover"
+            onError={() => setImageError(true)}
+          />
+        )
       ) : (
+        // SIEMPRE mostrar algo - renderTokenIcon tiene fallback garantizado
         renderTokenIcon(safeKey, { size: AVATAR, inner: AVATAR - 2, withCircle: false })
       )}
       {!!Mini && (
@@ -79,6 +123,8 @@ type StepTokenProps = {
   onChangeSearch?: (t: string) => void;
   /** Ref del input del header del modal */
   searchInputRef?: React.RefObject<RNTextInput | null>;
+  /** Destinatario para personalización (último token usado con este destinatario será segunda opción) */
+  recipient?: string;
 };
 
 export default function StepToken({
@@ -91,6 +137,7 @@ export default function StepToken({
   searchValue,
   onChangeSearch,
   searchInputRef,
+  recipient,
 }: StepTokenProps) {
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -103,45 +150,111 @@ export default function StepToken({
 
   const [qInternal, setQInternal] = useState("");
   const q = (searchValue ?? qInternal);
-  const setQ = (onChangeSearch ?? setQInternal);
-  const dq = useDebounced(q.trim(), 220);
+  const setQ = useCallback((value: string) => {
+    if (onChangeSearch) {
+      onChangeSearch(value);
+    } else {
+      setQInternal(value);
+    }
+  }, [onChangeSearch]);
+  // Debounce reducido para búsqueda más rápida mientras escribe (pero sin saturar requests)
+  // IMPORTANTE: Si q está vacío, dq debe estar vacío inmediatamente (sin debounce)
+  const dq = useDebounced(q.trim(), 250);
+  
+  // Asegurar que si q está vacío, dq también lo esté (para cargar recommended de primeras)
+  const effectiveQuery = useMemo(() => {
+    const trimmed = q.trim();
+    // Si el input está vacío, forzar query vacía para que se cargue recommended()
+    if (trimmed === "") return "";
+    // Si hay texto, usar el debounced
+    return dq;
+  }, [q, dq]);
 
   const { recent, add: addRecent } = useRecentTokens();
   const [groups, setGroups] = useState<MCGroup[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Iniciar en true para mostrar loading mientras carga
+  const favoriteChainByToken = useUserPrefs((s) => s.favoriteChainByToken);
+  
+  // Obtener balances del usuario (safe, puede fallar)
+  const userBalances = useMemo(() => {
+    try {
+      const { useBalancesStore } = require("@/store/balances");
+      const flat = useBalancesStore.getState().flat || [];
+      // Convertir a formato { tokenId: { chain: amount } }
+      const byToken: Record<string, Record<ChainKey, number>> = {};
+      for (const b of flat as any[]) {
+        const tokenKey = (b.tokenId || "").toLowerCase();
+        if (!byToken[tokenKey]) byToken[tokenKey] = {} as Record<ChainKey, number>;
+        byToken[tokenKey][b.chain as ChainKey] = (byToken[tokenKey][b.chain as ChainKey] || 0) + (b.amount || 0);
+      }
+      return byToken;
+    } catch {
+      return undefined;
+    }
+  }, []);
 
-  // redes permitidas según destino (pero si hay query, buscamos en todas)
+  // redes permitidas según destino
+  // IMPORTANTE: Si NO hay query, mostrar TODAS las chains para que se agrupen correctamente
+  // Solo filtrar por chain cuando el usuario está buscando activamente
   const allowChains = useMemo<ChainKey[] | undefined>(() => {
-    if (dq) return undefined; // 👈 Súper buscador: sin filtros cuando hay texto
-    if (!selectedChain) return undefined;
-    if (selectedChain === "solana") return ["solana"];
-    if (["base", "polygon", "ethereum"].includes(selectedChain))
-      return ["base", "polygon", "ethereum"] as ChainKey[];
-    return undefined;
-  }, [selectedChain, dq]);
+    // Si hay query activa, buscar en todas las chains (super buscador)
+    if (effectiveQuery) return undefined;
+    
+    // Si NO hay query: mostrar TODOS los tokens con TODAS sus chains (para agrupamiento completo)
+    // Esto permite que USDC/USDT muestren badge "+4" y switch network
+    return undefined; // Sin filtros = mostrar todas las chains
+    
+    // NOTA: Si queremos filtrar por selectedChain en el futuro, sería:
+    // if (!selectedChain) return undefined;
+    // if (selectedChain === "solana") return ["solana"];
+    // if (["base", "polygon", "ethereum"].includes(selectedChain))
+    //   return ["base", "polygon", "ethereum"] as ChainKey[];
+    // return undefined;
+  }, [effectiveQuery]); // Remover selectedChain de dependencias ya que no lo usamos
 
-  // fetch federado
+  // fetch federado - CARGAR INMEDIATAMENTE al montar (incluso con query vacía)
   useEffect(() => {
     const ctrl = typeof AbortController !== "undefined" ? new AbortController() : (null as any);
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
-        const res = await multichainSearch(dq, allowChains as any);
+        // Obtener IDs de tokens recientes para priorizar en ordenamiento (pagos frecuentes)
+        const recentIds = recent?.length ? recent.map(id => id.toLowerCase()) : undefined;
+        
+        // Obtener último token usado con este destinatario (para mostrarlo como segunda opción)
+        let lastUsedWithRecipient: { tokenId: string; chain: ChainKey } | undefined = undefined;
+        if (recipient) {
+          try {
+            const { getLastUsedWithRecipient } = require("@/services/paymentBehaviorLearning");
+            lastUsedWithRecipient = await getLastUsedWithRecipient(recipient);
+          } catch {
+            // Sistema de aprendizaje no disponible
+          }
+        }
+        
+        // IMPORTANTE: usar effectiveQuery (que garantiza "" si no hay input)
+        // Si está vacío, multichainSearch() llamará a recommended() automáticamente
+        // Pasar userBalances para priorizar tokens con balance
+        // Pasar recipient y lastUsedWithRecipient para mostrar última opción usada como segunda opción
+        const res = await multichainSearch(effectiveQuery, allowChains as any, selectedChain, recentIds, userBalances, recipient, lastUsedWithRecipient);
         if (mounted) setGroups(res);
-      } catch {/* noop */}
-      finally { if (mounted) setLoading(false); }
+      } catch (e) {
+        logger.debug("[StepToken] search error", String(e));
+      } finally { 
+        if (mounted) setLoading(false); 
+      }
     })();
     return () => { mounted = false; ctrl?.abort?.(); };
-  }, [dq, allowChains]);
+  }, [effectiveQuery, allowChains, recent, selectedChain, recipient]); // Usar effectiveQuery en lugar de dq
 
-  // “Recent” (sin query)
+  // "Recent" (sin query)
   const recentRows: MCItem[] = useMemo(() => {
-    if (dq || !recent?.length || !groups.length) return [];
+    if (effectiveQuery || !recent?.length || !groups.length) return [];
     const flat = groups.flatMap((g) => g.items);
     const byId = new Map(flat.map((i) => [i.id, i]));
     return recent.map((id) => byId.get(id)).filter(Boolean) as MCItem[];
-  }, [dq, recent, groups]);
+  }, [effectiveQuery, recent, groups]); // Usar effectiveQuery en lugar de dq
 
   // pick (elige la mejor chain del grupo, o el item dado)
   const pickItem = useCallback((it: MCItem) => {
@@ -169,33 +282,62 @@ export default function StepToken({
     goTo("amount");
   }, [addRecent, goTo, onPick, patch]);
 
-  // render de cada item (una chain concreta)
+  // Render con agrupación y selector de chain
   const renderMCItem = (item: MCItem) => {
-    const disabled = item.reason === "unsupported_chain";
+    // Extraer variants completos del item (si tiene metadata _variants)
+    const variants = (item as any)._variants as TokenVariant[] | undefined;
+    
+    // Si no hay variants explícitos, usar solo el item actual
+    if (!variants || variants.length === 0) {
+      const availableChains = (item as any)._availableChains as ChainKey[] || [item.chain];
+      // Construir variants desde availableChains
+      const builtVariants: TokenVariant[] = availableChains.map(chain => ({
+        chain,
+        id: chain === item.chain ? item.id : `${item.symbol.toLowerCase()}-${chain}`,
+        decimals: item.decimals,
+        address: item.address,
+        reason: item.reason,
+      }));
+      
+      // Si solo hay una chain, usar render simple
+      if (builtVariants.length === 1) {
+        return renderSimpleItem(item);
+      }
+      
+      // Usar los variants construidos
+      return renderGroupedItem(item, builtVariants);
+    }
 
+    // Si solo hay una variant, usar render simple
+    if (variants.length === 1) {
+      return renderSimpleItem(item);
+    }
 
+    // Múltiples variants: usar componente con selector
+    return renderGroupedItem(item, variants);
+  };
 
+  // Render simple para tokens con una sola chain
+  const renderSimpleItem = (item: MCItem) => {
     return (
       <Pressable
         key={`${item.id}-${item.chain}`}
-        onPress={() => !disabled && pickItem(item)}
-        disabled={disabled}
+        onPress={() => item.reason !== "unsupported_chain" && pickItem(item)}
+        disabled={item.reason === "unsupported_chain"}
         style={[
           styles.rowGlass,
           { flexDirection: "row", alignItems: "center" },
-          disabled && { opacity: 0.5 },
+          item.reason === "unsupported_chain" && { opacity: 0.5 },
         ]}
-        {...({ accessibilityLabel: `Pick ${item.symbol} on ${String(item.chain)}` } as any)}
       >
         <TokenWithMini
           iconKey={iconKeyForTokenId(item.id) ?? item.id}
           bestNet={item.chain}
           iconUrl={item.iconUrl}
         />
-
         <View style={[styles.labelWrap, { marginLeft: 12 }]}>
           <HighlightedText
-            text={`${item.symbol}`}
+            text={item.symbol}
             query={dq}
             style={styles.alias}
             highlightStyle={{ color: "#FFD86A", fontWeight: "700" }}
@@ -211,9 +353,61 @@ export default function StepToken({
             <Text style={styles.phone}>{item.name}</Text>
           )}
         </View>
-
-        <Ionicons name="chevron-forward" size={18} color="#AFC9D6" />
+        {/* Sin flecha: el row completo es clickeable para seleccionar el token */}
       </Pressable>
+    );
+  };
+
+  // Render agrupado con selector de chain
+  const renderGroupedItem = (item: MCItem, variants: TokenVariant[]) => {
+    const availableChains = variants.map(v => v.chain);
+    
+    // Auto-seleccionar mejor chain usando reglas INTELIGENTES
+    // Prioridad: Balance del usuario > Favorita > Destinatario > Popularidad
+    const bestChain = selectBestChain(
+      item.symbol,
+      availableChains,
+      {
+        recipientChain: selectedChain, // Chain del destinatario (baja prioridad ahora)
+        userBalances,
+        userFavoriteChain: favoriteChainByToken?.[item.symbol.toLowerCase()],
+        preferredChain: selectedChain,
+        requireBalance: true, // IMPORTANTE: priorizar chains con balance
+      }
+    ) || variants[0]?.chain || item.chain;
+
+    const handleVariantSelect = (variant: TokenVariant) => {
+      // Crear un MCItem con la chain seleccionada
+      const selectedItem: MCItem = {
+        ...item,
+        chain: variant.chain,
+        id: variant.id,
+        decimals: variant.decimals,
+        address: variant.address,
+        reason: variant.reason,
+      };
+      pickItem(selectedItem);
+    };
+
+    // Debug: verificar iconUrl antes de pasar al componente
+    if ((item.symbol === "JTO" || item.symbol === "ORCA" || item.symbol === "RAY" || item.symbol === "WIF") && !item.iconUrl) {
+      logger.debug(`[StepToken] ${item.symbol} MISSING iconUrl`, item.id, "chain:", item.chain);
+    }
+    
+    return (
+      <TokenItemWithChainSelector
+        key={`${item.symbol}-group`}
+        symbol={item.symbol}
+        name={item.name}
+        iconUrl={item.iconUrl}
+        brand={item.brand}
+        tokenId={item.id} // Pasar ID completo para resolver iconos correctamente
+        variants={variants}
+        selectedChain={bestChain}
+        onSelect={handleVariantSelect}
+        disabled={item.reason === "unsupported_chain"}
+        searchQuery={dq}
+      />
     );
   };
 
@@ -232,7 +426,7 @@ export default function StepToken({
 useEffect(() => {
   // Debug visual y por consola
   const count = groups.flatMap(g => g.items).length;
-  console.debug("[StepToken] groups", groups.length, "items", count);
+  logger.debug("[StepToken] groups", groups.length, "items", count);
 }, [groups]);
 
 
@@ -275,7 +469,7 @@ return (
               >
                 <Ionicons name="search" size={18} color={SUB} />
                 <TextInput
-                  ref={inputRef}
+                  ref={inputRef || searchInputRef}
                   value={q}
                   onChangeText={setQ}
                   placeholder="Search currency…"
@@ -284,6 +478,7 @@ return (
                   autoCapitalize="none"
                   autoCorrect={false}
                   returnKeyType="search"
+                  // La búsqueda se actualiza automáticamente mientras escribes (debounce de 250ms)
                 />
                 {!!q && (
                   <Pressable onPress={() => setQ("")} hitSlop={8}>

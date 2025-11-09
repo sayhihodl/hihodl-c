@@ -71,12 +71,12 @@ export default function HelpScreen() {
           <Text style={styles.h2}>Need help?</Text>
           <Text style={styles.p}>
             Check our FAQ or contact support directly.{"\n"}
-            Email: support@hihodl.com{"\n"}
+            Email: support@hihodl.xyz{"\n"}
             Telegram: @hihodl_support
           </Text>
           <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
             <Pressable
-              onPress={() => Linking.openURL("mailto:support@hihodl.com")}
+              onPress={() => Linking.openURL("mailto:support@hihodl.xyz")}
               style={styles.cta}
             >
               <Text style={styles.ctaText}>Email us</Text>

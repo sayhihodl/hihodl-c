@@ -1,0 +1,37 @@
+{
+  "name": "native-tab-bar",
+  "version": "1.0.0",
+  "description": "Native iOS Tab Bar module following Apple's HIG",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "scripts": {
+    "build": "expo-module build",
+    "clean": "expo-module clean"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "native-tab-bar",
+    "ios"
+  ],
+  "repository": "",
+  "bugs": {
+    "url": ""
+  },
+  "author": "",
+  "license": "MIT",
+  "homepage": "",
+  "dependencies": {},
+  "devDependencies": {
+    "expo-module-scripts": "^5.0.7"
+  },
+  "peerDependencies": {
+    "expo": "*"
+  }
+}
+
+
+
+
+
+

@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import ScreenBg from "@/ui/ScreenBg";
 import GlassHeader from "@/ui/GlassHeader";
 import { GlassCard } from "@/ui/Glass";
+import SearchField from "@/ui/SearchField";
 
 const BG = "#0D1820";
 const TILE_BG = "rgba(255,255,255,0.06)";
@@ -112,21 +113,18 @@ export default function NewPaymentScreen() {
           </Pressable>
         }
         centerSlot={
-          <View style={[styles.searchBar, { marginLeft: 4, marginRight: 18 }]}>
-            <Ionicons name="search" size={16} color="#8FD3E3" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={PHRASES[phIdx]}
-              placeholderTextColor="rgba(255,255,255,0.45)"
-              value={q}
-              onChangeText={setQ}
-              returnKeyType="go"
-              onSubmitEditing={() =>
-                router.push({ pathname: "/(internal)/send", params: { kind: "hihodl", to: q } })
-              }
-              autoFocus
-            />
-          </View>
+          <SearchField
+            value={q}
+            onChangeText={setQ}
+            placeholder={PHRASES[phIdx]}
+            containerStyle={{ marginLeft: 4, marginRight: 18 }}
+            inputProps={{
+              returnKeyType: "go",
+              onSubmitEditing: () =>
+                router.push({ pathname: "/(internal)/send", params: { kind: "hihodl", to: q } }),
+              autoFocus: true,
+            }}
+          />
         }
         rightSlot={
           // Scan en el header
@@ -225,19 +223,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.10)",
   },
 
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(255,255,255,0.10)",
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    height: 36,
-    flex: 1,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  searchInput: { flex: 1, color: "#fff", fontSize: 14, fontWeight: "400", letterSpacing: -0.2 },
 
   // Tiles (botones grandes)
   grid: { paddingHorizontal: 16, flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 8 },

@@ -1,6 +1,8 @@
-// src/stores/session.ts
+// src/store/session.ts
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { logger } from '@/utils/logger';
+import { analytics } from '@/utils/analytics';
 
 const KEY = 'session.v1';
 
@@ -35,8 +37,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({ session: next });
     try {
       await SecureStore.setItemAsync(KEY, JSON.stringify(next));
+      
+      // Trackear sesión establecida
+      if (next.wallet?.address) {
+        analytics.setUserId(next.wallet.address);
+      }
     } catch (e) {
-      console.warn('SecureStore setItem error', e);
+      logger.warn('SecureStore setItem error', e);
     }
   },
 
@@ -44,8 +51,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({ session: null });
     try {
       await SecureStore.deleteItemAsync(KEY);
+      // Limpiar user ID en analytics
+      analytics.setUserId(null);
     } catch (e) {
-      console.warn('SecureStore deleteItem error', e);
+      logger.warn('SecureStore deleteItem error', e);
     }
   },
 
@@ -61,7 +70,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         }
       }
     } catch (e) {
-      console.warn('SecureStore getItem error', e);
+      logger.warn('SecureStore getItem error', e);
     }
     set({ session: null, ready: true });
   },
