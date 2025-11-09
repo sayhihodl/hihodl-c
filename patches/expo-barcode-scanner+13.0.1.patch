@@ -1,0 +1,13 @@
+diff --git a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt
+index 16ac4c8..b583f14 100644
+--- a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt
++++ b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt
+@@ -64,7 +64,7 @@ class MLKitBarCodeScanner(context: Context) : ExpoBarCodeScanner(context) {
+       return@runBlocking results
+     } catch (e: Exception) {
+       Log.e(TAG, "Failed to detect barcode: " + e.message)
+-      return@runBlocking emptyList()
++      return@runBlocking emptyList<BarCodeScannerResult>()
+     }
+   }
+ 
