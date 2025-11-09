@@ -98,7 +98,7 @@
     "patch-package": "^8.0.1",
     "postinstall-postinstall": "^2.1.0",
     "react-native-svg-transformer": "^1.5.1",
-    "react-native-worklets": "^0.5.1",
+    "react-native-worklets": "0.5.1",
     "typescript": "~5.9.2"
   }
 }

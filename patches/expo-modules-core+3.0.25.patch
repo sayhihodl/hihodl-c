@@ -1,0 +1,85 @@
+diff --git a/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerInterface.kt b/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerInterface.kt
+new file mode 100644
+index 0000000..63f5db1
+--- /dev/null
++++ b/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerInterface.kt
+@@ -0,0 +1,11 @@
++package expo.modules.interfaces.barcodescanner
++
++import android.graphics.Bitmap
++
++interface BarCodeScannerInterface {
++  val isAvailable: Boolean
++  fun scan(imageData: ByteArray, width: Int, height: Int, rotation: Int): BarCodeScannerResult?
++  fun scanMultiple(bitmap: Bitmap): List<BarCodeScannerResult>
++  fun setSettings(settings: BarCodeScannerSettings)
++}
++
+diff --git a/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerProviderInterface.kt b/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerProviderInterface.kt
+new file mode 100644
+index 0000000..c768661
+--- /dev/null
++++ b/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerProviderInterface.kt
+@@ -0,0 +1,6 @@
++package expo.modules.interfaces.barcodescanner
++
++interface BarCodeScannerProviderInterface {
++  fun createBarCodeScanner(context: android.content.Context): BarCodeScannerInterface?
++}
++
+diff --git a/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerResult.kt b/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerResult.kt
+new file mode 100644
+index 0000000..7623206
+--- /dev/null
++++ b/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerResult.kt
+@@ -0,0 +1,38 @@
++package expo.modules.interfaces.barcodescanner
++
++data class BarCodeScannerResult(
++  val type: Int,
++  val value: String?,
++  val raw: String?,
++  val cornerPoints: List<Int>,
++  val height: Int,
++  val width: Int
++) {
++  data class BoundingBox(val x: Int, val y: Int, val width: Int, val height: Int)
++  
++  val boundingBox: BoundingBox
++    get() {
++      if (cornerPoints.isEmpty()) {
++        return BoundingBox(0, 0, 0, 0)
++      }
++      var minX = Int.MAX_VALUE
++      var minY = Int.MAX_VALUE
++      var maxX = Int.MIN_VALUE
++      var maxY = Int.MIN_VALUE
++
++      var i = 0
++      while (i < cornerPoints.size) {
++        val x: Int = cornerPoints[i]
++        val y: Int = cornerPoints[i + 1]
++
++        minX = minOf(minX, x)
++        minY = minOf(minY, y)
++        maxX = maxOf(maxX, x)
++        maxY = maxOf(maxY, y)
++        i += 2
++      }
++
++      return BoundingBox(minX, minY, maxX - minX, maxY - minY)
++    }
++}
++
+diff --git a/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerSettings.kt b/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerSettings.kt
+new file mode 100644
+index 0000000..a407e56
+--- /dev/null
++++ b/node_modules/expo-modules-core/android/src/main/java/expo/modules/interfaces/barcodescanner/BarCodeScannerSettings.kt
+@@ -0,0 +1,6 @@
++package expo.modules.interfaces.barcodescanner
++
++data class BarCodeScannerSettings(
++  val types: List<Int>?
++)
++
