@@ -128,9 +128,12 @@ android {
         }
         release {
             signingConfig signingConfigs.release
+            // minifyEnabled debe estar en true si shrinkResources está en true
+            def enableMinify = findProperty('android.enableMinifyInReleaseBuilds') ?: 'true'
+            minifyEnabled enableMinify.toBoolean()
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'true'
-            shrinkResources enableShrinkResources.toBoolean()
-            minifyEnabled enableMinifyInReleaseBuilds
+            // shrinkResources solo funciona si minifyEnabled está en true
+            shrinkResources enableShrinkResources.toBoolean() && enableMinify.toBoolean()
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
             crunchPngs enablePngCrunchInRelease.toBoolean()
