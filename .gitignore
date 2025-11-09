@@ -38,3 +38,10 @@ yarn-error.*
 # Android Keystore
 *.jks
 *keystore*
+
+# Documentación temporal de setup
+docs/temp/
+
+# Native folders (si usas Prebuild/CNG, descomenta estas líneas)
+# android/
+# ios/
