@@ -1,3 +1,57 @@
+diff --git a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt
+index 1cf51b5..3d39eb6 100644
+--- a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt
++++ b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt
+@@ -13,4 +13,8 @@ class BarCodeScannerProvider : InternalModule, BarCodeScannerProviderInterface {
+   override fun createBarCodeDetectorWithContext(context: Context): BarCodeScannerInterface {
+     return MLKitBarCodeScanner(context)
+   }
++
++  override fun createBarCodeScanner(context: Context): BarCodeScannerInterface? {
++    return MLKitBarCodeScanner(context)
++  }
+ }
+diff --git a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt
+index 71303df..fcf8938 100644
+--- a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt
++++ b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt
+@@ -68,8 +68,8 @@ class BarCodeScannerView(
+     onBarCodeScanned(
+       BarCodeScannedEvent(
+         target = id,
+-        data = barCode.value,
+-        raw = barCode.raw,
++        data = barCode.value ?: "",
++        raw = barCode.raw ?: "",
+         type = barCode.type,
+         cornerPoints = cornerPoints,
+         bounds = boundingBox
+diff --git a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt
+index df88b71..6c47e40 100644
+--- a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt
++++ b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt
+@@ -175,7 +175,9 @@ internal class BarCodeScannerViewFinder(
+   }
+ 
+   fun setBarCodeScannerSettings(settings: BarCodeScannerSettings?) {
+-    barCodeScanner?.setSettings(settings)
++    if (settings != null) {
++      barCodeScanner?.setSettings(settings)
++    }
+   }
+ 
+   private fun scanForBarcodes(camera: Camera?, mImageData: ByteArray) {
+diff --git a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/ExpoBarCodeScanner.kt b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/ExpoBarCodeScanner.kt
+index 62f8d34..a91b8c0 100644
+--- a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/ExpoBarCodeScanner.kt
++++ b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/ExpoBarCodeScanner.kt
+@@ -29,5 +29,5 @@ abstract class ExpoBarCodeScanner internal constructor(protected var mContext: C
+     }
+     return newBarCodeTypesObject.filterIsInstance<Number>().map { it.toInt() }
+   }
+-  abstract val isAvailable: Boolean
++  abstract override val isAvailable: Boolean
+ }
 diff --git a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt b/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt
 index 16ac4c8..93a7ee9 100644
 --- a/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt
