@@ -53,3 +53,5 @@ Una vez tengas los 3 Client IDs (Web, iOS, Android):
 2. Agrega las 3 variables al `.env`
 3. Reinicia la app
 
+
+

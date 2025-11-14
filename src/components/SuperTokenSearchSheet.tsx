@@ -55,10 +55,10 @@ export default function SuperTokenSearchSheet({
     return (bestChainForToken("usdc") || "solana") as ChainKey;
   }, [selectedChain]);
 
-  const handlePick = ({ tokenId: id, bestNet }: { tokenId: string; bestNet: ChainKey }) => {
+  const handlePick = ({ tokenId: id, bestNet, symbol, name }: { tokenId: string; bestNet: ChainKey; symbol?: string; name?: string }) => {
     const norm = id.toLowerCase();
     const fixed = coercePair(norm, bestNet);
-    onPick({ tokenId: norm, chain: fixed });
+    onPick({ tokenId: norm, chain: fixed, symbol, name });
     setTokenSearch("");
     onClose();
   };

@@ -58,3 +58,5 @@ Una vez tengas los 4 valores copiados:
 
 Si prefieres, puedes compartirme los Client IDs aquí y yo los configuro automáticamente en el código.
 
+
+

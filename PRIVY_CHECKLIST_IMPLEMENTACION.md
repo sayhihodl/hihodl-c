@@ -67,3 +67,5 @@
 4. 🟡 **IMPORTANTE:** app.json config
 5. 🟢 **OPCIONAL:** Assets y backend verification
 
+
+

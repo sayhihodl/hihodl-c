@@ -6,12 +6,9 @@ import { View, Text, Pressable, StyleSheet, Animated } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { HIT_SLOP, DASHBOARD_LAYOUT } from "@/constants/dashboard";
 import type { Account } from "@/hooks/useAccount";
-import { useSettingsStore } from "@/store/settings";
-import colors from "@/theme/colors";
 
 const HERO_HPAD = DASHBOARD_LAYOUT.HERO_HPAD;
 const HEADER_PAD = DASHBOARD_LAYOUT.HEADER_PAD;
@@ -78,14 +75,8 @@ function DashboardHeader({
   insetsTop,
   tt,
 }: DashboardHeaderProps) {
-  const { showBalances, toggleBalances } = useSettingsStore();
   const HEADER_H = DASHBOARD_LAYOUT.HEADER_HEIGHT;
   const FIXED_H = insetsTop + HEADER_H + HEADER_PAD;
-
-  const handleToggleBalances = async () => {
-    await Haptics.selectionAsync();
-    toggleBalances();
-  };
 
   // Blur: de 0 a 1 al empezar a bajar
   const headerBlurOpacity = scrolly.interpolate({
@@ -170,38 +161,12 @@ function DashboardHeader({
             <View style={headerStyles.headerRight}>
               <Pressable
                 style={headerStyles.iconBtn}
-                onPress={handleToggleBalances}
-                hitSlop={HIT_SLOP}
-                accessibilityRole="button"
-                accessibilityLabel={showBalances ? tt("a11y.hideBalances", "Ocultar balances") : tt("a11y.showBalances", "Mostrar balances")}
-                testID="toggle-balances"
-              >
-                <Ionicons
-                  name={showBalances ? "eye-outline" : "eye-off-outline"}
-                  size={20}
-                  color="#fff"
-                />
-              </Pressable>
-
-              <Pressable
-                style={headerStyles.iconBtn}
                 onPress={openScanner}
                 hitSlop={HIT_SLOP}
                 accessibilityRole="button"
                 accessibilityLabel={tt("a11y.openScanner", "Abrir escáner")}
               >
                 <Ionicons name="scan-outline" size={20} color="#fff" />
-              </Pressable>
-
-              {/* Cards */}
-              <Pressable
-                style={headerStyles.iconBtn}
-                onPress={goCards}
-                hitSlop={HIT_SLOP}
-                accessibilityRole="button"
-                accessibilityLabel={tt("a11y.openCards", "Abrir tarjetas")}
-              >
-                <Ionicons name="card-outline" size={20} color="#fff" />
               </Pressable>
             </View>
           </View>

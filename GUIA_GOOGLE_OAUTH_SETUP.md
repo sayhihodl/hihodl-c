@@ -241,3 +241,5 @@ npx expo start -c
 
 **¿Necesitas ayuda?** Revisa los logs de la consola cuando intentes hacer login para ver errores específicos.
 
+
+

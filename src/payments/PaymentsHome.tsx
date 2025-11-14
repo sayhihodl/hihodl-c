@@ -11,6 +11,7 @@ import { GlassCard } from "@/ui/Glass";
 import AccountFilterSheet from "@/payments/AccountFilterSheet";
 import { SkeletonLine } from "@/ui/Skeleton";
 import SearchField from "@/ui/SearchField";
+import AnimatedList from "@/ui/AnimatedList";
 import type { RecipientKind } from "@/send/types";
 
 const BG = "#0D1820";
@@ -340,30 +341,10 @@ export default function PaymentsHome() {
         contentStyle={{ paddingHorizontal: 12 }}
       />
 
-      <Animated.FlatList
-        data={filtered}
-        keyExtractor={(i: Thread) => i.id}
-        ListHeaderComponent={ChipsHeader}
-        ListEmptyComponent={
-          <View style={{ paddingHorizontal: 16, paddingTop: 24 }}>
-            <View style={[styles.threadGlass, { marginBottom: 12 }]}> 
-              <SkeletonLine width={180} height={16} />
-              <View style={{ height: 8 }} />
-              <SkeletonLine width={120} height={12} />
-            </View>
-            <View style={[styles.threadGlass, { marginBottom: 12 }]}> 
-              <SkeletonLine width={200} height={16} />
-              <View style={{ height: 8 }} />
-              <SkeletonLine width={100} height={12} />
-            </View>
-            <View style={[styles.threadGlass, { marginBottom: 12 }]}> 
-              <SkeletonLine width={160} height={16} />
-              <View style={{ height: 8 }} />
-              <SkeletonLine width={110} height={12} />
-            </View>
-          </View>
-        }
-        renderItem={({ item }: { item: Thread }) => {
+      <AnimatedList<Thread>
+        items={filtered}
+        keyExtractor={(item) => item.id}
+        renderItem={(item, index) => {
           const subtitle = formatLastActivity(item.lastMsg);
           const rightTime = formatThreadTime(item.lastTs, item.lastTime);
           const displayName = formatThreadDisplayName(item);
@@ -458,16 +439,51 @@ export default function PaymentsHome() {
             </Pressable>
           );
         }}
+        onItemSelect={(item) => {
+          const displayName = formatThreadDisplayName(item);
+          router.push({
+            pathname: "/(internal)/payments/thread",
+            params: { 
+              id: item.id, 
+              name: displayName, 
+              alias: item.alias,
+              ...(item.emoji && { emoji: item.emoji }),
+              ...(item.avatar && { avatar: item.avatar }),
+              ...(item.recipientKind && { recipientKind: item.recipientKind }),
+              ...(item.recipientAddress && { recipientAddress: item.recipientAddress }),
+            },
+          });
+        }}
+        showGradients={true}
+        enableArrowNavigation={true}
+        displayScrollbar={false}
+        itemHeight={0} // Auto height
+        animationDelay={30}
+        ListHeaderComponent={ChipsHeader}
+        ListEmptyComponent={
+          <View style={{ paddingHorizontal: 16, paddingTop: 24 }}>
+            <View style={[styles.threadGlass, { marginBottom: 12 }]}> 
+              <SkeletonLine width={180} height={16} />
+              <View style={{ height: 8 }} />
+              <SkeletonLine width={120} height={12} />
+            </View>
+            <View style={[styles.threadGlass, { marginBottom: 12 }]}> 
+              <SkeletonLine width={200} height={16} />
+              <View style={{ height: 8 }} />
+              <SkeletonLine width={100} height={12} />
+            </View>
+            <View style={[styles.threadGlass, { marginBottom: 12 }]}> 
+              <SkeletonLine width={160} height={16} />
+              <View style={{ height: 8 }} />
+              <SkeletonLine width={110} height={12} />
+            </View>
+          </View>
+        }
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 80 }}
-        showsVerticalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrolly } } }],
-          { useNativeDriver: true }
-        )}
-        scrollEventThrottle={16}
-        initialNumToRender={12}
-        windowSize={10}
-        removeClippedSubviews
+        style={{ flex: 1 }}
+        onScroll={(e) => {
+          scrolly.setValue(e.nativeEvent.contentOffset.y);
+        }}
       />
 
       <AccountFilterSheet visible={accountSheetOpen} onClose={() => setAccountSheetOpen(false)} />

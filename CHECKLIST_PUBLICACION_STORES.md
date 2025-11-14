@@ -29,26 +29,14 @@
 
 ## 🚨 CRÍTICO - Debe estar listo ANTES de publicar
 
-### 1. Android - Keystore de Producción ⚠️
+### 1. Android - Keystore de Producción ✅
 
-**Estado:** ❌ Falta
+**Estado:** ✅ Completado
 
-```bash
-# Generar keystore
-keytool -genkeypair -v -storetype PKCS12 \
-  -keystore release.keystore \
-  -alias hihodl-release \
-  -keyalg RSA -keysize 2048 -validity 10000
-
-# Guardar en lugar seguro y configurar en EAS:
-eas credentials
-```
-
-**Pasos:**
-- [ ] Generar keystore de producción
-- [ ] Guardar keystore y passwords en lugar seguro
-- [ ] Configurar en EAS: `eas credentials` → Android → Production keystore
-- [ ] Hacer backup del keystore en lugar separado
+- ✅ Keystore generado por EAS
+- ✅ Configurado como default para producción
+- ✅ Backup descargado y guardado
+- ✅ Agregado al `.gitignore`
 
 ---
 
@@ -71,61 +59,128 @@ eas credentials
 
 ---
 
-### 3. Variables de Entorno en EAS Secrets ⚠️
+### 3. Variables de Entorno en EAS Secrets ✅
 
-**Estado:** ❌ Falta configurar en EAS
+**Estado:** ✅ Completado
 
-**Configurar TODAS las variables en EAS Secrets:**
-
-```bash
-# Instalar EAS CLI si no lo tienes
-npm install -g eas-cli
-
-# Login
-eas login
-
-# Configurar secrets (reemplaza con tus valores reales)
-eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://gctwjvfpwkirtybzbnmu.supabase.co"
-eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "tu-anon-key"
-eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --value "928131091332-lmsnu9rdcc32heclu7jd8s6pdimov2s6.apps.googleusercontent.com"
-eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID --value "928131091332-7l9dl952ld1sbutm8t8uucjjoi79mj63.apps.googleusercontent.com"
-eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID --value "928131091332-jcgolg7uk2mbsdbh6q9fqcthhqmugofi.apps.googleusercontent.com"
-eas secret:create --scope project --name EXPO_PUBLIC_ALCHEMY_API_KEY --value "0W91EqeROoUy2tO315BPK"
-eas secret:create --scope project --name EXPO_PUBLIC_HELIUS_API_KEY --value "tu-helius-key"
-eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value "https://hihodl-backend-v-0-1.onrender.com/api/v1"
-eas secret:create --scope project --name EXPO_PUBLIC_PRIVY_APP_ID --value "tu-privy-app-id"
-eas secret:create --scope project --name EXPO_PUBLIC_PRIVY_CLIENT_ID --value "tu-privy-client-id"
-```
-
-**Checklist:**
-- [ ] Todas las variables configuradas en EAS Secrets
-- [ ] Verificar que no hay valores placeholder
+- ✅ Todas las variables configuradas en EAS Secrets
+- ✅ `EXPO_PUBLIC_SUPABASE_URL` - Configurado
+- ✅ `EXPO_PUBLIC_SUPABASE_ANON_KEY` - Configurado
+- ✅ `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` - Configurado
+- ✅ `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` - Configurado
+- ✅ `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` - Configurado
+- ✅ `EXPO_PUBLIC_ALCHEMY_API_KEY` - Configurado
+- ✅ `EXPO_PUBLIC_HELIUS_API_KEY` - Configurado
+- ✅ `EXPO_PUBLIC_API_URL` - Configurado
+- ✅ `EXPO_PUBLIC_PRIVY_APP_ID` - Configurado
+- ✅ `EXPO_PUBLIC_PRIVY_CLIENT_ID` - Configurado
 
 ---
 
-### 4. URLs Legales ⚠️
+### 4. URLs Legales ✅
 
-**Estado:** ❌ Verificar que existan
+**Estado:** ✅ Verificado y funcionando
 
 **Requisitos:**
-- [ ] Privacy Policy URL: `https://hihodl.xyz/privacy` (debe existir y estar actualizada)
-- [ ] Terms of Service URL: `https://hihodl.xyz/terms` (debe existir y estar actualizada)
-- [ ] Support URL (opcional pero recomendado)
+- ✅ Privacy Policy URL: `https://hihodl.xyz/privacy` (HTTP 200 - Funcionando)
+- ✅ Terms of Service URL: `https://hihodl.xyz/terms` (HTTP 200 - Funcionando)
+- ⚠️ Support URL (opcional pero recomendado) - Puede usar `https://hihodl.xyz`
 
 **Ambas stores requieren estas URLs.**
 
 ---
 
-### 5. Testing en Dispositivos Físicos ⚠️
+### 5. Sincronizar Código con GitHub ⚠️
 
-**Estado:** ❌ Falta
+**Estado:** ⚠️ **CRÍTICO** - Código no sincronizado con GitHub
+
+**Problema:** EAS Build usa el código de GitHub. Si no está sincronizado, el build puede fallar o usar código antiguo.
+
+**Estado actual:**
+- ⚠️ 9 commits sin hacer push
+- ⚠️ ~100 archivos modificados sin commitear (incluye código fuente)
+- ⚠️ Archivos nuevos sin trackear
+
+**Solución:**
+```bash
+# Opción 1: Usar script automatizado
+./scripts/prepare-git-push.sh
+
+# Opción 2: Manual
+git add -A
+git commit -m "chore: sync codebase before production build"
+git push origin main
+```
+
+**⚠️ IMPORTANTE:** Debes hacer push ANTES de hacer el build de producción.
+
+---
+
+### 6. Build de Producción Android ⚠️
+
+**Estado:** ⚠️ Build completado pero puede estar desactualizado
+
+- ✅ Build de producción Android completado
+- ✅ Build ID: `234173fa-f91b-4fa7-8db2-ef7600b8d562`
+- ✅ AAB generado: `https://expo.dev/artifacts/eas/5mvfdVJdXbWcRSznqtDEYA.aab`
+- ⚠️ **IMPORTANTE:** Este build puede estar usando código antiguo si no hiciste push
+- ⚠️ **Pendiente:** Hacer nuevo build después de sincronizar con GitHub
+- ⚠️ **Pendiente:** Descargar y probar en dispositivo físico Android
+
+**⚠️ IMPORTANTE:** Los links directos requieren autenticación en el NAVEGADOR (no solo en CLI).
+
+**🔴 Si ves error 403 Forbidden:**
+- El problema NO es de cuenta personal vs organización
+- El problema es que tu NAVEGADOR no tiene sesión activa en expo.dev
+- Aunque estés logueado en la CLI (`eas whoami`), el navegador necesita su propia sesión
+
+**✅ SOLUCIÓN - Pasos para descargar:**
+
+1. **Opción 1: Dashboard Web (RECOMENDADO) 🌐**
+   ```bash
+   # Paso 1: Abre este link en tu navegador
+   https://expo.dev/accounts/sayhihodl/projects/hihodl-yes/builds
+   
+   # Paso 2: Si no estás logueado, inicia sesión con tu cuenta: sayhihodl
+   
+   # Paso 3: Busca el build con ID: 234173fa-f91b-4fa7-8db2-ef7600b8d562
+   
+   # Paso 4: Haz clic en el botón "Download" o en el link del artifact
+   ```
+
+2. **Opción 2: Link directo (desde navegador autenticado) 🔗**
+   ```bash
+   # Paso 1: Primero inicia sesión en expo.dev
+   # Abre: https://expo.dev y loguéate con tu cuenta: sayhihodl
+   
+   # Paso 2: Luego abre este link en el MISMO navegador:
+   https://expo.dev/artifacts/eas/5mvfdVJdXbWcRSznqtDEYA.aab
+   ```
+
+3. **Si el problema persiste (403 sigue apareciendo):**
+   - Cierra TODAS las pestañas de expo.dev
+   - Limpia las cookies del navegador para expo.dev
+   - Inicia sesión nuevamente en: https://expo.dev
+   - Abre el link del build en la misma sesión
+
+4. **Usar script de ayuda:**
+   ```bash
+   ./scripts/download-build-auth.sh android
+   ```
+
+---
+
+### 6. Testing en Dispositivos Físicos ⚠️
+
+**Estado:** ⚠️ Pendiente - Build listo, falta probar
 
 **Checklist:**
-- [ ] Build de producción funciona en iPhone físico
+- [ ] Descargar AAB del build de producción
+- [ ] Instalar en dispositivo Android físico
 - [ ] Build de producción funciona en Android físico
 - [ ] Todas las features principales funcionan
 - [ ] Google Sign In funciona
-- [ ] Apple Sign In funciona (cuando tengas certificados)
+- [ ] Apple Sign In funciona (cuando tengas certificados iOS)
 - [ ] No hay crashes
 - [ ] Performance aceptable (startup time, navegación)
 
@@ -295,21 +350,22 @@ eas secret:create --scope project --name EXPO_PUBLIC_PRIVY_CLIENT_ID --value "tu
 ## 🎯 Prioridad de Tareas
 
 ### 🔴 URGENTE (Antes de publicar)
-1. ⚠️ **Android Keystore** - Sin esto no puedes publicar en Play Store
-2. ⚠️ **EAS Secrets** - Configurar todas las variables de entorno
-3. ⚠️ **URLs Legales** - Privacy Policy y Terms (requerido por ambas stores)
-4. ⚠️ **Testing en dispositivos físicos** - Verificar que todo funciona
-5. ⚠️ **Screenshots** - Necesarios para ambas stores
+1. ✅ **Android Keystore** - Completado
+2. ✅ **EAS Secrets** - Completado
+3. ✅ **URLs Legales** - Verificadas y funcionando
+4. ✅ **Build de Producción Android** - Completado
+5. ⚠️ **Testing en dispositivos físicos** - Build listo, falta probar en dispositivo
+6. ⚠️ **Screenshots** - Necesarios para ambas stores
 
 ### 🟡 IMPORTANTE (Mejora la calidad)
-6. ⚠️ **Crash Reporting** - Para monitorear errores en producción
-7. ⚠️ **Store Listings completos** - Descripciones, screenshots, etc.
-8. ⚠️ **Content Rating** - Requerido por ambas stores
+7. ⚠️ **Crash Reporting** - Para monitorear errores en producción
+8. ⚠️ **Store Listings completos** - Descripciones, screenshots, etc.
+9. ⚠️ **Content Rating** - Requerido por ambas stores
 
 ### 🟢 OPCIONAL (Puede esperar)
-9. ⏳ **Apple Developer Program** - Ya está en proceso
-10. ⏳ **Analytics** - Si no está activado, activarlo o eliminar
-11. ⏳ **App Preview videos** - Opcional pero ayuda
+10. ⏳ **Apple Developer Program** - Ya está en proceso
+11. ⏳ **Analytics** - Si no está activado, activarlo o eliminar
+12. ⏳ **App Preview videos** - Opcional pero ayuda
 
 ---
 
@@ -370,6 +426,6 @@ eas build:list
 
 ---
 
-**Última actualización:** Basado en el estado actual del proyecto
-**Próximo paso:** Configurar Android Keystore y EAS Secrets
+**Última actualización:** Actualizado con progreso actual
+**Próximo paso:** Descargar build de Android y probar en dispositivo físico, luego preparar screenshots
 

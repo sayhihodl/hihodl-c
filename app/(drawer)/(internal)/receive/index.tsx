@@ -166,14 +166,9 @@ export default function ReceiveScreen() {
   }, [params.account]);
 
   // ===== Header dials (ajustables) =====
-  const TITLE_H = 44;          // alto fila superior (X · Receive · acciones)
-  const ROW_SEARCH_GAP = 14;   // espacio entre título y buscador
-  const SEARCH_H = 50;         // alto buscador
-  const AFTER_SEARCH_GAP = 10; // aire debajo del buscador
-  const HEADER_INNER_TOP = 6;  // pegado al notch (menor = más arriba)
-
-  const HEADER_CONTENT_H = TITLE_H + ROW_SEARCH_GAP + SEARCH_H + AFTER_SEARCH_GAP;
-  const HEADER_TOTAL = insets.top + HEADER_INNER_TOP + HEADER_CONTENT_H;
+  const HEADER_HEIGHT = 52;    // altura del header (similar a PaymentsHome)
+  const HEADER_INNER_TOP = 16;  // pegado al notch (menor = más arriba)
+  const HEADER_TOTAL = insets.top + HEADER_INNER_TOP + HEADER_HEIGHT;
 
   const [query, setQuery] = useState("");
   const [showAllTokens, setShowAllTokens] = useState(false);
@@ -212,10 +207,10 @@ export default function ReceiveScreen() {
     Alert.alert("Copied", `${capitalize(c)} address copied`);
   };
 
-  const openScanner = () => router.push("/receive/scanner" as Href);
-  const openRequestLink = () => router.push("/(drawer)/(tabs)/receive/request-link" as Href);
+  const openScanner = () => router.push("/(drawer)/(internal)/receive/scanner" as Href);
+  const openRequestLink = () => router.push("/(drawer)/(internal)/receive/request-link" as Href);
   const openRequestAmount = (p: { token?: string; chain: ChainKey }) =>
-    router.push({ pathname: "/(drawer)/(tabs)/receive/request-amount", params: p } as Href);
+    router.push({ pathname: "/(drawer)/(internal)/receive/request-amount", params: p } as Href);
 
   const closeReceive = () => {
     if (nav?.canGoBack?.()) router.back();
@@ -234,123 +229,196 @@ export default function ReceiveScreen() {
   return (
     <SafeAreaView edges={["top", "bottom"]} style={styles.container}>
       {/* Fondo que cubre notch + header */}
-      <ScreenBg account={account} height={HEADER_TOTAL + 240} />
+      <ScreenBg account={account} height={HEADER_TOTAL + 160} showTopSeam />
 
       {/* ===== GlassHeader con notch + blur ===== */}
       <GlassHeader
         scrolly={scrollY}
-        height={HEADER_CONTENT_H}
+        blurTint="dark"
+        overlayColor="rgba(7,16,22,0.45)"
+        height={HEADER_HEIGHT}
         innerTopPad={HEADER_INNER_TOP}
-        solidColor="transparent"
-        contentStyle={{ flexDirection: "column", paddingHorizontal: 20 }}
-        leftSlot={null}
-        rightSlot={null}
-        centerSlot={
-          <>
-            {/* Fila superior: X · Receive · acciones */}
-            <View style={styles.topRow}>
-              {/* X sin burbuja */}
-              <Pressable onPress={closeReceive} hitSlop={10} style={styles.headerIconBtnBare}>
-                <Ionicons name="close" size={22} color={TEXT} />
-              </Pressable>
-
-              <Text style={styles.title} numberOfLines={1}>
-                Receive
-              </Text>
-
-              {/* Acciones con burbuja */}
-              <View style={styles.rightBtns}>
-                <Pressable onPress={openRequestLink} hitSlop={10} style={styles.headerIconBtn} accessibilityLabel="Open request via link">
-                  <Ionicons name="log-out-outline" size={22} color={TEXT} />
-                </Pressable>
-                <Pressable onPress={openScanner} hitSlop={10} style={styles.headerIconBtn} accessibilityLabel="Open QR scanner">
-                  <Ionicons name="qr-code-outline" size={22} color={TEXT} />
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Search — spacing: ROW_SEARCH_GAP & AFTER_SEARCH_GAP */}
-            <View style={{ marginTop: ROW_SEARCH_GAP, marginBottom: AFTER_SEARCH_GAP }}>
-              <SearchField
-                value={query}
-                onChangeText={setQuery}
-                placeholder="Search token or network"
-                height={SEARCH_H}
-                onClear={() => setQuery("")}
-              />
-            </View>
-          </>
+        sideWidth={45}
+        centerWidthPct={70}
+        leftSlot={
+          <Pressable onPress={closeReceive} hitSlop={10} style={styles.closeBtn}>
+            <Ionicons name="close" size={20} color="#fff" />
+          </Pressable>
         }
+        centerSlot={
+          <SearchField
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search tokens or networks"
+            containerStyle={{ marginLeft: 4, marginRight: 18 }}
+            onClear={() => setQuery("")}
+          />
+        }
+        rightSlot={
+          <View style={styles.rightBtns}>
+            <Pressable onPress={openRequestLink} hitSlop={10} accessibilityLabel="Open request via link">
+              <Ionicons name="log-out-outline" size={22} color="#fff" />
+            </Pressable>
+            <Pressable onPress={openScanner} hitSlop={10} accessibilityLabel="Open QR scanner">
+              <Ionicons name="qr-code-outline" size={22} color="#fff" />
+            </Pressable>
+          </View>
+        }
+        contentStyle={{ paddingHorizontal: 12 }}
       />
 
       {/* ===== Listas ===== */}
       <Animated.FlatList<SectionItem>
         data={sections}
         keyExtractor={(i, idx) => `${i.type}-${idx}`}
-        ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
         contentContainerStyle={{
-          paddingHorizontal: 16,
+          paddingHorizontal: 20,
           paddingBottom: insets.bottom + 72,
-          // Un pelín menos de padding-top para subir el contenido bajo el header
-          paddingTop: HEADER_TOTAL - 38,
+          paddingTop: HEADER_TOTAL + 8,
         }}
-        ListFooterComponent={<View style={{ height: 24 }} />}
+        ListFooterComponent={<View style={{ height: 32 }} />}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         scrollEventThrottle={16}
         renderItem={({ item }) =>
           item.type === "tokens" ? (
             <View>
               <Text style={styles.sectionTitle}>Tokens</Text>
-              {tokenList.map(t => (
-                <View key={t.id} style={styles.row}>
-                  <TokenIcon token={t} chains={t.chains} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.rowTitle}>{t.symbol}</Text>
-                  </View>
-                  <Pressable onPress={() => openRequestAmount({ token: t.id, chain: defaultChainForToken(t) })} style={styles.iconBtn} hitSlop={10} accessibilityLabel="Request via link">
-                    <Ionicons name="log-out-outline" size={22} color={SUB} />
-                  </Pressable>
-                  <Pressable onPress={() => openQRForToken(t)} style={styles.iconBtn} hitSlop={10}>
-                    <Ionicons name="qr-code-outline" size={22} color={SUB} />
-                  </Pressable>
-                  <Pressable onPress={() => copyAddress(defaultChainForToken(t))} style={styles.iconBtn} hitSlop={10}>
-                    <Ionicons name="copy-outline" size={22} color={SUB} />
-                  </Pressable>
+              {tokenList.length > 0 ? (
+                <>
+                  {tokenList.map(t => (
+                    <Pressable
+                      key={t.id}
+                      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+                      onPress={() => openQRForToken(t)}
+                      android_ripple={{ color: "rgba(255,255,255,0.05)" }}
+                    >
+                      <TokenIcon token={t} chains={t.chains} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.rowTitle}>{t.symbol}</Text>
+                        {t.name !== t.symbol && (
+                          <Text style={styles.rowSub}>{t.name}</Text>
+                        )}
+                      </View>
+                      <View style={styles.actionButtons}>
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            openRequestAmount({ token: t.id, chain: defaultChainForToken(t) });
+                          }}
+                          style={styles.iconBtn}
+                          hitSlop={10}
+                          accessibilityLabel="Request via link"
+                        >
+                          <Ionicons name="log-out-outline" size={20} color={SUB} />
+                        </Pressable>
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            openQRForToken(t);
+                          }}
+                          style={styles.iconBtn}
+                          hitSlop={10}
+                          accessibilityLabel="Show QR code"
+                        >
+                          <Ionicons name="qr-code-outline" size={20} color={SUB} />
+                        </Pressable>
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            copyAddress(defaultChainForToken(t));
+                          }}
+                          style={styles.iconBtn}
+                          hitSlop={10}
+                          accessibilityLabel="Copy address"
+                        >
+                          <Ionicons name="copy-outline" size={20} color={SUB} />
+                        </Pressable>
+                      </View>
+                    </Pressable>
+                  ))}
+                  {filtered.tokens.length > 3 && (
+                    <Pressable style={styles.moreRow} onPress={() => setShowAllTokens(v => !v)}>
+                      <Text style={styles.moreTxt}>{showAllTokens ? "Show less" : "View more"}</Text>
+                      <Ionicons name={showAllTokens ? "chevron-up" : "chevron-down"} size={16} color={SUB} />
+                    </Pressable>
+                  )}
+                </>
+              ) : (
+                <View style={styles.emptyState}>
+                  <Ionicons name="search-outline" size={32} color={SUB} />
+                  <Text style={styles.emptyStateText}>No tokens found</Text>
+                  <Text style={styles.emptyStateSub}>Try a different search term</Text>
                 </View>
-              ))}
-              {filtered.tokens.length > 3 && (
-                <Pressable style={styles.moreRow} onPress={() => setShowAllTokens(v => !v)}>
-                  <Text style={styles.moreTxt}>{showAllTokens ? "Show less" : "View more"}</Text>
-                  <Ionicons name={showAllTokens ? "chevron-up" : "chevron-down"} size={16} color={SUB} />
-                </Pressable>
               )}
             </View>
           ) : (
             <View>
               <Text style={styles.sectionTitle}>Networks</Text>
-              {chainList.map(c => (
-                <View key={c.key} style={styles.row}>
-                  <NetworkIcon chain={c.key} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.rowTitle}>{c.name}</Text>
-                    <Text style={styles.rowSub}>{c.short}</Text>
-                  </View>
-                  <Pressable onPress={() => openRequestAmount({ chain: c.key })} style={styles.iconBtn} hitSlop={10} accessibilityLabel="Request via link">
-                    <Ionicons name="log-out-outline" size={22} color={SUB} />
-                  </Pressable>
-                  <Pressable onPress={() => openQRForChain(c.key)} style={styles.iconBtn} hitSlop={10}>
-                    <Ionicons name="qr-code-outline" size={22} color={SUB} />
-                  </Pressable>
-                  <Pressable onPress={() => copyAddress(c.key)} style={styles.iconBtn} hitSlop={10}>
-                    <Ionicons name="copy-outline" size={22} color={SUB} />
-                  </Pressable>
+              {chainList.length > 0 ? (
+                <>
+                  {chainList.map(c => (
+                    <Pressable
+                      key={c.key}
+                      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+                      onPress={() => openQRForChain(c.key)}
+                      android_ripple={{ color: "rgba(255,255,255,0.05)" }}
+                    >
+                      <NetworkIcon chain={c.key} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.rowTitle}>{c.name}</Text>
+                        <Text style={styles.rowSub}>{c.short}</Text>
+                      </View>
+                      <View style={styles.actionButtons}>
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            openRequestAmount({ chain: c.key });
+                          }}
+                          style={styles.iconBtn}
+                          hitSlop={10}
+                          accessibilityLabel="Request via link"
+                        >
+                          <Ionicons name="log-out-outline" size={20} color={SUB} />
+                        </Pressable>
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            openQRForChain(c.key);
+                          }}
+                          style={styles.iconBtn}
+                          hitSlop={10}
+                          accessibilityLabel="Show QR code"
+                        >
+                          <Ionicons name="qr-code-outline" size={20} color={SUB} />
+                        </Pressable>
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            copyAddress(c.key);
+                          }}
+                          style={styles.iconBtn}
+                          hitSlop={10}
+                          accessibilityLabel="Copy address"
+                        >
+                          <Ionicons name="copy-outline" size={20} color={SUB} />
+                        </Pressable>
+                      </View>
+                    </Pressable>
+                  ))}
+                  {filtered.chains.length > 3 && (
+                    <Pressable style={styles.moreRow} onPress={() => setShowAllChains(v => !v)}>
+                      <Text style={styles.moreTxt}>{showAllChains ? "Show less" : "View more"}</Text>
+                      <Ionicons name={showAllChains ? "chevron-up" : "chevron-down"} size={16} color={SUB} />
+                    </Pressable>
+                  )}
+                </>
+              ) : (
+                <View style={styles.emptyState}>
+                  <Ionicons name="search-outline" size={32} color={SUB} />
+                  <Text style={styles.emptyStateText}>No networks found</Text>
+                  <Text style={styles.emptyStateSub}>Try a different search term</Text>
                 </View>
-              ))}
-              {filtered.chains.length > 3 && (
-                <Pressable style={styles.moreRow} onPress={() => setShowAllChains(v => !v)}>
-                  <Text style={styles.moreTxt}>{showAllChains ? "Show less" : "View more"}</Text>
-                  <Ionicons name={showAllChains ? "chevron-up" : "chevron-down"} size={16} color={SUB} />
-                </Pressable>
               )}
             </View>
           )
@@ -379,52 +447,46 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
 
   /* Header */
-  topRow: {
-    height: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  rightBtns: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  // X sin burbuja (standard)
-  headerIconBtnBare: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
-  },
-  // Botones derechos con burbuja
-  headerIconBtn: {
+  closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: "rgba(255,255,255,0.10)",
   },
-  title: { color: TEXT, fontSize: 18, fontWeight: "800", textAlign: "center" },
-
-  /* Search inside header */
+  rightBtns: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
 
   /* Lists */
-  sectionTitle: { color: SUB, fontSize: 12, letterSpacing: 0.3, marginBottom: 8 },
+  sectionTitle: {
+    color: SUB,
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+    marginBottom: 12,
+    marginTop: 4,
+    textTransform: "uppercase",
+  },
 
   row: {
     backgroundColor: GLASS_BG,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: GLASS_BORDER,
     borderRadius: 18,
-    padding: 14,
+    padding: 16,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
     marginBottom: 10,
+    minHeight: 68,
+  },
+  rowPressed: {
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderColor: "rgba(255,255,255,0.12)",
   },
 
   iconCircle: {
@@ -480,18 +542,65 @@ const styles = StyleSheet.create({
   },
   countBadgeTxt: { color: "#fff", fontSize: 13, fontWeight: "900" },
 
-  rowTitle: { color: TEXT, fontSize: 16, fontWeight: "400" },
-  rowSub: { color: SUB, fontSize: 12, marginTop: 2 },
-
-  iconBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    alignItems: "center",
-    justifyContent: "center",
+  rowTitle: {
+    color: TEXT,
+    fontSize: 16,
+    fontWeight: "600",
+    letterSpacing: -0.2,
+  },
+  rowSub: {
+    color: SUB,
+    fontSize: 13,
+    marginTop: 3,
+    fontWeight: "400",
   },
 
-  moreRow: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 6, paddingVertical: 6 },
-  moreTxt: { color: SUB, fontSize: 12, fontWeight: "700" },
+  actionButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+
+  moreRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    marginTop: 4,
+  },
+  moreTxt: {
+    color: SUB,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+  },
+  emptyStateText: {
+    color: TEXT,
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  emptyStateSub: {
+    color: SUB,
+    fontSize: 13,
+    textAlign: "center",
+  },
 });

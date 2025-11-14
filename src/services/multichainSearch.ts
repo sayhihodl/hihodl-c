@@ -19,6 +19,7 @@ export type MCItem = {
   iconUrl?: string;
   reason?: "needs_meta" | "unsupported_chain";
   address?: string;        // Contract address para EVM o mint para Solana
+  marketCapRank?: number; // Market cap rank from CoinGecko (lower = better, top 100 = official)
 };
 
 // Token agrupado: un símbolo con todas sus chains disponibles
@@ -157,6 +158,9 @@ function catalogToMCItems(allowChains?: ChainKey[]): MCItem[] {
         iconUrl,
         // Guardar coingeckoId para enriquecimiento async
         ...(t.coingeckoId && !iconUrl ? { _coingeckoId: t.coingeckoId } as any : {}),
+        // marketCapRank se puede obtener desde CoinGecko usando coingeckoId, pero por ahora lo dejamos undefined
+        // Se enriquecerá cuando se busque el token desde CoinGecko
+        marketCapRank: undefined,
       });
     }
   }
@@ -557,7 +561,10 @@ function mapCoinGeckoToMCItems(
 ): MCItem[] {
   const evmChains: ChainKey[] = ["ethereum", "base", "polygon"];
   const allowedEvm = evmChains.filter((c) => !allowChains || allowChains.includes(c));
-  if (!allowedEvm.length) return [];
+  if (!allowedEvm.length) {
+    dbg("mapCoinGeckoToMCItems: no allowed EVM chains");
+    return [];
+  }
 
   const items: MCItem[] = [];
   const chainMap: Record<string, ChainKey> = {
@@ -568,13 +575,36 @@ function mapCoinGeckoToMCItems(
 
   dbg("mapCoinGeckoToMCItems", cgTokens.length, "tokens", allowedEvm.length, "allowed chains");
 
+  let tokensWithPlatforms = 0;
+  let tokensWithoutPlatforms = 0;
+
   for (const token of cgTokens.slice(0, 30)) {
     // Verificar si el token tiene platforms
     if (!token.platforms || Object.keys(token.platforms).length === 0) {
-      dbg("token without platforms", token.symbol, token.id);
+      tokensWithoutPlatforms++;
+      dbg("token without platforms", token.symbol, token.id, "- skipping");
+      // IMPORTANTE: Si el token no tiene platforms, intentar crear un item con Ethereum como fallback
+      // Esto permite que tokens populares aparezcan aunque CoinGecko no haya devuelto platforms inmediatamente
+      // Solo hacer esto para tokens con market_cap_rank (tokens conocidos)
+      if (token.market_cap_rank && token.market_cap_rank <= 200 && allowedEvm.includes("ethereum")) {
+        dbg("creating fallback item for token without platforms", token.symbol, "on ethereum");
+        items.push({
+          id: `CG:${token.id}:ethereum:unknown`,
+          chain: "ethereum",
+          symbol: (token.symbol || token.name?.toUpperCase() || "UNKNOWN").toUpperCase(),
+          name: token.name,
+          iconUrl: token.image,
+          brand: token.market_cap_rank && token.market_cap_rank <= 100 ? "verified" : undefined,
+          decimals: undefined,
+          address: undefined,
+          reason: "needs_meta", // Marcar como necesita metadata para que se enriquezca después
+          marketCapRank: token.market_cap_rank,
+        });
+      }
       continue;
     }
 
+    tokensWithPlatforms++;
     // Para cada token de CoinGecko, crear items para cada chain EVM permitida que tenga address
     for (const chainKey of allowedEvm) {
       const platformKey = chainKey === "polygon" ? "polygon-pos" : chainKey;
@@ -591,12 +621,13 @@ function mapCoinGeckoToMCItems(
           brand: token.market_cap_rank && token.market_cap_rank <= 100 ? "verified" : undefined,
           decimals: undefined, // Se enriquecerá con Alchemy si está disponible
           address: address.toLowerCase(),
+          marketCapRank: token.market_cap_rank,
         });
       }
     }
   }
 
-  dbg("mapCoinGeckoToMCItems result", items.length, "items created");
+  dbg("mapCoinGeckoToMCItems result", items.length, "items created", "- with platforms:", tokensWithPlatforms, "without platforms:", tokensWithoutPlatforms);
   return items;
 }
 
@@ -673,6 +704,10 @@ export async function multichainSearch(
       if (allowChains && !allowChains.includes(ck)) continue;
 
       const iconUrl: string | undefined = (hit as any).logoURI || undefined;
+      
+      // Intentar obtener marketCapRank desde el catálogo si está disponible
+      const catalogToken = (TOKENS_CATALOG as any[])?.find((t: any) => t.id === hit.id);
+      const marketCapRank = catalogToken?.marketCapRank || undefined;
 
       result.push({
         id: hit.id,
@@ -682,6 +717,7 @@ export async function multichainSearch(
           decimals: undefined,
         brand: undefined,
         iconUrl,
+        marketCapRank,
       });
     }
     }
@@ -707,11 +743,13 @@ export async function multichainSearch(
 
   // Procesar resultados de CoinGecko (EVM)
   if (cgResult.status === "fulfilled" && Array.isArray(cgResult.value)) {
-    dbg("coingecko hits", cgResult.value.length);
+    dbg("coingecko hits", cgResult.value.length, "tokens found");
     const cgItems = mapCoinGeckoToMCItems(cgResult.value, allowChains);
+    dbg("coingecko mapped", cgItems.length, "items created from", cgResult.value.length, "tokens");
     result.push(...cgItems);
   } else {
-    dbg("coingecko error", cgResult.status === "rejected" ? String(cgResult.reason) : "no result");
+    const errorMsg = cgResult.status === "rejected" ? String(cgResult.reason) : "no result";
+    dbg("coingecko error", errorMsg);
   }
 
   // Si parece address/mint exacto, prioriza
@@ -941,45 +979,120 @@ export async function multichainSearch(
     }
   }
 
-  // 7) Ranking mejorado con prioridad de chain
+  // 6.5) Filtrar tokens que solo tienen la query en su descripción pero no en símbolo/nombre principal
+  // Esto evita que aparezcan tokens como "USDCPO" cuando buscas "polygon" solo porque dicen "Portal from Polygon"
+  const qLower = query.toLowerCase().trim();
+  if (qLower.length > 0) {
+    const filteredItems: MCItem[] = [];
+    const nameMatches: MCItem[] = []; // Tokens que coinciden solo en nombre/descripción
+    
+    for (const item of items) {
+      const symLower = item.symbol.toLowerCase();
+      const nameLower = (item.name || "").toLowerCase();
+      
+      // Match en símbolo (siempre incluir)
+      const symbolMatch = symLower === qLower || symLower.startsWith(qLower) || symLower.includes(qLower);
+      
+      // Match en nombre principal - pero excluir si solo aparece en frases como "from Polygon", "on Polygon", "Portal from Polygon"
+      // Estas frases indican que el token está "en Polygon" pero no ES Polygon
+      let nameMatch = false;
+      if (nameLower) {
+        // Si el nombre completo coincide exactamente o empieza con la query, incluirlo
+        if (nameLower === qLower || nameLower.startsWith(qLower + " ")) {
+          nameMatch = true;
+        } else if (nameLower.includes(qLower)) {
+          // Si contiene la query, verificar que no sea solo en frases como "from X", "on X", "Portal from X"
+          const patternsToExclude = [
+            `from ${qLower}`,
+            `on ${qLower}`,
+            `portal from ${qLower}`,
+            `allbridge from ${qLower}`,
+            `wrapped.*from ${qLower}`,
+            `\\(.*from ${qLower}\\)`,
+          ];
+          const isInExcludedPattern = patternsToExclude.some(pattern => {
+            const regex = new RegExp(pattern, "i");
+            return regex.test(nameLower);
+          });
+          // Solo incluir si NO está en un patrón excluido
+          if (!isInExcludedPattern) {
+            nameMatch = true;
+          }
+        }
+      }
+      
+      // Si coincide en símbolo o nombre principal válido, incluirlo
+      if (symbolMatch || nameMatch) {
+        if (symbolMatch) {
+          filteredItems.push(item); // Prioridad: símbolo primero
+        } else {
+          nameMatches.push(item); // Después: nombre
+        }
+      }
+      // Si no coincide en símbolo ni nombre válido, NO incluirlo
+    }
+    
+    // Combinar: primero símbolos, luego nombres
+    const originalCount = items.length;
+    items = [...filteredItems, ...nameMatches];
+    dbg("filtered items", items.length, "from", originalCount, "original items");
+  }
+
+  // 7) Ranking mejorado con prioridad de tokens oficiales (top 100)
   items.sort((a, b) => {
     const aSym = a.symbol.toLowerCase();
     const bSym = b.symbol.toLowerCase();
     const qLower = query.toLowerCase();
     
-    // Prioridad 1: Match exacto + chain preferida (combinación más fuerte)
+    // Prioridad 0: Match exacto en símbolo (máxima prioridad absoluta)
+    const aExactSymbol = aSym === qLower;
+    const bExactSymbol = bSym === qLower;
+    if (aExactSymbol && !bExactSymbol) return -1;
+    if (!aExactSymbol && bExactSymbol) return 1;
+    
+    // Prioridad 0.5: Match exacto en nombre
+    const aExactName = a.name?.toLowerCase() === qLower;
+    const bExactName = b.name?.toLowerCase() === qLower;
+    if (aExactName && !bExactName) return -1;
+    if (!aExactName && bExactName) return 1;
+    
+    // Prioridad 1: Tokens oficiales del top 100 (máxima prioridad)
+    const aIsTop100 = a.marketCapRank !== undefined && a.marketCapRank <= 100;
+    const bIsTop100 = b.marketCapRank !== undefined && b.marketCapRank <= 100;
+    if (aIsTop100 && !bIsTop100) return -1;
+    if (!aIsTop100 && bIsTop100) return 1;
+    // Si ambos son top 100, ordenar por rank (menor = mejor)
+    if (aIsTop100 && bIsTop100 && a.marketCapRank !== undefined && b.marketCapRank !== undefined) {
+      if (a.marketCapRank !== b.marketCapRank) return a.marketCapRank - b.marketCapRank;
+    }
+    
+    // Prioridad 2: Match exacto + chain preferida (combinación más fuerte)
     const aExactPreferred = (aSym === qLower || a.name?.toLowerCase() === qLower) && preferredChain && a.chain === preferredChain;
     const bExactPreferred = (bSym === qLower || b.name?.toLowerCase() === qLower) && preferredChain && b.chain === preferredChain;
     if (aExactPreferred && !bExactPreferred) return -1;
     if (!aExactPreferred && bExactPreferred) return 1;
 
-    // Prioridad 2: Chain preferida (aunque no sea match exacto)
+    // Prioridad 3: Chain preferida (aunque no sea match exacto)
     if (preferredChain) {
       if (a.chain === preferredChain && b.chain !== preferredChain) return -1;
       if (a.chain !== preferredChain && b.chain === preferredChain) return 1;
     }
 
-    // Prioridad 3: Verified/brand tokens
+    // Prioridad 4: Verified/brand tokens
     if (a.brand && !b.brand) return -1;
     if (!a.brand && b.brand) return 1;
 
-    // Prioridad 4: Match exacto con query (sin considerar chain)
-    const aExact = aSym === qLower || a.name?.toLowerCase() === qLower;
-    const bExact = bSym === qLower || b.name?.toLowerCase() === qLower;
-    if (aExact && !bExact) return -1;
-    if (!aExact && bExact) return 1;
+    // Prioridad 5: Empieza con query en símbolo
+    const aSymStart = aSym.startsWith(qLower);
+    const bSymStart = bSym.startsWith(qLower);
+    if (aSymStart && !bSymStart) return -1;
+    if (!aSymStart && bSymStart) return 1;
 
-    // Prioridad 5: Tiene metadata completa
+    // Prioridad 6: Tiene metadata completa
     const aComplete = a.decimals && a.name && a.iconUrl;
     const bComplete = b.decimals && b.name && b.iconUrl;
     if (aComplete && !bComplete) return -1;
     if (!aComplete && bComplete) return 1;
-
-    // Prioridad 6: Empieza con query
-    const aStart = aSym.startsWith(qLower);
-    const bStart = bSym.startsWith(qLower);
-    if (aStart && !bStart) return -1;
-    if (!aStart && bStart) return 1;
 
     // Prioridad 7: Popularidad de chain (si no hay preferencia)
     if (!preferredChain) {
@@ -995,5 +1108,38 @@ export async function multichainSearch(
   dbg("final items", items.length);
 
   if (!items.length) return [{ key: "all", title: "Results", items: [] }];
+  
+  // Separar tokens oficiales (top 100) de otros tokens
+  const officialTokens: MCItem[] = [];
+  const otherTokens: MCItem[] = [];
+  
+  for (const item of items) {
+    const isOfficial = item.marketCapRank !== undefined && item.marketCapRank <= 100;
+    if (isOfficial) {
+      officialTokens.push(item);
+    } else {
+      otherTokens.push(item);
+    }
+  }
+  
+  // Si hay tokens oficiales, crear grupos separados
+  if (officialTokens.length > 0) {
+    const groups: MCGroup[] = [
+      { key: "official", title: "Official", items: officialTokens },
+    ];
+    
+    // Si hay otros tokens, agregarlos como segundo grupo (limitado a 10 para mostrar "View more")
+    if (otherTokens.length > 0) {
+      groups.push({
+        key: "other",
+        title: "Other tokens",
+        items: otherTokens.slice(0, 10), // Mostrar solo primeros 10, el resto se mostrará con "View more"
+      });
+    }
+    
+    return groups;
+  }
+  
+  // Si no hay tokens oficiales, devolver todos como un solo grupo
   return [{ key: "all", title: "Results", items }];
 }

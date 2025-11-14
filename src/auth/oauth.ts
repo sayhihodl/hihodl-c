@@ -49,23 +49,23 @@ export async function signInWithGoogle(): Promise<{ error: Error | null }> {
     // On mobile, we need to handle the redirect manually
     if (Platform.OS !== 'web' && data.url) {
       try {
-        // Open URL in browser and wait for callback
+      // Open URL in browser and wait for callback
         // NOTA: openAuthSessionAsync puede devolver 'cancel' si el usuario cierra la ventana
         // o si el deep link se abre correctamente (el navegador se cierra y la app se abre)
         // Por eso, no tratamos 'cancel' como error fatal - el deep link puede funcionar de todas formas
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-        
+      
         // Si el usuario cancela explícitamente, no mostrar error (es normal)
-        if (result.type === 'cancel') {
+      if (result.type === 'cancel') {
           // No establecer error - el usuario simplemente decidió no continuar
           // El listener de auth state change manejará si el login se completa
           console.log('User cancelled OAuth flow or browser closed');
           return { error: null }; // No es un error, solo el usuario canceló
-        }
-        
-        // If we got a URL back, handle the callback
-        if (result.type === 'success' && result.url) {
-          await handleOAuthCallback(result.url);
+      }
+      
+      // If we got a URL back, handle the callback
+      if (result.type === 'success' && result.url) {
+        await handleOAuthCallback(result.url);
         } else {
           // Si no hay URL pero tampoco es cancel, puede ser que el deep link funcione
           // El listener de auth state change manejará el callback

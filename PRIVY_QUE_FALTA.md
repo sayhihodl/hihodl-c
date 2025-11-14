@@ -131,3 +131,5 @@ Según la documentación, Privy para Expo requiere:
 **Dónde obtenerlo:**
 - Dashboard de Privy → Tu App → Settings → Client ID
 
+
+

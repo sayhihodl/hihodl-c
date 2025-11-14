@@ -155,7 +155,7 @@ export default function PaymentsComposerScreen() {
           <SearchResultsView results={searchResults} onClose={() => setSearch("")} />
         ) : (
           <PaymentComposer
-            onRequest={() => router.push("/(drawer)/(internal)/payments/QuickRequestScreen")}
+            onRequest={() => router.replace("/(drawer)/(internal)/receive/request-amount")}
             onScan={() => router.push("/(drawer)/(internal)/send/scanner")}
             onGroup={() => router.push("/(drawer)/(internal)/payments/create-group")}
           />

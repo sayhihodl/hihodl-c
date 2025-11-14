@@ -131,7 +131,6 @@ export default function DashboardOptimized() {
   const goReceive = useCallback(() => router.navigate(href("/(drawer)/(internal)/receive", { account: ACCOUNT_IDS[account] })), [account]);
   const goSend = useCallback(() => router.navigate({ pathname: "/(drawer)/(internal)/send", params: { account: ACCOUNT_IDS[account], startAt: "search", mode: "send" } }), [account]);
   const goSwap = useCallback(() => router.navigate(`/(drawer)/(tabs)/swap?account=${ACCOUNT_IDS[account]}`), [account]);
-  const goCards = useCallback(() => router.navigate({ pathname: "/(drawer)/(internal)/cards/[id]", params: { id: "general", account: ACCOUNT_IDS[account] } }), [account]);
 
   if (!ready) {
     return (
@@ -171,9 +170,6 @@ export default function DashboardOptimized() {
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <Pressable style={styles.iconBtn} onPress={() => router.push("/(drawer)/(internal)/receive/scanner" as Href)} hitSlop={HIT} accessibilityRole="button" accessibilityLabel={t("dashboard:a11y.openScanner", "Abrir escáner")}>
                   <Ionicons name="scan-outline" size={20} color="#fff" />
-                </Pressable>
-                <Pressable style={styles.iconBtn} onPress={goCards} hitSlop={HIT} accessibilityRole="button" accessibilityLabel={t("dashboard:a11y.openCards", "Abrir tarjetas")}>
-                  <Ionicons name="card-outline" size={20} color="#fff" />
                 </Pressable>
               </View>
             </View>

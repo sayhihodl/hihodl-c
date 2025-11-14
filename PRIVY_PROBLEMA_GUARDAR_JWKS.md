@@ -98,3 +98,5 @@ Si no responde o da error 404, Supabase no expone JWKS y debes usar el JWT Secre
 - [Supabase JWT Docs](https://supabase.com/docs/guides/auth/jwts)
 - [Privy JWT Setup](https://docs.privy.io/authentication/user-authentication/jwt-based-auth/setup)
 
+
+

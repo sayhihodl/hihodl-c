@@ -233,3 +233,5 @@ EXPO_PUBLIC_MOCK_PAYMENTS=1
 
 **Última actualización:** 2024-12-19
 
+
+

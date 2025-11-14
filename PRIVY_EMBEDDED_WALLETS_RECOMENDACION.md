@@ -144,3 +144,5 @@ embeddedWallets: {
 
 **Tu arquitectura actual es perfecta. Solo agrega Privy para conectar wallets externas, nada más.**
 
+
+

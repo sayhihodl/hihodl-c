@@ -60,3 +60,5 @@ Si el JWKS endpoint no funciona, puedes usar el JWT Secret directamente:
 - [Supabase JWT Docs](https://supabase.com/docs/guides/auth/jwts)
 - [Privy JWT-based Auth](https://docs.privy.io/authentication/user-authentication/jwt-based-auth/setup)
 
+
+

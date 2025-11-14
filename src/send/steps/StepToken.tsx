@@ -112,7 +112,7 @@ function TokenWithMini({ iconKey, bestNet, iconUrl }: { iconKey?: string; bestNe
 type StepTokenProps = {
   title: string;
   selectedChain?: ChainKey;
-  onPick?: (sel: { tokenId: string; bestNet: ChainKey }) => void;
+  onPick?: (sel: { tokenId: string; bestNet: ChainKey; symbol?: string; name?: string }) => void;
   onBack?: () => void;
   onTopChange?: (atTop: boolean) => void;
 
@@ -173,6 +173,7 @@ export default function StepToken({
   const { recent, add: addRecent } = useRecentTokens();
   const [groups, setGroups] = useState<MCGroup[]>([]);
   const [loading, setLoading] = useState(true); // Iniciar en true para mostrar loading mientras carga
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set()); // Grupos expandidos (para "View more")
   const favoriteChainByToken = useUserPrefs((s) => s.favoriteChainByToken);
   
   // Obtener balances del usuario (safe, puede fallar)
@@ -276,7 +277,7 @@ export default function StepToken({
 
     patch({ token: meta as any, tokenId: meta.id, chain: meta.chain, amount: "" });
     Promise.resolve(addRecent(meta.id)).catch(() => {});
-    onPick?.({ tokenId: meta.id, bestNet: meta.chain as ChainKey });
+    onPick?.({ tokenId: meta.id, bestNet: meta.chain as ChainKey, symbol: cleanSymbol, name: meta.name });
     setQ("");
     Keyboard.dismiss();
     goTo("amount");
@@ -495,15 +496,14 @@ return (
       
       <FlatList
         style={{ flex: 1 }}
-        data={groups.flatMap(g => g.items) as any}
-        keyExtractor={(it: MCItem, idx: number) => `${it.id}-${it.chain}-${idx}`}
+        data={groups as any}
+        keyExtractor={(g: MCGroup, idx: number) => g.key || `group-${idx}`}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: insets.bottom + 22,
-          paddingTop: useExternalHeader ? 6 : (HEADER_TOTAL - 38),
+          paddingTop: useExternalHeader ? 20 : (HEADER_TOTAL - 38),
           flexGrow: 1,
         }}
-        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         keyboardShouldPersistTaps="always"
         keyboardDismissMode="on-drag"
         bounces={Platform.OS === "ios"}
@@ -529,7 +529,55 @@ return (
           const startedAtTop = dragStartY.current <= 0.5;
           if (startedAtTop && overscroll) onBack?.();
         }}
-        renderItem={({ item }) => renderMCItem(item as MCItem)}
+        renderItem={({ item: group }) => {
+          const isExpanded = expandedGroups.has(group.key);
+          const isOtherGroup = group.key === "other";
+          const SHOW_LIMIT = 10;
+          const hasMore = group.items.length > SHOW_LIMIT;
+          const itemsToShow = isExpanded || !hasMore ? group.items : group.items.slice(0, SHOW_LIMIT);
+          
+          return (
+            <View style={{ marginBottom: 16 }}>
+              {/* Título del grupo (solo si hay múltiples grupos o es "Other tokens") */}
+              {groups.length > 1 && (
+                <Text style={styles.sectionTitle}>{group.title}</Text>
+              )}
+              
+              {/* Items del grupo */}
+              {itemsToShow.map((item, idx) => (
+                <View key={`${item.id}-${item.chain}-${idx}`} style={{ marginBottom: 8 }}>
+                  {renderMCItem(item)}
+                </View>
+              ))}
+              
+              {/* Botón "View more" si hay más items */}
+              {hasMore && !isExpanded && (
+                <Pressable
+                  onPress={() => setExpandedGroups(prev => new Set(prev).add(group.key))}
+                  style={styles.viewMoreBtn}
+                >
+                  <Text style={styles.viewMoreText}>View more ({group.items.length - SHOW_LIMIT} more)</Text>
+                  <Ionicons name="chevron-down" size={16} color={legacy.SUB} />
+                </Pressable>
+              )}
+              
+              {/* Botón "Show less" si está expandido */}
+              {hasMore && isExpanded && (
+                <Pressable
+                  onPress={() => {
+                    const newSet = new Set(expandedGroups);
+                    newSet.delete(group.key);
+                    setExpandedGroups(newSet);
+                  }}
+                  style={styles.viewMoreBtn}
+                >
+                  <Text style={styles.viewMoreText}>Show less</Text>
+                  <Ionicons name="chevron-up" size={16} color={legacy.SUB} />
+                </Pressable>
+              )}
+            </View>
+          );
+        }}
         ListEmptyComponent={
           <View style={{ paddingTop: 8 }}>
             <Text style={[styles.hint, { textAlign: "center" }]}>
@@ -565,12 +613,30 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   input: { flex: 1, color: "#fff", fontSize: 15 },
-  sectionTitle: { color: legacy.SUB, fontSize: 12, letterSpacing: 0.3, marginTop: 10, marginBottom: 6 },
+  sectionTitle: { color: legacy.SUB, fontSize: 12, letterSpacing: 0.3, marginTop: 10, marginBottom: 8, fontWeight: "600" },
   labelWrap: { flex: 1, minWidth: 0, justifyContent: "center" },
   rowGlass: { backgroundColor: GLASS_BG, borderRadius: 18, paddingVertical: 14, paddingHorizontal: 14, flexDirection: "row", alignItems: "center" },
   alias: { color: "#fff", fontWeight: "500", fontSize: 15, letterSpacing: 0.3 },
   phone: { color: legacy.SUB, fontSize: 12, marginTop: 2 },
   hint: { color: legacy.SUB, fontSize: 12, marginTop: 14, textAlign: "center" },
+  viewMoreBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  viewMoreText: {
+    color: legacy.SUB,
+    fontSize: 13,
+    fontWeight: "600",
+    marginRight: 6,
+  },
   miniBadge: {
     position: "absolute", right: -7, bottom: -5, width: MINI_BADGE, height: MINI_BADGE, borderRadius: 6, overflow: "hidden",
     alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)",

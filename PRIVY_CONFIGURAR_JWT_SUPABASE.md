@@ -92,3 +92,5 @@ Si Supabase no expone un endpoint JWKS estándar, puedes:
 - [Supabase JWT Docs](https://supabase.com/docs/guides/auth/jwts)
 - [Privy JWT-based Auth Setup](https://docs.privy.io/authentication/user-authentication/jwt-based-auth/setup)
 
+
+

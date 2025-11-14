@@ -146,3 +146,5 @@ npx expo start -c
 - Supabase Dashboard: https://supabase.com/dashboard/project/gctwjvfpwkirtybzbnmu
 - Google Cloud Console: https://console.cloud.google.com/
 
+
+

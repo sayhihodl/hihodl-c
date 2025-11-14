@@ -55,3 +55,5 @@ El JWKS endpoint de Supabase requiere autenticación, por lo que Privy no puede 
 - Solo úsalo para configurar Privy
 - No lo subas a repositorios públicos
 
+
+

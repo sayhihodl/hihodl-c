@@ -109,3 +109,5 @@ El SHA-1 es necesario para que Google OAuth funcione en Android, pero **no es cr
 - Probar la app en iOS/Web primero
 - Agregar SHA-1 después cuando lo necesites para Android
 
+
+

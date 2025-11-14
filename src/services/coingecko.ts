@@ -145,7 +145,13 @@ export async function searchCoinGecko(
       try {
         const results = await Promise.allSettled(platformPromises);
         const successCount = results.filter(r => r.status === "fulfilled").length;
-        logger.debug("[coingecko] platform fetch completed", successCount, "/", tokensToFetch.length);
+        const tokensWithPlatforms = tokens.filter(t => t.platforms && Object.keys(t.platforms).length > 0).length;
+        logger.debug("[coingecko] platform fetch completed", successCount, "/", tokensToFetch.length, "- tokens with platforms:", tokensWithPlatforms);
+        
+        // Si muy pocos tokens tienen platforms, puede ser un problema de rate limit o timeout
+        if (tokensWithPlatforms === 0 && tokens.length > 0) {
+          logger.debug("[coingecko] WARNING: No tokens have platforms - may indicate rate limit or timeout issue");
+        }
       } catch (e) {
         logger.debug("[coingecko] platform fetch global error", String(e));
       }

@@ -104,7 +104,7 @@ const SearchField = forwardRef<TextInput, Props>(({
 
   return (
     <View style={[styles.searchBar, { height }, containerStyle]}>
-      <Ionicons name="search" size={16} color="#8FD3E3" />
+      <Ionicons name="search" size={18} color="rgba(255,255,255,0.6)" />
       <TextInput
         ref={inputRef}
         value={value}
@@ -113,16 +113,18 @@ const SearchField = forwardRef<TextInput, Props>(({
         placeholderTextColor="rgba(255,255,255,0.45)"
         style={styles.searchInput}
         returnKeyType="search"
+        autoCapitalize="none"
+        autoCorrect={false}
         {...inputProps}
       />
       {onPaste && (
         <Pressable onPress={onPaste} hitSlop={8} accessibilityLabel="Paste">
-          <Ionicons name="clipboard-outline" size={16} color="#8FD3E3" />
+          <Ionicons name="clipboard-outline" size={18} color="rgba(255,255,255,0.6)" />
         </Pressable>
       )}
       {!!value && onClear && (
         <Pressable onPress={onClear} hitSlop={8} accessibilityLabel="Clear">
-          <Ionicons name="close-circle" size={16} color="#8FD3E3" />
+          <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.6)" />
         </Pressable>
       )}
     </View>
@@ -137,10 +139,10 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 10,
     backgroundColor: "rgba(255,255,255,0.10)",
-    borderRadius: 14,
-    paddingHorizontal: 10,
+    borderRadius: 16,
+    paddingHorizontal: 14,
     flex: 1,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(255,255,255,0.08)",
@@ -148,8 +150,9 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: "#fff",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "400",
     letterSpacing: -0.2,
+    paddingVertical: 0, // Remove default padding for better alignment
   },
 });

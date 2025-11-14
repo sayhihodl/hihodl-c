@@ -56,6 +56,9 @@ export default function SegmentedPills({
     Array(items.length).fill({ x: 0, w: 0 })
   );
   const [containerW, setContainerW] = useState(0);
+  
+  // Medir texto invisible primero para obtener el ancho real
+  const [measuring, setMeasuring] = useState(true);
 
   // AVs internos para el caso SIN progress
   const leftAV = useRef(new Animated.Value(0)).current;
@@ -64,19 +67,45 @@ export default function SegmentedPills({
   const computedBtnWidths = useMemo(() => {
     if (!containerW || labelW.some((w) => w <= 0)) return null;
     const usable = containerW - wrapHPad * 2;
-    const desired = labelW.map((w) => w + pillHPad * 2);
+    
+    // Calcular el ancho deseado para cada botón (texto + padding)
+    // Asegurar que cada botón tenga al menos el espacio necesario para su texto completo
+    const desired = labelW.map((w) => {
+      // Añadir padding y un pequeño margen extra para evitar truncamiento
+      const minNeeded = w + pillHPad * 2 + 4; // +4px de margen de seguridad
+      return Math.max(pillMinWidth, minNeeded);
+    });
+    
     const sum = desired.reduce((a, b) => a + b, 0);
-
-    const k = Math.max(0.85, Math.min(1.2, usable / sum));
-    const widths = desired.map((w) => Math.max(pillMinWidth, Math.round(w * k)));
-
-    let diff = usable - widths.reduce((a, b) => a + b, 0);
-    for (let i = 0; i < widths.length && diff !== 0; i++) {
-      const step = diff > 0 ? 1 : -1;
-      widths[i] += step;
-      diff -= step;
+    
+    // Si el espacio disponible es suficiente, usar los anchos deseados
+    if (sum <= usable) {
+      // Distribuir cualquier espacio extra equitativamente
+      const extra = usable - sum;
+      const perPill = Math.floor(extra / desired.length);
+      const remainder = extra % desired.length;
+      return desired.map((w, i) => w + perPill + (i < remainder ? 1 : 0));
     }
-    return widths;
+    
+    // Si no cabe, escalar proporcionalmente pero asegurar que cada uno tenga al menos pillMinWidth
+    const scale = usable / sum;
+    const scaled = desired.map((w) => Math.max(pillMinWidth, Math.round(w * scale)));
+    const scaledSum = scaled.reduce((a, b) => a + b, 0);
+    let diff = usable - scaledSum;
+    
+    // Ajustar diferencias menores distribuyendo el espacio extra/faltante
+    let i = 0;
+    while (diff !== 0 && i < scaled.length * 2) {
+      const idx = i % scaled.length;
+      const step = diff > 0 ? 1 : -1;
+      if (scaled[idx] + step >= pillMinWidth) {
+        scaled[idx] += step;
+        diff -= step;
+      }
+      i++;
+    }
+    
+    return scaled;
   }, [containerW, labelW, wrapHPad, pillHPad, pillMinWidth]);
 
   // Indicador: con progress usa interpolaciones, sin progress anima hacia el pill activo
@@ -109,82 +138,135 @@ export default function SegmentedPills({
     ]).start();
   }, [activeIndex, btnMeasures, progress, leftAV, widthAV, animateMs]);
 
+  // Medir textos primero de forma invisible
+  useEffect(() => {
+    if (measuring && labelW.every((w) => w > 0)) {
+      setMeasuring(false);
+    }
+  }, [measuring, labelW]);
+
   return (
-    <View
-      style={[
-        styles.wrap,
-        { height, paddingHorizontal: wrapHPad, backgroundColor: wrapBackground },
-        style,
-      ]}
-      onLayout={(e) => setContainerW(e.nativeEvent.layout.width)}
-    >
-      <Animated.View style={[styles.indicator, { left, width }, indicatorStyle]} />
-
-      {items.map((item, i) => {
-        const active = i === activeIndex;
-        const w = computedBtnWidths?.[i];
-
-        return (
-          <Pressable
-            key={item.id}
-            onPress={() => onPress(i, item)}
-            style={[styles.btn, w ? { width: w } : null]}
-            onLayout={(e) => {
-              const { x, width: bw } = e.nativeEvent.layout;
-              setBtnMeasures((prev) => {
-                const next = [...prev];
-                if (next[i]?.x === x && next[i]?.w === bw) return prev;
-                next[i] = { x, w: bw };
-                return next;
-              });
-            }}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
-          >
+    <>
+      {/* Textos invisibles para medir el ancho real - usar el estilo más ancho (activo) */}
+      {measuring && (
+        <View style={{ position: "absolute", opacity: 0, pointerEvents: "none", zIndex: -1, width: 1000 }}>
+          {items.map((item, i) => (
             <Text
-              style={[styles.txt, textStyle, active && styles.txtActive, active && activeTextStyle]}
-              numberOfLines={1}
+              key={`measure-${item.id}`}
+              style={[
+                styles.txt, 
+                textStyle, 
+                styles.txtActive, // Usar estilo activo (más ancho) para medir
+                activeTextStyle
+              ]}
               allowFontScaling={false}
               onLayout={(e) => {
                 const lw = e.nativeEvent.layout.width;
-                setLabelW((prev) => (prev[i] === lw ? prev : Object.assign([...prev], { [i]: lw })));
+                if (lw > 0) {
+                  setLabelW((prev) => {
+                    const next = [...prev];
+                    // Usar el máximo entre el estilo normal y activo para asegurar espacio suficiente
+                    if (next[i] === 0 || lw > next[i]) {
+                      next[i] = lw;
+                    }
+                    return next;
+                  });
+                }
               }}
             >
               {item.label}
             </Text>
-          </Pressable>
-        );
-      })}
-    </View>
+          ))}
+        </View>
+      )}
+      
+      <View
+        style={[
+          styles.wrap,
+          { height, paddingHorizontal: wrapHPad, backgroundColor: wrapBackground },
+          style,
+        ]}
+        onLayout={(e) => setContainerW(e.nativeEvent.layout.width)}
+      >
+        <Animated.View style={[styles.indicator, { left, width }, indicatorStyle]} />
+
+        {items.map((item, i) => {
+          const active = i === activeIndex;
+          const w = computedBtnWidths?.[i];
+
+          return (
+            <Pressable
+              key={item.id}
+              onPress={() => onPress(i, item)}
+              style={[styles.btn, w ? { width: w } : null]}
+              onLayout={(e) => {
+                const { x, width: bw } = e.nativeEvent.layout;
+                setBtnMeasures((prev) => {
+                  const next = [...prev];
+                  if (next[i]?.x === x && next[i]?.w === bw) return prev;
+                  next[i] = { x, w: bw };
+                  return next;
+                });
+              }}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+            >
+              <Text
+                style={[styles.txt, textStyle, active && styles.txtActive, active && activeTextStyle]}
+                numberOfLines={1}
+                allowFontScaling={false}
+                adjustsFontSizeToFit={false}
+              >
+                {item.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    borderRadius: 18,
+    borderRadius: 20,
     paddingVertical: 4,
     flexDirection: "row",
     alignItems: "center",
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
   indicator: {
     position: "absolute",
     top: 4,
     bottom: 4,
-    borderRadius: 14,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
   btn: {
     height: "100%",
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 2,
   },
-  txt: { color: "#9FB3BF", fontWeight: "800", fontSize: 14 },
-  txtActive: { color: "#FFFFFF" },
+  txt: { 
+    color: "rgba(159,179,191,0.9)", 
+    fontWeight: "700", 
+    fontSize: 14,
+    letterSpacing: 0.2,
+  },
+  txtActive: { 
+    color: "#FFFFFF",
+    fontWeight: "800",
+  },
 });

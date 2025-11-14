@@ -57,3 +57,5 @@ El error no debería bloquear la app. Privy seguirá funcionando para:
 
 Este error es común en desarrollo y no debería afectar la funcionalidad de Privy para conectar wallets. El manejador de errores agregado previene que el error bloquee la app.
 
+
+

@@ -13,6 +13,8 @@ import GlassHeader from "@/ui/GlassHeader";
 
 import { useTranslation } from "react-i18next";
 import { preloadNamespaces } from "@/i18n/i18n";
+import { useUserPrefs } from "@/store/userPrefs";
+import { findTokenById } from "@/config/tokensCatalog";
 
 /* theme */
 const BG = colors.navBg ?? legacyColors.BG ?? "#0D1820";
@@ -47,6 +49,13 @@ export default function SettingsScreen() {
   const [nTips, setNTips] = useState(false);
 
   const prettyLang = useMemo(() => prettifyLanguage(i18n.language), [i18n.language]);
+  
+  // Obtener el símbolo del token predeterminado
+  const defaultTokenId = useUserPrefs((state) => state.defaultTokenId) || "usdc";
+  const defaultTokenSymbol = useMemo(() => {
+    const token = findTokenById(defaultTokenId);
+    return token?.symbol || defaultTokenId.toUpperCase();
+  }, [defaultTokenId]);
 
   const Backdrop = useMemo(
     () => (
@@ -125,6 +134,14 @@ export default function SettingsScreen() {
               label={t("settings:language")}
               value={prettyLang}       // 👉 valor a la derecha
               onPress={() => router.push("/menu/settings/language")}
+              rightIcon={null}         // sin flecha
+            />
+            <Divider />
+            <Row
+              icon="wallet-outline"
+              label="Default Token"
+              value={defaultTokenSymbol}       // 👉 valor a la derecha
+              onPress={() => router.push("/menu/settings/default-token")}
               rightIcon={null}         // sin flecha
             />
           </GlassCard>

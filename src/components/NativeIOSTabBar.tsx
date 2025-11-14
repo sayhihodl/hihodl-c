@@ -27,6 +27,7 @@ import { FEATURES } from "@/config/features";
 import { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { PlatformPressable } from "@react-navigation/elements";
 import { BottomTabBar } from "@react-navigation/bottom-tabs";
+import FluidGlassTabBarLite from "./FluidGlassTabBarLite";
 
 // iOS Native Colors - Revolut Style
 const ACTIVE_GLOW = "#007AFF"; // iOS Blue for active state
@@ -213,8 +214,9 @@ function FloatingTabBar(props: any) {
           },
         ]}
       >
-        <RevolutTabBarBackground />
-        <BottomTabBar {...props} />
+        <FluidGlassTabBarLite intensity={BLUR_INTENSITY_IOS} tint="dark">
+          <BottomTabBar {...props} />
+        </FluidGlassTabBarLite>
       </View>
     </View>
   );

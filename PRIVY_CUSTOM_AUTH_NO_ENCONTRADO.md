@@ -65,3 +65,5 @@ En lugar de usar Privy Custom Auth, podemos:
 - [Privy Docs - Using Your Own Authentication](https://docs.privy.io/guides/authentication/using-your-own-authentication)
 - [Privy Pricing](https://privy.io/pricing) (para verificar si Custom Auth requiere plan específico)
 
+
+

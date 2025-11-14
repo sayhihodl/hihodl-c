@@ -42,3 +42,5 @@ Estas peticiones son **opcionales** y Privy funciona sin ellas para conectar wal
 
 **No necesitas hacer nada.** El error es cosmético y no afecta la funcionalidad de Privy para conectar MetaMask o Phantom.
 
+
+

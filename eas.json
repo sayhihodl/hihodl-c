@@ -23,6 +23,18 @@
         "simulator": false
       }
     },
+    "testflight": {
+      "autoIncrement": true,
+      "distribution": "store",
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release"
+      },
+      "env": {
+        "EXPO_PUBLIC_FEATURE_DISCOVER": "false",
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      }
+    },
     "production": {
       "autoIncrement": true,
       "android": {
@@ -44,6 +56,13 @@
         "serviceAccountKeyPath": "./service-account-key.json",
         "track": "production"
       },
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "your-app-store-connect-app-id",
+        "appleTeamId": "your-team-id"
+      }
+    },
+    "testflight": {
       "ios": {
         "appleId": "your-apple-id@example.com",
         "ascAppId": "your-app-store-connect-app-id",

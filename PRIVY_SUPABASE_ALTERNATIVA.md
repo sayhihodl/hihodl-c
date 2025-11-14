@@ -57,3 +57,5 @@ Mientras tanto, podemos:
 
 ¿Quieres que deshabilite Custom Auth temporalmente para que la app funcione sin errores mientras resolvemos esto con Privy?
 
+
+

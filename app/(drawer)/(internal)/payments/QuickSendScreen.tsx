@@ -35,6 +35,8 @@ import {
   useIsHihodlUser,
 } from "./_lib/_QuickSendScreen.hooks";
 import { sendQuickPayment } from "./_lib/_QuickSendScreen.send";
+import { useKYC } from "@/hooks/useKYC";
+import { KYCVerification } from "@/components/KYCVerification";
 
 const { TEXT, SUB } = legacy;
 
@@ -73,6 +75,10 @@ function QuickSendInner({
     title
   );
   const isHihodlUser = useIsHihodlUser(state);
+  
+  // KYC verification
+  const { isVerified, loading: kycLoading, refresh: refreshKYC } = useKYC();
+  const [showKYCModal, setShowKYCModal] = useState(false);
 
   // Token preset
   useTokenPreset(paymentType, tokenId, chain, balances, state, patch, setTokenId, setChain);
@@ -139,9 +145,23 @@ function QuickSendInner({
 
   // Handler para el botón Send - diferente comportamiento según tipo de destinatario
   const goSend = useCallback(() => {
-    // PIX y Mercado Pago: no requieren chain, solo tokenId
+    // PIX y Mercado Pago: requieren KYC y no requieren chain, solo tokenId
     if (paymentType === "pix" || paymentType === "mercado_pago") {
       if (!tokenId || !amountStr || Number(amountStr) <= 0) return;
+      
+      // Check KYC status
+      if (kycLoading) {
+        // Still loading, wait
+        return;
+      }
+      
+      if (isVerified === false) {
+        // KYC not verified, show modal
+        setShowKYCModal(true);
+        return;
+      }
+      
+      // KYC verified or not required, proceed with payment
       doSend();
       return;
     }
@@ -443,6 +463,21 @@ function QuickSendInner({
   />
 </BottomKeyboardModal>
 
+      {/* KYC Verification Modal */}
+      <KYCVerification
+        visible={showKYCModal}
+        onClose={() => setShowKYCModal(false)}
+        onComplete={(status) => {
+          if (status === 'verified') {
+            refreshKYC();
+            // After verification, try sending again
+            setTimeout(() => {
+              doSend();
+            }, 500);
+          }
+        }}
+        requiredFor={paymentType === "pix" ? "pix" : paymentType === "mercado_pago" ? "mercado_pago" : "subscription"}
+      />
     </KeyboardAvoidingView>
   );
 }

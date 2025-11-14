@@ -55,3 +55,5 @@ Si no necesitas Privy inmediatamente, podemos:
 
 ¿Quieres que deshabilite Custom Auth temporalmente para que la app funcione sin errores?
 
+
+

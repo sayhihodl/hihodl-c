@@ -463,3 +463,5 @@ ON auth.users(wallet_address);
 
 **¿Preguntas?** Esta integración mínima te da lo mejor de ambos mundos: Privy para conectar wallets fácilmente, y Supabase para todo lo demás que ya tienes funcionando.
 
+
+

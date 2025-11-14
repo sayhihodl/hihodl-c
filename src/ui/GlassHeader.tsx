@@ -103,36 +103,63 @@ export default function GlassHeader({
   }
 
   return (
-    <View pointerEvents="box-none" style={[styles.wrap, { height: TOTAL_H }]}>
-      {/* Capa blur */}
-<Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { opacity: blurOpacity }]}>
-  <BlurView
-    intensity={60}
-    tint={blurTint}
-    experimentalBlurMethod="dimezisBlurView"
-    collapsable={false as any}
-    style={[StyleSheet.absoluteFillObject, { height: TOTAL_H, backgroundColor: "transparent" }]}
-  />
-  <View
-    style={{
-      position: "absolute",
-      top: 0, left: 0, right: 0,
-      height: TOTAL_H,
-      backgroundColor: overlayColor,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderColor: "rgba(255,255,255,0.08)",
-    }}
-  />
-</Animated.View>
+    <View pointerEvents="box-none" style={[styles.wrap, { height: TOTAL_H, backgroundColor: "transparent" }]}>
+      {/* Capa blur - cubre toda el área incluyendo notch */}
+      <Animated.View 
+        pointerEvents="none" 
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: TOTAL_H,
+          opacity: blurOpacity,
+        }}
+      >
+        <BlurView
+          intensity={60}
+          tint={blurTint}
+          experimentalBlurMethod="dimezisBlurView"
+          collapsable={false as any}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: TOTAL_H,
+            backgroundColor: "transparent",
+          }}
+        />
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: TOTAL_H,
+            backgroundColor: overlayColor,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderColor: "rgba(255,255,255,0.08)",
+          }}
+        />
+      </Animated.View>
 
       {/* Capa sólida (cuando haces scroll) */}
       <Animated.View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: solidColor, opacity: solidOpacity }]}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: TOTAL_H,
+          backgroundColor: solidColor,
+          opacity: solidOpacity,
+        }}
       />
 
-      {/* Contenido */}
-      <SafeAreaView edges={["top", "left", "right"]} style={{ paddingTop: 0 }}>
+      {/* Contenido del header */}
+      <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
         <View
           style={[
             styles.rowBase,

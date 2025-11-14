@@ -691,3 +691,5 @@ Usuario llega a login
 
 **¿Preguntas?** Esta implementación te dará lo mejor de ambos mundos: facilidad para nuevos usuarios y flexibilidad para usuarios avanzados con wallets.
 
+
+

@@ -58,3 +58,6 @@ export * from './health.service';
 // Stable Cards
 export * from './stablecards.service';
 
+// KYC Verification
+export * from './kyc.service';
+

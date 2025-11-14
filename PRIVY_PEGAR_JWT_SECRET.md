@@ -79,3 +79,5 @@ Si Privy rechaza el JWT Secret porque espera un certificado x.509:
 - [Supabase JWT Docs](https://supabase.com/docs/guides/auth/jwts)
 - [Privy JWT Setup](https://docs.privy.io/authentication/user-authentication/jwt-based-auth/setup)
 
+
+
